@@ -4,7 +4,6 @@ const morgan = require('morgan');
 require('dotenv').config();
 
 const paymentRoutes = require('./src/routes/payment.routes');
-const uploadRoutes = require('./src/routes/upload.routes');
 const escrowRoutes = require('./src/routes/escrow.routes');
 const errorHandler = require('./src/middleware/errorHandler');
 
@@ -23,7 +22,6 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/payment', paymentRoutes);
-app.use('/api/upload', uploadRoutes);
 app.use('/api/escrow', escrowRoutes);
 
 app.use(errorHandler);

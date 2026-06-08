@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { BACKEND_URL } from '../utils/constants';
-import { auth } from './firebase';
+import { auth, storage } from './firebase';
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 
 const api = axios.create({ baseURL: BACKEND_URL });
 
@@ -57,23 +58,25 @@ export const checkPaymentStatus = async (checkoutRequestId) => {
 };
 
 export const uploadListingImages = async (files) => {
-  const token = await auth.currentUser?.getIdToken();
-  const formData = new FormData();
-  files.forEach((file) => formData.append('photos', file));
-  const { data } = await api.post('/api/upload/listing-images', formData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return data;
+  const user = auth.currentUser;
+  if (!user) throw new Error('You must be logged in to upload images');
+
+  const urls = [];
+  for (const file of files) {
+    const fileName = `listings/${user.uid}/${crypto.randomUUID()}${file.name.substring(file.name.lastIndexOf('.'))}`;
+    const storageRef = ref(storage, fileName);
+    const snapshot = await uploadBytesResumable(storageRef, file);
+    const url = await getDownloadURL(snapshot.ref);
+    urls.push(url);
+  }
+  return { urls };
 };
 
-export const deleteListingImage = async (fileName) => {
-  const token = await auth.currentUser?.getIdToken();
-  const { data } = await api.delete('/api/upload/listing-image', {
-    headers: { Authorization: `Bearer ${token}` },
-    data: { fileName },
-  });
-  return data;
+export const deleteListingImage = async (imageUrl) => {
+  try {
+    const storageRef = ref(storage, imageUrl);
+    await deleteObject(storageRef);
+  } catch (err) {
+    console.error('Delete image error:', err);
+  }
 };
