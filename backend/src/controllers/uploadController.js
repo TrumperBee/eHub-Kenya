@@ -22,12 +22,17 @@ async function uploadImages(req, res, next) {
       return res.status(400).json({ error: 'No files uploaded' });
     }
 
+    if (!process.env.CLOUDFLARE_ACCOUNT_ID || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY) {
+      return res.status(500).json({ error: 'Image upload is not configured. Set Cloudflare R2 credentials in the backend environment variables.' });
+    }
+
     const results = await cloudflareService.uploadImages(req.files);
     const urls = results.map(r => r.url);
 
     res.json({ success: true, urls });
   } catch (err) {
-    next(err);
+    console.error('Upload error:', err);
+    res.status(500).json({ error: err.message || 'Image upload failed. Check Cloudflare R2 configuration.' });
   }
 }
 
