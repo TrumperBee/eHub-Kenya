@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, LogOut, User, ShoppingBag, Shield, Bell } from 'lucide-react';
+import { Menu, X, Bell, LogOut, Shield, ShoppingBag, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { ADMIN_EMAIL, ADMIN_ROUTE } from '../../utils/constants';
@@ -11,11 +11,24 @@ export default function Navbar() {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const dropdownRef = useRef(null);
   const notifRef = useRef(null);
+
+  const openDrawer = () => { setDrawerOpen(true); document.body.style.overflow = 'hidden'; };
+  const closeDrawer = () => { setDrawerOpen(false); document.body.style.overflow = ''; };
+
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') closeDrawer(); };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
+
+  useEffect(() => {
+    return () => { document.body.style.overflow = ''; };
+  }, []);
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -27,10 +40,12 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    setMobileOpen(false);
+    setDrawerOpen(false);
     setDropdownOpen(false);
     setNotifOpen(false);
   }, [location.pathname]);
+
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   const navLinks = [
     { label: 'Home', path: '/' },
@@ -41,6 +56,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await logout();
+    closeDrawer();
     navigate('/');
   };
 
@@ -57,11 +73,32 @@ export default function Navbar() {
   };
 
   const isAdmin = currentUser?.email === ADMIN_EMAIL;
-  const displayName = userProfile?.displayName || currentUser?.displayName || 'User';
+  const displayName = userProfile?.sellerDisplayName || userProfile?.displayName || currentUser?.displayName || 'User';
   const initials = getInitials(displayName);
 
+  const DrawerNavItem = ({ icon, label, href, activeColor }) => (
+    <Link
+      to={href}
+      onClick={closeDrawer}
+      className="flex items-center gap-3.5 mx-2 px-4 rounded-lg transition-colors min-h-[52px]"
+      style={{
+        color: isActive(href) ? '#FFF100' : '#FFFFFF',
+        background: isActive(href) ? 'rgba(255,255,255,0.12)' : 'transparent',
+      }}
+      onMouseEnter={(e) => { if (!isActive(href)) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+      onMouseLeave={(e) => { if (!isActive(href)) e.currentTarget.style.background = 'transparent'; }}
+    >
+      <span style={{ color: isActive(href) ? (activeColor || '#FFF100') : '#FFFFFF', fontSize: 18, width: 20, textAlign: 'center', flexShrink: 0 }}>{icon}</span>
+      <span className="font-heading text-sm font-bold uppercase tracking-wide">{label}</span>
+    </Link>
+  );
+
+  const SectionLabel = ({ label, color }) => (
+    <p className="font-heading text-[11px] font-bold uppercase tracking-[0.15em] px-5 pt-5 pb-2" style={{ color: color || '#FFF100' }}>{label}</p>
+  );
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-[68px] md:h-[68px] h-[60px]" style={{ background: '#003BFF' }}>
+    <nav className="fixed top-0 left-0 right-0 z-50 h-[68px]" style={{ background: '#003BFF' }}>
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
         <Link to="/" className="flex items-center gap-1.5">
           <span className="font-heading text-xl font-extrabold text-white uppercase tracking-wider">
@@ -212,56 +249,143 @@ export default function Navbar() {
         </div>
 
         <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden text-white p-2 min-h-[48px] min-w-[48px] flex items-center justify-center"
+          onClick={openDrawer}
+          className="md:hidden flex flex-col justify-center items-center w-11 h-11 rounded-lg hover:bg-white/10 transition-colors"
+          aria-label="Open menu"
         >
-          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+          {drawerOpen ? <X size={24} className="text-white" /> : <Menu size={24} className="text-white" />}
         </button>
       </div>
 
-      {mobileOpen && (
-        <div className="md:hidden fixed inset-0 top-[60px] z-50 animate-fade-in"
-          style={{ background: '#001E7A' }}>
-          <div className="px-6 py-6 space-y-2">
-            {navLinks.map(link => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className="block px-4 py-3 rounded-xl font-heading text-sm font-bold uppercase tracking-wider transition-colors"
-                style={{
-                  color: location.pathname === link.path ? '#FFF100' : 'rgba(255,255,255,0.8)',
-                  background: location.pathname === link.path ? 'rgba(255,241,0,0.1)' : 'transparent',
-                }}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <div className="border-t border-white/10 my-4" />
-            {!currentUser ? (
-              <div className="flex flex-col gap-3 pt-2">
-                <Link to="/login" className="w-full text-center btn-ghost !text-white !border !border-white/30 !py-3">Login</Link>
-                <Link to="/register" className="w-full text-center btn-primary !py-3">Register</Link>
-              </div>
-            ) : (
-              <div className="space-y-1 pt-2">
-                <Link to="/orders" className="block px-4 py-3 rounded-xl text-sm text-white/80 hover:bg-white/10 font-medium">My Orders</Link>
-                <Link to="/profile" className="block px-4 py-3 rounded-xl text-sm text-white/80 hover:bg-white/10 font-medium">Profile</Link>
-                {userProfile?.sellerApproved && (
-                  <Link to="/transfer-room" className="block px-4 py-3 rounded-xl text-sm text-white/80 hover:bg-white/10 font-medium">Transfer Room</Link>
-                )}
-                {!userProfile?.sellerApproved && (
-                  <Link to="/apply-seller" className="block px-4 py-3 rounded-xl text-sm text-white/80 hover:bg-white/10 font-medium">Become a Seller</Link>
-                )}
-                {isAdmin && (
-                  <Link to={ADMIN_ROUTE} className="block px-4 py-3 rounded-xl text-xs text-white/50 hover:bg-white/10 font-heading font-bold uppercase tracking-wider">Admin Panel</Link>
-                )}
-                <button onClick={handleLogout} className="block w-full text-left px-4 py-3 rounded-xl text-sm font-medium hover:bg-white/10"
-                  style={{ color: '#C8102E' }}>Logout</button>
-              </div>
-            )}
-          </div>
-        </div>
+      {drawerOpen && (
+        <div className="fixed inset-0 z-[9998] bg-black/60" onClick={closeDrawer} />
       )}
+
+      <div
+        className={`fixed top-0 left-0 h-full w-[75vw] max-w-[320px] z-[9999] flex flex-col overflow-y-auto transform transition-transform duration-300 ease-out ${
+          drawerOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        style={{ background: '#001E7A', borderRight: '3px solid #FFF100' }}
+      >
+        <div style={{ background: '#003BFF', padding: '24px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1.5">
+              <span className="font-heading text-lg font-extrabold text-white uppercase tracking-wider">eFOOTBALL HUB</span>
+              <span className="font-heading text-lg font-extrabold uppercase tracking-wider" style={{ color: '#FFF100' }}>KENYA</span>
+            </div>
+            <button onClick={closeDrawer} className="flex items-center justify-center w-11 h-11 shrink-0" aria-label="Close menu">
+              <X size={24} className="text-white" />
+            </button>
+          </div>
+
+          {currentUser && (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-heading font-bold shrink-0" style={{ background: '#003BFF', border: '2px solid #FFFFFF' }}>
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <p className="font-heading text-sm font-bold text-white truncate">{displayName}</p>
+                <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{currentUser.email}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <SectionLabel label="MENU" />
+        <DrawerNavItem icon="🏠" label="Home" href="/" />
+        <DrawerNavItem icon="🔍" label="Browse Accounts" href="/browse" />
+        <DrawerNavItem icon="❓" label="How It Works" href="/how-it-works" />
+        <DrawerNavItem icon="💬" label="FAQ" href="/faq" />
+
+        {currentUser && (
+          <>
+            <div className="mx-5 mt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} />
+            <SectionLabel label="MY ACCOUNT" />
+            <DrawerNavItem icon="📦" label="My Orders" href="/orders" />
+            <DrawerNavItem icon="👤" label="Profile" href="/profile" />
+            <Link
+              to={location.pathname}
+              onClick={() => setNotifOpen(true)}
+              className="flex items-center gap-3.5 mx-2 px-4 rounded-lg transition-colors min-h-[52px] text-white hover:bg-white/10"
+            >
+              <span style={{ fontSize: 18, width: 20, textAlign: 'center', flexShrink: 0 }}>🔔</span>
+              <span className="font-heading text-sm font-bold uppercase tracking-wide flex-1">Notifications</span>
+              {unreadCount > 0 && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: '#FFF100', color: '#111' }}>{unreadCount}</span>
+              )}
+            </Link>
+          </>
+        )}
+
+        {userProfile?.sellerApproved && (
+          <>
+            <div className="mx-5 mt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} />
+            <SectionLabel label="SELLER" />
+            <DrawerNavItem icon="🏪" label="Transfer Room" href="/transfer-room" />
+            <DrawerNavItem icon="➕" label="New Listing" href="/transfer-room/new" />
+            <DrawerNavItem icon="📊" label="My Earnings" href="/transfer-room/earnings" />
+          </>
+        )}
+
+        {currentUser && !userProfile?.sellerApproved && (
+          <div className="mx-3 my-4 rounded-xl p-4" style={{ background: 'rgba(255,241,0,0.12)', border: '1px solid rgba(255,241,0,0.4)' }}>
+            <p className="font-heading text-sm font-extrabold mb-1" style={{ color: '#FFF100' }}>BECOME A SELLER</p>
+            <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.7)' }}>
+              Apply to list your eFootball accounts and earn via M-Pesa.
+            </p>
+            <Link
+              to="/apply-seller"
+              onClick={closeDrawer}
+              className="flex items-center justify-center w-full h-10 rounded-xl font-heading text-sm font-bold transition-colors"
+              style={{ background: '#FFF100', color: '#111111' }}
+            >
+              APPLY NOW →
+            </Link>
+          </div>
+        )}
+
+        {isAdmin && (
+          <>
+            <div className="mx-5 mt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} />
+            <SectionLabel label="ADMIN" color="#C8102E" />
+            <DrawerNavItem icon="⚙️" label="Command Center" href={ADMIN_ROUTE} activeColor="#C8102E" />
+            <DrawerNavItem icon="📋" label="Applications" href={`${ADMIN_ROUTE}/applications`} activeColor="#C8102E" />
+            <DrawerNavItem icon="👥" label="Manage Sellers" href={`${ADMIN_ROUTE}/sellers`} activeColor="#C8102E" />
+            <DrawerNavItem icon="🚨" label="Disputes" href={`${ADMIN_ROUTE}/disputes`} activeColor="#C8102E" />
+          </>
+        )}
+
+        <div className="mt-auto px-5 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          {currentUser ? (
+            <button
+              onClick={handleLogout}
+              className="flex items-center justify-center gap-2 w-full h-12 rounded-xl font-heading text-sm font-bold uppercase transition-colors"
+              style={{ border: '1px solid rgba(255,255,255,0.3)', color: '#FFFFFF', background: 'transparent' }}
+            >
+              <span>🚪</span> Logout
+            </button>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Link
+                to="/login"
+                onClick={closeDrawer}
+                className="flex items-center justify-center w-full h-12 rounded-xl font-heading text-sm font-bold uppercase transition-colors"
+                style={{ border: '1px solid #FFFFFF', color: '#FFFFFF' }}
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                onClick={closeDrawer}
+                className="flex items-center justify-center w-full h-12 rounded-xl font-heading text-sm font-bold uppercase transition-colors"
+                style={{ background: '#FFF100', color: '#111111' }}
+              >
+                Create Account
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
     </nav>
   );
 }
