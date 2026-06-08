@@ -34,35 +34,35 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="pt-16 min-h-screen bg-[#0D0D0D]">
+    <div className="pt-16 min-h-screen bg-konami-light-gray">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-8">
-          <User size={24} style={{ color: '#BF0021' }} />
-          <h1 className="section-heading">My Profile</h1>
+          <User size={24} className="text-konami-blue" />
+          <h1 className="font-heading text-3xl font-extrabold text-konami-text">My Profile</h1>
         </div>
 
         <div className="card p-6 mb-6">
-          <div className="flex items-center gap-4 pb-6 border-b border-[#2A2A2A] mb-6">
-            <div className="w-16 h-16 rounded-full bg-[#BF0021] flex items-center justify-center text-white text-xl font-bold font-heading">
+          <div className="flex items-center gap-4 pb-6 border-b border-konami-mid-gray mb-6">
+            <div className="w-16 h-16 rounded-full bg-konami-blue flex items-center justify-center text-white text-xl font-bold font-heading">
               {(userProfile?.displayName || 'U').split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
             </div>
             <div>
-              <h2 className="font-heading text-xl font-bold text-white">{userProfile?.displayName || 'User'}</h2>
-              <p className="text-sm text-[#9E9E9E]">{currentUser?.email}</p>
+              <h2 className="font-heading text-xl font-bold text-konami-text">{userProfile?.displayName || 'User'}</h2>
+              <p className="text-sm text-konami-text-muted">{currentUser?.email}</p>
             </div>
           </div>
 
           <div className="space-y-5">
             <div>
-              <label className="block text-sm text-[#9E9E9E] mb-1.5">Email</label>
+              <label className="block text-sm text-konami-text-muted mb-1.5">Email</label>
               <div className="flex items-center gap-2 input-field opacity-60 cursor-not-allowed">
-                <Mail size={16} className="text-[#5C5C5C]" />
-                <span className="text-white">{currentUser?.email}</span>
+                <Mail size={16} className="text-konami-text-muted" />
+                <span className="text-konami-text">{currentUser?.email}</span>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm text-[#9E9E9E] mb-1.5">Display Name</label>
+              <label className="block text-sm text-konami-text-muted mb-1.5">Display Name</label>
               <input
                 type="text"
                 value={displayName}
@@ -72,7 +72,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label className="block text-sm text-[#9E9E9E] mb-1.5">Phone Number (Safaricom)</label>
+              <label className="block text-sm text-konami-text-muted mb-1.5">Phone Number (Safaricom)</label>
               <input
                 type="tel"
                 placeholder="e.g. 0712345678"
@@ -80,7 +80,7 @@ export default function ProfilePage() {
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 className="input-field"
               />
-              <p className="text-xs text-[#5C5C5C] mt-1">Used for M-Pesa payments</p>
+              <p className="text-xs text-konami-text-muted mt-1">Used for M-Pesa payments</p>
             </div>
 
             <button
@@ -99,21 +99,21 @@ export default function ProfilePage() {
         </div>
 
         <div className="card p-6">
-          <h3 className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">Account Info</h3>
+          <h3 className="font-heading text-sm font-bold uppercase tracking-wider text-konami-text mb-4">Account Info</h3>
           <div className="space-y-3 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-[#9E9E9E]">Account type</span>
-              <span className="text-white capitalize">{userProfile?.role || 'Buyer'}</span>
+              <span className="text-konami-text-muted">Account type</span>
+              <span className="text-konami-text capitalize">{userProfile?.role || 'Buyer'}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#9E9E9E]">Seller status</span>
-              <span className={userProfile?.sellerApproved ? 'text-green-400' : 'text-[#5C5C5C]'}>
+              <span className="text-konami-text-muted">Seller status</span>
+              <span className={userProfile?.sellerApproved ? 'text-green-500' : 'text-konami-text-muted'}>
                 {userProfile?.sellerApproved ? 'Approved' : 'Not a seller'}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#9E9E9E]">Member since</span>
-              <span className="text-white">{userProfile?.createdAt ? formatDate(userProfile.createdAt) : '-'}</span>
+              <span className="text-konami-text-muted">Member since</span>
+              <span className="text-konami-text">{userProfile?.createdAt ? formatDate(userProfile.createdAt) : '-'}</span>
             </div>
           </div>
         </div>

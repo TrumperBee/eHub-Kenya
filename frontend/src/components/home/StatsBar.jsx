@@ -40,14 +40,16 @@ function useCountUp(target, duration = 2000) {
   return { count, ref };
 }
 
-function StatItem({ label, target, suffix = '' }) {
+function StatItem({ label, target }) {
   const { count, ref } = useCountUp(target);
   return (
     <div ref={ref} className="text-center">
-      <p className="font-heading text-3xl md:text-4xl font-bold text-white">
-        {count.toLocaleString()}{suffix}
+      <p className="font-heading text-[40px] md:text-[56px] font-extrabold leading-none" style={{ color: '#003BFF' }}>
+        {count.toLocaleString()}
       </p>
-      <p className="text-sm text-[#9E9E9E] mt-1">{label}</p>
+      <p className="font-heading text-[14px] font-bold uppercase tracking-[0.1em] mt-1" style={{ color: '#001E7A' }}>
+        {label}
+      </p>
     </div>
   );
 }
@@ -78,13 +80,13 @@ export default function StatsBar() {
   }, []);
 
   return (
-    <section className="py-12 border-y border-[#2A2A2A]" style={{ backgroundColor: '#1A1A1A' }}>
+    <section className="py-10" style={{ background: '#FFF100' }}>
       <div className="max-w-5xl mx-auto px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          <StatItem label="Accounts Listed" target={stats.listings} />
-          <StatItem label="Sales Completed" target={stats.sales} />
-          <StatItem label="Registered Users" target={stats.users} />
-          <StatItem label="Active Sellers" target={stats.sellers} />
+          <StatItem label="Total Accounts Listed" target={stats.listings} />
+          <StatItem label="Total Sales Completed" target={stats.sales} />
+          <StatItem label="Registered Sellers" target={stats.sellers} />
+          <StatItem label="Transactions Processed" target={stats.sales + Math.floor(stats.listings / 2)} />
         </div>
       </div>
     </section>

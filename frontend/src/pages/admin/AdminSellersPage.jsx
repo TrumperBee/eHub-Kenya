@@ -32,40 +32,40 @@ export default function AdminSellersPage() {
 
   return (
     <AdminLayout>
-      <h2 className="font-heading text-xl font-bold text-white mb-6">Manage Sellers</h2>
+      <h2 className="font-heading text-xl font-bold text-konami-text mb-6">Manage Sellers</h2>
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-2 border-transparent border-t-[#BF0021] rounded-full animate-spin" style={{ borderRightColor: '#BF0021' }} />
+          <div className="w-8 h-8 border-2 border-transparent border-t-konami-blue rounded-full animate-spin" style={{ borderRightColor: '#003BFF' }} />
         </div>
       ) : sellers.length === 0 ? (
-        <p className="text-[#5C5C5C] text-sm">No approved sellers yet.</p>
+        <p className="text-konami-text-muted text-sm">No approved sellers yet.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#2A2A2A] text-left">
-                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-[#9E9E9E]">Name</th>
-                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-[#9E9E9E]">Email</th>
-                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-[#9E9E9E]">Display Name</th>
-                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-[#9E9E9E]">Rating</th>
-                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-[#9E9E9E]">Sales</th>
-                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-[#9E9E9E]">Joined</th>
-                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-[#9E9E9E]">Actions</th>
+              <tr className="border-b border-konami-mid-gray text-left">
+                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Name</th>
+                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Email</th>
+                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Display Name</th>
+                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Rating</th>
+                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Sales</th>
+                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Joined</th>
+                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A2A2A]">
+            <tbody className="divide-y divide-konami-mid-gray">
               {sellers.map((seller) => (
-                <tr key={seller.uid} className="hover:bg-[#242424] transition-colors">
-                  <td className="py-3 text-sm text-white">{seller.displayName || '—'}</td>
-                  <td className="py-3 text-sm text-[#9E9E9E]">{seller.email}</td>
-                  <td className="py-3 text-sm text-white">{seller.sellerDisplayName || '—'}</td>
-                  <td className="py-3 text-sm text-[#D4AF37]">{seller.sellerRating ? `${seller.sellerRating} ★` : '—'}</td>
-                  <td className="py-3 text-sm text-white">{seller.totalSales || 0}</td>
-                  <td className="py-3 text-sm text-[#9E9E9E]">{formatDate(seller.createdAt)}</td>
+                <tr key={seller.uid} className="hover:bg-konami-light-gray transition-colors">
+                  <td className="py-3 text-sm text-konami-text">{seller.displayName || '—'}</td>
+                  <td className="py-3 text-sm text-konami-text-dim">{seller.email}</td>
+                  <td className="py-3 text-sm text-konami-text">{seller.sellerDisplayName || '—'}</td>
+                  <td className="py-3 text-sm text-konami-gold">{seller.sellerRating ? `${seller.sellerRating} ★` : '—'}</td>
+                  <td className="py-3 text-sm text-konami-text">{seller.totalSales || 0}</td>
+                  <td className="py-3 text-sm text-konami-text-dim">{formatDate(seller.createdAt)}</td>
                   <td className="py-3">
                     <div className="flex gap-2">
-                      <Link to={`/hub-command-af29x/listings`} className="px-3 py-1.5 text-xs font-medium bg-[#242424] text-white rounded-lg hover:bg-[#2E2E2E] border border-[#2A2A2A] transition-colors">
+                      <Link to={`/hub-command-af29x/listings`} className="px-3 py-1.5 text-xs font-medium bg-konami-light-gray text-konami-text rounded-lg hover:bg-gray-200 border border-konami-mid-gray transition-colors">
                         View Listings
                       </Link>
                       {confirmRemove === seller.uid ? (
@@ -73,12 +73,12 @@ export default function AdminSellersPage() {
                           <button onClick={() => handleRemove(seller.uid, seller.displayName)} disabled={actionLoading} className="px-2 py-1.5 text-xs font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
                             {actionLoading ? '...' : 'Confirm'}
                           </button>
-                          <button onClick={() => setConfirmRemove(null)} className="px-2 py-1.5 text-xs font-medium bg-[#242424] text-white rounded-lg hover:bg-[#2E2E2E] border border-[#2A2A2A]">
+                          <button onClick={() => setConfirmRemove(null)} className="px-2 py-1.5 text-xs font-medium bg-konami-light-gray text-konami-text rounded-lg hover:bg-gray-200 border border-konami-mid-gray">
                             No
                           </button>
                         </div>
                       ) : (
-                        <button onClick={() => setConfirmRemove(seller.uid)} className="px-3 py-1.5 text-xs font-medium bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 border border-red-400/30 transition-colors">
+                        <button onClick={() => setConfirmRemove(seller.uid)} className="px-3 py-1.5 text-xs font-medium bg-red-600/20 text-red-500 rounded-lg hover:bg-red-600/30 border border-red-400/30 transition-colors">
                           Remove
                         </button>
                       )}
@@ -93,16 +93,16 @@ export default function AdminSellersPage() {
 
       {confirmRemove && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setConfirmRemove(null)}>
-          <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-6 max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-heading text-lg font-bold text-white mb-3">Remove Seller Access</h3>
-            <p className="text-sm text-[#9E9E9E] mb-4">
+          <div className="bg-white border border-konami-mid-gray rounded-2xl p-6 max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-heading text-lg font-bold text-konami-text mb-3">Remove Seller Access</h3>
+            <p className="text-sm text-konami-text-muted mb-4">
               This will remove this seller's access. Their existing listings will be hidden. This action can be reversed.
             </p>
             <div className="flex gap-3">
               <button onClick={() => setConfirmRemove(null)} className="btn-secondary flex-1 text-sm py-2.5">
                 Cancel
               </button>
-              <button onClick={() => handleRemove(confirmRemove, '')} disabled={actionLoading} className="btn-primary flex-1 text-sm py-2.5 bg-red-600 hover:bg-red-700">
+              <button onClick={() => handleRemove(confirmRemove, '')} disabled={actionLoading} className="btn-primary flex-1 text-sm py-2.5 bg-konami-red hover:bg-konami-red-hover">
                 {actionLoading ? 'Processing...' : 'Remove'}
               </button>
             </div>

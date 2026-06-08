@@ -6,22 +6,26 @@ export default function FeaturedListings() {
   const { listings, loading } = useFeaturedListings();
 
   return (
-    <section className="py-16 bg-[#0D0D0D]">
+    <section className="py-16 section-light">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="text-center mb-10">
-          <h2 className="section-heading">Featured Accounts</h2>
-          <div className="w-16 h-1 bg-[#BF0021] mx-auto mt-3 rounded-full" />
+        <div className="text-center mb-3">
+          <h2 className="section-heading section-heading-dark yellow-underline inline-block">
+            Featured Accounts
+          </h2>
         </div>
+        <p className="text-center text-konami-text-muted text-base mb-10">
+          Hand-picked premium eFootball accounts from verified sellers
+        </p>
 
         {loading ? (
           <div className="flex justify-center">
-            <div className="w-8 h-8 border-3 border-transparent border-t-[#BF0021] rounded-full animate-spin" style={{ borderRightColor: '#BF0021' }} />
+            <div className="w-8 h-8 border-3 border-transparent border-t-konami-blue rounded-full animate-spin" style={{ borderRightColor: '#003BFF' }} />
           </div>
         ) : listings.length === 0 ? (
-          <p className="text-center text-[#5C5C5C]">No featured listings yet.</p>
+          <p className="text-center text-konami-text-muted">No featured listings yet.</p>
         ) : (
           <>
-            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {listings.slice(0, 6).map((listing) => (
                 <ListingCard key={listing.id} listing={listing} />
               ))}
@@ -38,7 +42,7 @@ export default function FeaturedListings() {
         )}
 
         <div className="text-center mt-8">
-          <Link to="/browse" className="btn-secondary">
+          <Link to="/browse" className="btn-blue">
             View All Accounts
           </Link>
         </div>

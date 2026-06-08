@@ -31,9 +31,9 @@ export default function MyOrdersPage() {
     : orders.filter(o => o.status === 'completed');
 
   return (
-    <div className="pt-16 min-h-screen bg-[#0D0D0D]">
+    <div className="pt-16 min-h-screen bg-konami-light-gray">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="section-heading mb-6">My Orders</h1>
+        <h1 className="font-heading text-3xl font-extrabold text-konami-text mb-6">My Orders</h1>
 
         <div className="flex gap-2 mb-6">
           {FILTER_TABS.map((tab) => (
@@ -42,8 +42,8 @@ export default function MyOrdersPage() {
               onClick={() => setActiveFilter(tab.key)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeFilter === tab.key
-                  ? 'bg-[#BF0021] text-white'
-                  : 'bg-[#1A1A1A] text-[#9E9E9E] hover:text-white border border-[#2A2A2A]'
+                  ? 'bg-konami-blue text-white'
+                  : 'bg-white text-konami-text-muted hover:text-konami-text border border-konami-mid-gray'
               }`}
             >
               {tab.label}
@@ -53,12 +53,12 @@ export default function MyOrdersPage() {
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-3 border-transparent border-t-[#BF0021] rounded-full animate-spin" style={{ borderRightColor: '#BF0021' }} />
+            <div className="w-8 h-8 border-3 border-transparent border-t-konami-blue rounded-full animate-spin" style={{ borderRightColor: '#003BFF' }} />
           </div>
         ) : filtered.length === 0 ? (
           <div className="card p-12 text-center">
-            <ShoppingBag size={48} className="mx-auto mb-4 text-[#5C5C5C]" />
-            <p className="text-[#9E9E9E] mb-2">No orders yet</p>
+            <ShoppingBag size={48} className="mx-auto mb-4 text-konami-text-muted" />
+            <p className="text-konami-text-dim mb-2">No orders yet</p>
             <Link to="/browse" className="btn-primary inline-block text-sm mt-2">
               Browse Listings
             </Link>
@@ -71,23 +71,23 @@ export default function MyOrdersPage() {
                 <Link
                   key={order.id}
                   to={`/orders/${order.id}`}
-                  className="card p-4 flex items-center gap-4 hover:border-[#BF0021]/50 transition-colors"
+                  className="card p-4 flex items-center gap-4 hover:border-konami-blue/50 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">
+                    <p className="text-sm font-semibold text-konami-text truncate">
                       {order.listingTitle || 'Unnamed Listing'}
                     </p>
-                    <p className="text-xs text-[#5C5C5C] mt-0.5">
+                    <p className="text-xs text-konami-text-muted mt-0.5">
                       {order.sellerDisplayName || 'Unknown Seller'} · {formatDate(order.createdAt)}
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-white">{formatKES(order.amount)}</p>
-                    <span className={`text-xs ${statusConfig.color || 'text-[#9E9E9E]'}`}>
+                    <p className="text-sm font-bold text-konami-text">{formatKES(order.amount)}</p>
+                    <span className={`text-xs ${statusConfig.color || 'text-konami-text-dim'}`}>
                       {statusConfig.label || order.status}
                     </span>
                   </div>
-                  <span className="text-xs text-[#5C5C5C] hover:text-white ml-2">View →</span>
+                  <span className="text-xs text-konami-text-muted hover:text-konami-blue ml-2">View →</span>
                 </Link>
               );
             })}

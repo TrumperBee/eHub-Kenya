@@ -1,9 +1,15 @@
 export default function PlayerBadge({ playerName }) {
   return (
     <span
-      className="inline-flex items-center max-w-[120px] bg-[#242424] border-l-2 border-[#BF0021] rounded-r-md px-2 py-0.5 text-xs text-[#9E9E9E] truncate"
+      className="inline-flex items-center gap-1 rounded-lg px-[10px] py-[4px] text-xs font-medium truncate max-w-[140px]"
+      style={{
+        background: '#F0F4FF',
+        border: '1px solid #003BFF',
+        color: '#003BFF',
+      }}
       title={playerName}
     >
+      <span style={{ fontSize: 8, color: '#003BFF' }}>⚽</span>
       {playerName}
     </span>
   );

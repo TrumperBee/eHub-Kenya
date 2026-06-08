@@ -72,19 +72,19 @@ export default function AdminDashboardPage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <h2 className="font-heading text-xl font-bold text-white">Overview</h2>
+        <h2 className="font-heading text-xl font-bold text-konami-text">Overview</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {metricCards.map((card) => (
-            <div key={card.label} className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-5" style={{ borderTopColor: card.color, borderTopWidth: 2 }}>
+            <div key={card.label} className="bg-white border border-konami-mid-gray rounded-xl p-5" style={{ borderTopColor: card.color, borderTopWidth: 2 }}>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-[#5C5C5C] uppercase tracking-wider">{card.label}</span>
+                <span className="text-xs text-konami-text-muted uppercase tracking-wider">{card.label}</span>
                 <span style={{ color: card.color }}>{card.icon}</span>
               </div>
-              <p className="font-heading text-2xl font-bold text-white">
+              <p className="font-heading text-2xl font-bold text-konami-text">
                 {card.value}
                 {card.badge && (
-                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-[#BF0021] text-white">
+                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-konami-red text-white">
                     {card.label === 'Pending Applications' ? stats.pendingApps : stats.activeDisputes}
                   </span>
                 )}
@@ -94,21 +94,21 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-5">
-            <h3 className="font-heading text-sm font-bold text-white mb-4">Recent Orders</h3>
+          <div className="bg-white border border-konami-mid-gray rounded-xl p-5">
+            <h3 className="font-heading text-sm font-bold text-konami-text mb-4">Recent Orders</h3>
             {recentOrders.length === 0 ? (
-              <p className="text-sm text-[#5C5C5C]">No orders yet.</p>
+              <p className="text-sm text-konami-text-muted">No orders yet.</p>
             ) : (
               <div className="space-y-2">
                 {recentOrders.map((order) => {
                   const cfg = ORDER_STATUS[order.status] || {};
                   return (
-                    <div key={order.id} className="flex items-center justify-between py-2 border-b border-[#2A2A2A] last:border-0">
+                    <div key={order.id} className="flex items-center justify-between py-2 border-b border-konami-mid-gray last:border-0">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-white truncate">{order.listingTitle || '—'}</p>
-                        <p className="text-xs text-[#5C5C5C]">{formatKES(order.amount)}</p>
+                        <p className="text-sm text-konami-text truncate">{order.listingTitle || '—'}</p>
+                        <p className="text-xs text-konami-text-muted">{formatKES(order.amount)}</p>
                       </div>
-                      <span className={`text-xs ${cfg.color || 'text-[#9E9E9E]'} shrink-0 ml-2`}>
+                      <span className={`text-xs ${cfg.color || 'text-konami-text-dim'} shrink-0 ml-2`}>
                         {cfg.label || order.status}
                       </span>
                     </div>
@@ -118,27 +118,27 @@ export default function AdminDashboardPage() {
             )}
           </div>
 
-          <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-5">
-            <h3 className="font-heading text-sm font-bold text-white mb-4">Recent Applications</h3>
+          <div className="bg-white border border-konami-mid-gray rounded-xl p-5">
+            <h3 className="font-heading text-sm font-bold text-konami-text mb-4">Recent Applications</h3>
             {recentApps.length === 0 ? (
-              <p className="text-sm text-[#5C5C5C]">No applications yet.</p>
+              <p className="text-sm text-konami-text-muted">No applications yet.</p>
             ) : (
               <div className="space-y-2">
                 {recentApps.map((app) => (
-                  <div key={app.id} className="flex items-center justify-between py-2 border-b border-[#2A2A2A] last:border-0">
+                  <div key={app.id} className="flex items-center justify-between py-2 border-b border-konami-mid-gray last:border-0">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white truncate">{app.desiredSellerName || app.displayName || '—'}</p>
-                      <p className="text-xs text-[#5C5C5C]">{app.email}</p>
+                      <p className="text-sm text-konami-text truncate">{app.desiredSellerName || app.displayName || '—'}</p>
+                      <p className="text-xs text-konami-text-muted">{app.email}</p>
                     </div>
                     <span className={`text-xs shrink-0 ml-2 ${
-                      app.status === 'pending' ? 'text-amber-400' :
-                      app.status === 'approved' ? 'text-green-400' : 'text-red-400'
+                      app.status === 'pending' ? 'text-amber-500' :
+                      app.status === 'approved' ? 'text-green-500' : 'text-red-500'
                     }`}>
                       {app.status}
                     </span>
                   </div>
                 ))}
-                <Link to={`/hub-command-af29x/applications`} className="block text-xs text-[#BF0021] hover:underline mt-2 text-center">
+                <Link to={`/hub-command-af29x/applications`} className="block text-xs text-konami-blue hover:underline mt-2 text-center">
                   View All Applications →
                 </Link>
               </div>

@@ -32,27 +32,27 @@ export default function ChatWindow({ orderId, order, currentUserId }) {
   const statusMsg = order ? getStatusMessage(order.status) : '';
 
   return (
-    <div className="flex flex-col h-full bg-[#1A1A1A] rounded-2xl border border-[#2A2A2A] overflow-hidden">
-      <div className="p-4 border-b border-[#2A2A2A]">
+    <div className="flex flex-col h-full bg-white rounded-2xl border border-konami-mid-gray overflow-hidden shadow-card">
+      <div className="p-4 border-b border-konami-mid-gray bg-konami-blue">
         <div className="flex items-center gap-2 mb-2">
           {statusConfig && (
-            <span className={`text-xs font-semibold ${statusConfig.color || 'text-[#9E9E9E]'}`}>
+            <span className={`text-xs font-semibold text-white`}>
               {statusConfig.label}
             </span>
           )}
         </div>
         {statusMsg && (
-          <p className="text-xs text-[#5C5C5C] leading-relaxed">{statusMsg}</p>
+          <p className="text-xs text-white/70 leading-relaxed">{statusMsg}</p>
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-1 min-h-[300px] max-h-[500px]">
+      <div className="flex-1 overflow-y-auto p-4 space-y-1 min-h-[300px] max-h-[500px] bg-konami-light-gray">
         {loading ? (
           <div className="flex justify-center py-8">
-            <div className="w-6 h-6 border-2 border-transparent border-t-[#BF0021] rounded-full animate-spin" style={{ borderRightColor: '#BF0021' }} />
+            <div className="w-6 h-6 border-2 border-transparent border-t-konami-blue rounded-full animate-spin" style={{ borderRightColor: '#003BFF' }} />
           </div>
         ) : messages.length === 0 ? (
-          <p className="text-center text-sm text-[#5C5C5C] py-8">No messages yet. Start the conversation.</p>
+          <p className="text-center text-sm text-konami-text-muted py-8">No messages yet. Start the conversation.</p>
         ) : (
           messages.map((msg) => (
             <ChatMessage

@@ -2,26 +2,26 @@ import ListingCard from './ListingCard';
 
 function SkeletonCard() {
   return (
-    <div className="rounded-xl overflow-hidden animate-pulse" style={{ backgroundColor: '#1A1A1A' }}>
-      <div className="aspect-[16/9] bg-[#242424]" />
+    <div className="rounded-xl overflow-hidden animate-pulse bg-konami-light-gray">
+      <div className="aspect-[16/9] bg-gray-200" />
       <div className="p-3 space-y-3">
         <div className="flex gap-2">
-          <div className="h-4 bg-[#242424] rounded w-24" />
-          <div className="h-4 bg-[#242424] rounded w-12" />
+          <div className="h-4 bg-gray-200 rounded w-24" />
+          <div className="h-4 bg-gray-200 rounded w-12" />
         </div>
-        <div className="h-4 bg-[#242424] rounded w-full" />
+        <div className="h-4 bg-gray-200 rounded w-full" />
         <div className="grid grid-cols-3 gap-2">
-          <div className="h-10 bg-[#242424] rounded-lg" />
-          <div className="h-10 bg-[#242424] rounded-lg" />
-          <div className="h-10 bg-[#242424] rounded-lg" />
+          <div className="h-10 bg-gray-200 rounded-lg" />
+          <div className="h-10 bg-gray-200 rounded-lg" />
+          <div className="h-10 bg-gray-200 rounded-lg" />
         </div>
         <div className="flex gap-1.5">
-          <div className="h-5 bg-[#242424] rounded w-16" />
-          <div className="h-5 bg-[#242424] rounded w-14" />
+          <div className="h-5 bg-gray-200 rounded w-16" />
+          <div className="h-5 bg-gray-200 rounded w-14" />
         </div>
-        <div className="flex items-center justify-between pt-1 border-t border-[#2A2A2A]">
-          <div className="h-6 bg-[#242424] rounded w-20" />
-          <div className="h-9 bg-[#242424] rounded w-24" />
+        <div className="flex items-center justify-between pt-1 border-t border-konami-mid-gray">
+          <div className="h-6 bg-gray-200 rounded w-20" />
+          <div className="h-9 bg-gray-200 rounded w-24" />
         </div>
       </div>
     </div>
@@ -43,9 +43,9 @@ export default function ListingGrid({ listings, loading, emptyMessage = 'No list
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <span className="text-5xl mb-4">⚽</span>
-        <p className="text-[#9E9E9E] text-lg mb-4">{emptyMessage}</p>
+        <p className="text-konami-text-muted text-lg mb-4">{emptyMessage}</p>
         {onClearFilters && (
-          <button onClick={onClearFilters} className="text-sm text-[#BF0021] hover:text-[#E0001B] transition-colors">
+          <button onClick={onClearFilters} className="text-sm text-konami-blue hover:text-konami-blue-hover transition-colors">
             Clear Filters
           </button>
         )}

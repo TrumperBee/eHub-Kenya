@@ -15,7 +15,7 @@ export default function ReviewForm({ onSubmit, loading }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <p className="text-sm text-[#9E9E9E] mb-2">Your Rating</p>
+        <p className="text-sm text-konami-text-muted mb-2">Your Rating</p>
         <div className="flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
@@ -29,7 +29,7 @@ export default function ReviewForm({ onSubmit, loading }) {
               <Star
                 size={20}
                 fill={(hover || rating) >= star ? '#D4AF37' : 'none'}
-                color={(hover || rating) >= star ? '#D4AF37' : '#2A2A2A'}
+                color={(hover || rating) >= star ? '#D4AF37' : '#E0E0E0'}
               />
             </button>
           ))}

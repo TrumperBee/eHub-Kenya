@@ -11,7 +11,7 @@ const tabs = [
   { id: 'listings', label: 'My Listings', icon: List, path: '/transfer-room' },
   { id: 'orders', label: 'Orders', icon: ShoppingBag, path: '/transfer-room/orders' },
   { id: 'earnings', label: 'Earnings', icon: Wallet, path: '/transfer-room/earnings' },
-  { id: 'profile', label: 'My Profile', icon: User, path: '/transfer-room/profile' },
+  { id: 'profile', label: 'Profile', icon: User, path: '/transfer-room/profile' },
 ];
 
 const mobileTabs = [
@@ -30,24 +30,25 @@ function OverviewTab({ listings, orders, loading }) {
   const totalEarned = completedOrders.reduce((sum, o) => sum + (o.amount || 0), 0);
 
   if (loading) {
-    return <div className="flex justify-center py-12"><Loader size={24} className="animate-spin text-[#BF0021]" /></div>;
+    return <div className="flex justify-center py-12"><Loader size={24} className="animate-spin" style={{ color: '#003BFF' }} /></div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Active Listings', value: activeListings.length, icon: List, color: '#BF0021' },
-          { label: 'Pending Orders', value: pendingOrders.length, icon: Loader, color: '#D4AF37' },
-          { label: 'Completed Sales', value: completedOrders.length, icon: ShoppingBag, color: '#22C55E' },
-          { label: 'Total Earned', value: formatKES(totalEarned), icon: TrendingUp, color: '#BF0021' },
+          { label: 'Active Listings', value: activeListings.length, icon: List },
+          { label: 'Pending Orders', value: pendingOrders.length, icon: Loader },
+          { label: 'Completed Sales', value: completedOrders.length, icon: ShoppingBag },
+          { label: 'Total Earned', value: formatKES(totalEarned), icon: TrendingUp },
         ].map((stat, i) => (
-          <div key={i} className="card p-4">
+          <div key={i} className="card p-4 relative overflow-hidden">
+            <div style={{ height: 4, background: '#003BFF', position: 'absolute', top: 0, left: 0, right: 0 }} />
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs text-[#9E9E9E]">{stat.label}</p>
-              <stat.icon size={18} style={{ color: stat.color }} />
+              <p className="text-xs" style={{ color: '#6B7280' }}>{stat.label}</p>
+              <stat.icon size={18} style={{ color: '#003BFF' }} />
             </div>
-            <p className="font-heading text-xl font-bold text-white">{stat.value}</p>
+            <p className="font-heading text-2xl font-extrabold" style={{ color: '#003BFF' }}>{stat.value}</p>
           </div>
         ))}
       </div>
@@ -56,31 +57,31 @@ function OverviewTab({ listings, orders, loading }) {
         <Link to="/transfer-room/new" className="btn-primary flex items-center gap-2">
           <Plus size={16} /> Create New Listing
         </Link>
-        <Link to="/transfer-room/orders" className="btn-secondary flex items-center gap-2">
+        <Link to="/transfer-room/orders" className="btn-blue flex items-center gap-2">
           View Orders
         </Link>
       </div>
 
-      <div className="card">
-        <div className="p-5 border-b border-[#2A2A2A]">
-          <h3 className="font-heading text-lg font-bold text-white">Recent Orders</h3>
+      <div className="card overflow-hidden">
+        <div className="p-5 border-b border-konami-mid-gray">
+          <h3 className="font-heading text-lg font-bold uppercase" style={{ color: '#003BFF' }}>Recent Orders</h3>
         </div>
         {orders.length === 0 ? (
-          <div className="p-8 text-center text-[#5C5C5C] text-sm">No orders yet.</div>
+          <div className="p-8 text-center text-sm" style={{ color: '#6B7280' }}>No orders yet.</div>
         ) : (
-          <div className="divide-y divide-[#2A2A2A]">
+          <div className="divide-y divide-konami-mid-gray">
             {orders.slice(0, 5).map((order) => (
-              <Link key={order.id} to={`/orders/${order.id}`} className="flex items-center justify-between px-5 py-3 hover:bg-[#242424] transition-colors">
+              <Link key={order.id} to={`/orders/${order.id}`} className="flex items-center justify-between px-5 py-3 hover:bg-konami-light-gray transition-colors">
                 <div>
-                  <p className="text-sm text-white">{order.listingTitle || 'Order'}</p>
-                  <p className="text-xs text-[#5C5C5C]">{formatDate(order.createdAt)}</p>
+                  <p className="text-sm font-medium" style={{ color: '#111111' }}>{order.listingTitle || 'Order'}</p>
+                  <p className="text-xs" style={{ color: '#6B7280' }}>{formatDate(order.createdAt)}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-white">{formatKES(order.amount)}</p>
+                  <p className="text-sm font-heading font-bold" style={{ color: '#111111' }}>{formatKES(order.amount)}</p>
                   <span className={`text-xs ${
                     order.status === 'completed' ? 'text-green-400' :
                     order.status === 'pending_payment' ? 'text-yellow-400' :
-                    order.status === 'in_transfer' ? 'text-purple-400' : 'text-[#9E9E9E]'
+                    order.status === 'in_transfer' ? 'text-purple-400' : 'text-konami-text-muted'
                   }`}>
                     {order.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </span>
@@ -91,9 +92,9 @@ function OverviewTab({ listings, orders, loading }) {
         )}
       </div>
 
-      <div className="card p-5" style={{ borderLeft: '3px solid #BF0021' }}>
-        <h3 className="font-heading text-lg font-bold text-white mb-2">Tips for Fast Sales</h3>
-        <ul className="space-y-1 text-sm text-[#9E9E9E]">
+      <div className="card-accent p-5" style={{ borderLeft: 'none', borderTop: '3px solid #003BFF' }}>
+        <h3 className="font-heading text-lg font-bold uppercase mb-2" style={{ color: '#003BFF' }}>Tips for Fast Sales</h3>
+        <ul className="space-y-1 text-sm" style={{ color: '#6B7280' }}>
           <li>• Upload high-quality squad photos</li>
           <li>• Write honest, detailed descriptions</li>
           <li>• Price competitively based on tier and stats</li>
@@ -107,11 +108,11 @@ function OverviewTab({ listings, orders, loading }) {
 
 function ListingsTab({ listings, loading }) {
   const navigate = useNavigate();
-  if (loading) return <div className="flex justify-center py-12"><Loader size={24} className="animate-spin text-[#BF0021]" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader size={24} className="animate-spin" style={{ color: '#003BFF' }} /></div>;
   if (listings.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-[#9E9E9E] mb-4">You haven't created any listings yet.</p>
+        <p className="text-konami-text-muted mb-4">You haven't created any listings yet.</p>
         <Link to="/transfer-room/new" className="btn-primary">Create Your First Listing</Link>
       </div>
     );
@@ -121,19 +122,19 @@ function ListingsTab({ listings, loading }) {
       {listings.map((listing) => (
         <div key={listing.id} className="card p-4 flex items-center justify-between">
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-white truncate">{listing.title}</p>
-            <p className="text-xs text-[#9E9E9E]">{formatKES(listing.price)} — {listing.tier} — {listing.platform}</p>
+            <p className="text-sm font-heading font-bold truncate" style={{ color: '#111111' }}>{listing.title}</p>
+            <p className="text-xs" style={{ color: '#6B7280' }}>{formatKES(listing.price)} — {listing.tier} — {listing.platform}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0 ml-4">
             <span className={`badge text-xs ${
               listing.status === 'active' ? 'bg-green-400/10 text-green-400' :
               listing.status === 'paused' ? 'bg-yellow-400/10 text-yellow-400' :
-              listing.status === 'sold' ? 'bg-[#BF0021]/10 text-[#BF0021]' :
-              'bg-[#242424] text-[#5C5C5C]'
+              listing.status === 'sold' ? 'bg-red-400/10 text-konami-red' :
+              'bg-konami-light-gray text-konami-text-muted'
             }`}>
               {listing.status.charAt(0).toUpperCase() + listing.status.slice(1)}
             </span>
-            <button onClick={() => navigate(`/transfer-room/edit/${listing.id}`)} className="btn-ghost text-xs">Edit</button>
+            <button onClick={() => navigate(`/transfer-room/edit/${listing.id}`)} className="btn-blue !py-1.5 !px-3 text-xs">Edit</button>
           </div>
         </div>
       ))}
@@ -153,9 +154,7 @@ export default function TransferRoomPage() {
   const tabFromUrl = searchParams.get('tab');
 
   useEffect(() => {
-    if (tabFromUrl && tabs.find(t => t.id === tabFromUrl)) {
-      setActiveTab(tabFromUrl);
-    }
+    if (tabFromUrl && tabs.find(t => t.id === tabFromUrl)) setActiveTab(tabFromUrl);
   }, [tabFromUrl]);
 
   useEffect(() => {
@@ -172,14 +171,14 @@ export default function TransferRoomPage() {
   }, [userProfile]);
 
   return (
-    <div className="pt-16 min-h-screen bg-[#0D0D0D]">
+    <div className="pt-[68px] min-h-screen" style={{ background: '#F5F5F5' }}>
       <div className="flex">
-        <aside className="hidden md:block w-60 shrink-0 min-h-[calc(100vh-64px)] border-r border-[#2A2A2A] bg-[#0D0D0D] p-4 sticky top-16">
+        <aside className="hidden md:block w-60 shrink-0 min-h-[calc(100vh-68px)] p-4 sticky top-[68px]" style={{ background: '#001E7A' }}>
           <div className="mb-6">
-            <h2 className="font-heading text-sm font-bold uppercase tracking-wider" style={{ color: '#BF0021' }}>TRANSFER ROOM</h2>
+            <h2 className="font-heading text-sm font-bold uppercase tracking-wider" style={{ color: '#FFF100' }}>TRANSFER ROOM</h2>
             <p className="text-sm text-white mt-2 truncate">{userProfile?.sellerDisplayName || userProfile?.displayName}</p>
             {userProfile?.sellerRating > 0 && (
-              <p className="text-xs text-[#D4AF37]"><Star size={12} className="inline" /> {userProfile.sellerRating.toFixed(1)}</p>
+              <p className="text-xs text-konami-gold"><Star size={12} className="inline" /> {userProfile.sellerRating.toFixed(1)}</p>
             )}
           </div>
 
@@ -191,9 +190,12 @@ export default function TransferRoomPage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                      isActive ? 'bg-[#BF0021]/10 text-[#BF0021]' : 'text-[#9E9E9E] hover:text-white hover:bg-[#1A1A1A]'
-                    }`}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-heading font-bold uppercase tracking-wider transition-colors min-h-[44px]"
+                    style={{
+                      color: isActive ? '#FFF100' : 'rgba(255,255,255,0.7)',
+                      background: isActive ? 'rgba(255,241,0,0.08)' : 'transparent',
+                      borderLeft: isActive ? '3px solid #FFF100' : '3px solid transparent',
+                    }}
                   >
                     <tab.icon size={16} />
                     {tab.label}
@@ -204,9 +206,12 @@ export default function TransferRoomPage() {
                 <Link
                   key={tab.id}
                   to={tab.path}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                    location.pathname === tab.path ? 'bg-[#BF0021]/10 text-[#BF0021]' : 'text-[#9E9E9E] hover:text-white hover:bg-[#1A1A1A]'
-                  }`}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-heading font-bold uppercase tracking-wider transition-colors min-h-[44px]"
+                  style={{
+                    color: location.pathname === tab.path ? '#FFF100' : 'rgba(255,255,255,0.7)',
+                    background: location.pathname === tab.path ? 'rgba(255,241,0,0.08)' : 'transparent',
+                    borderLeft: location.pathname === tab.path ? '3px solid #FFF100' : '3px solid transparent',
+                  }}
                 >
                   <tab.icon size={16} />
                   {tab.label}
@@ -216,20 +221,22 @@ export default function TransferRoomPage() {
           </nav>
 
           <Link to="/transfer-room/new" className="btn-primary w-full flex items-center justify-center gap-2 text-sm">
-            <Plus size={16} /> New Listing
+            <Plus size={16} /> New Listing +
           </Link>
         </aside>
 
         <main className="flex-1 p-4 md:p-6 max-w-5xl">
-          <div className="md:hidden flex gap-1 mb-4 bg-[#1A1A1A] rounded-xl p-1 overflow-x-auto">
+          <div className="md:hidden flex gap-1 mb-4 rounded-xl p-1 overflow-x-auto" style={{ background: '#E0E0E0' }}>
             {mobileTabs.map((tab) => (
               tab.id === 'overview' || tab.id === 'listings' ? (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs whitespace-nowrap transition-colors ${
-                    activeTab === tab.id ? 'bg-[#BF0021] text-white' : 'text-[#9E9E9E]'
-                  }`}
+                  className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-heading font-bold uppercase whitespace-nowrap transition-colors min-h-[40px]"
+                  style={{
+                    background: activeTab === tab.id ? '#003BFF' : 'transparent',
+                    color: activeTab === tab.id ? '#FFFFFF' : '#6B7280',
+                  }}
                 >
                   <tab.icon size={14} /> {tab.label}
                 </button>
@@ -237,9 +244,11 @@ export default function TransferRoomPage() {
                 <Link
                   key={tab.id}
                   to={tab.path}
-                  className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs whitespace-nowrap transition-colors ${
-                    location.pathname === tab.path ? 'bg-[#BF0021] text-white' : 'text-[#9E9E9E]'
-                  }`}
+                  className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-heading font-bold uppercase whitespace-nowrap transition-colors min-h-[40px]"
+                  style={{
+                    background: location.pathname === tab.path ? '#003BFF' : 'transparent',
+                    color: location.pathname === tab.path ? '#FFFFFF' : '#6B7280',
+                  }}
                 >
                   <tab.icon size={14} /> {tab.label}
                 </Link>

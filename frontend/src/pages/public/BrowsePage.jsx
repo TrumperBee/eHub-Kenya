@@ -47,27 +47,20 @@ export default function BrowsePage() {
   };
 
   return (
-    <div className="pt-16 min-h-screen bg-[#0D0D0D]">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="section-heading">Browse Accounts</h1>
-            <p className="text-sm text-[#9E9E9E] mt-1">
-              Showing {listings.length} account{listings.length !== 1 ? 's' : ''}
-            </p>
+    <div className="pt-[68px] min-h-screen" style={{ background: '#F5F5F5' }}>
+      <div className="section-blue px-4 pt-[60px] pb-10">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <h1 className="text-[40px] md:text-[48px] font-heading font-extrabold text-white uppercase">BROWSE ACCOUNTS</h1>
+          <div className="inline-flex items-center px-4 py-2 rounded-full text-sm font-heading font-bold" style={{ background: '#FFFFFF', color: '#003BFF' }}>
+            Showing {listings.length} accounts
           </div>
-          <button
-            onClick={() => setDrawerOpen(true)}
-            className="md:hidden btn-secondary flex items-center gap-2 text-sm"
-          >
-            <SlidersHorizontal size={16} />
-            Filters
-          </button>
         </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto px-4 -mt-10 relative z-10">
         <div className="flex gap-6">
           <div className="hidden md:block w-[280px] shrink-0">
-            <div className="sticky top-20 card p-4">
+            <div className="sticky top-20 bg-white rounded-2xl shadow-card border border-konami-mid-gray p-5">
               <ListingFilters
                 filters={currentFilters}
                 onFiltersChange={handleFiltersChange}
@@ -76,6 +69,16 @@ export default function BrowsePage() {
           </div>
 
           <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-4">
+              <button
+                onClick={() => setDrawerOpen(true)}
+                className="md:hidden btn-blue flex items-center gap-2 text-sm !py-3"
+              >
+                <SlidersHorizontal size={16} />
+                Filters
+              </button>
+            </div>
+
             <ListingGrid
               listings={listings}
               loading={loading}
@@ -85,10 +88,7 @@ export default function BrowsePage() {
 
             {hasMore && !loading && (
               <div className="flex justify-center mt-8">
-                <button
-                  onClick={loadMore}
-                  className="btn-secondary flex items-center gap-2"
-                >
+                <button onClick={loadMore} className="btn-blue flex items-center gap-2">
                   <Loader size={16} />
                   Load More
                 </button>
@@ -97,7 +97,7 @@ export default function BrowsePage() {
 
             {loading && hasMore && (
               <div className="flex justify-center mt-8">
-                <div className="w-8 h-8 border-3 border-transparent border-t-[#BF0021] rounded-full animate-spin" style={{ borderRightColor: '#BF0021' }} />
+                <div className="w-8 h-8 border-3 border-transparent border-t-konami-blue rounded-full animate-spin" style={{ borderRightColor: '#003BFF' }} />
               </div>
             )}
           </div>

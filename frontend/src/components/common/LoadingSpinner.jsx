@@ -7,14 +7,14 @@ const sizes = {
 export default function LoadingSpinner({ size = 'md', fullScreen = false }) {
   const spinner = (
     <div
-      className={`${sizes[size]} rounded-full border-transparent border-t-[#BF0021] animate-spin`}
-      style={{ borderRightColor: '#BF0021' }}
+      className={`${sizes[size]} rounded-full border-transparent border-t-konami-blue animate-spin`}
+      style={{ borderRightColor: '#003BFF' }}
     />
   );
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 bg-[#0D0D0D] flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-konami-light-gray flex items-center justify-center z-50">
         {spinner}
       </div>
     );

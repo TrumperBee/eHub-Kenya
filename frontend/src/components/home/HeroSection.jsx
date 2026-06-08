@@ -3,59 +3,69 @@ import { ChevronDown } from 'lucide-react';
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section
+      className="relative min-h-screen flex items-center overflow-hidden"
+      style={{ minHeight: 600 }}
+    >
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: 'url(https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1920&q=80)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
       <div
         className="absolute inset-0"
         style={{
-          background: `
-            linear-gradient(135deg, rgba(191,0,33,0.05) 0%, transparent 50%),
-            repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.02) 40px, rgba(255,255,255,0.02) 41px),
-            repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,255,255,0.02) 40px, rgba(255,255,255,0.02) 41px)
-          `,
+          background: 'linear-gradient(135deg, rgba(0,20,80,0.92) 0%, rgba(0,59,255,0.85) 60%, rgba(0,20,80,0.95) 100%)',
         }}
       />
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
-        <div className="inline-flex items-center gap-1.5 border border-[#BF0021]/30 rounded-full px-4 py-1.5 mb-6 bg-[#BF0021]/5">
-          <span className="text-sm">🇰🇪</span>
-          <span className="text-xs text-[#9E9E9E] font-medium">Kenya's Premier eFootball Marketplace</span>
-        </div>
+      <div className="relative z-10 max-w-6xl mx-auto px-6 w-full">
+        <div className="max-w-3xl">
+          <div className="animate-fade-in-up inline-flex items-center gap-2 rounded-full px-5 py-2 mb-6"
+            style={{ background: '#FFF100' }}>
+            <span className="text-sm">🇰🇪</span>
+            <span className="font-heading text-[12px] font-bold uppercase tracking-[0.1em]" style={{ color: '#111111' }}>
+              KENYA'S #1 eFOOTBALL MARKETPLACE
+            </span>
+          </div>
 
-        <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-4">
-          <span className="text-white">Buy & Sell </span>
-          <span className="text-[#BF0021]">eFootball Accounts</span>
-          <span className="text-white"> Securely</span>
-        </h1>
+          <div className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <h1 className="text-[40px] md:text-[64px] font-heading font-extrabold uppercase leading-[1.0] tracking-[0.02em]">
+              <span className="text-white">BUY & SELL </span>
+              <span style={{ color: '#FFF100' }}>eFOOTBALL</span>
+              <span className="text-white"> ACCOUNTS</span>
+            </h1>
+          </div>
 
-        <p className="text-[#9E9E9E] text-lg mb-8 max-w-2xl mx-auto">
-          M-Pesa payments. Escrow protected. Verified sellers. No scams.
-        </p>
+          <div className="animate-fade-in-up mt-6" style={{ animationDelay: '0.6s' }}>
+            <p className="text-lg md:text-xl leading-relaxed max-w-[480px]" style={{ color: 'rgba(255,255,255,0.8)' }}>
+              M-Pesa payments. Escrow protected. Verified sellers. No scams. No stress. Just football.
+            </p>
+          </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-          <Link to="/browse" className="btn-primary text-lg px-8 py-4">
-            Browse Accounts
-          </Link>
-          <Link to="/apply-seller" className="btn-secondary text-lg px-8 py-4">
-            Become a Seller
-          </Link>
-        </div>
+          <div className="animate-fade-in-up mt-8 flex flex-col sm:flex-row gap-4" style={{ animationDelay: '0.9s' }}>
+            <Link to="/browse" className="btn-primary text-base !px-10 !py-5">Browse Accounts</Link>
+            <Link to="/apply-seller" className="btn-secondary text-base !px-10 !py-5">Become a Seller</Link>
+          </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
-          {[
-            { text: 'M-Pesa Payments', sub: '100%' },
-            { text: 'Escrow Protected', sub: '100%' },
-            { text: 'Verified Sellers', sub: '100%' },
-          ].map((item, i) => (
-            <div key={i} className="text-center">
-              <p className="text-sm font-semibold text-white">{item.text}</p>
-              <p className="text-xs text-[#5C5C5C]">{item.sub}</p>
-            </div>
-          ))}
+          <div className="animate-fade-in-up mt-10 flex items-center gap-6" style={{ animationDelay: '1.2s' }}>
+            {['📱 M-PESA NATIVE', '🔒 ESCROW PROTECTED', '✅ VERIFIED SELLERS'].map((item, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="font-heading text-[12px] font-bold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                  {item}
+                </span>
+                {i < 2 && <span className="w-px h-4" style={{ background: 'rgba(255,255,255,0.2)' }} />}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-        <ChevronDown size={24} className="text-[#5C5C5C]" />
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce-soft">
+        <ChevronDown size={24} className="text-white/50" />
       </div>
     </section>
   );

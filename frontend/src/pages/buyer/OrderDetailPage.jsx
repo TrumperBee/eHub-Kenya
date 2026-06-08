@@ -32,8 +32,8 @@ export default function OrderDetailPage() {
   if (loading) return <div className="pt-16"><LoadingSpinner fullScreen /></div>;
   if (!order) {
     return (
-      <div className="pt-16 min-h-screen bg-[#0D0D0D] flex items-center justify-center">
-        <p className="text-[#9E9E9E]">Order not found.</p>
+      <div className="pt-16 min-h-screen bg-konami-light-gray flex items-center justify-center">
+        <p className="text-konami-text-dim">Order not found.</p>
       </div>
     );
   }
@@ -121,49 +121,49 @@ export default function OrderDetailPage() {
   };
 
   return (
-    <div className="pt-16 min-h-screen bg-[#0D0D0D]">
+    <div className="pt-16 min-h-screen bg-konami-light-gray">
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="lg:w-[400px] shrink-0 space-y-4">
             <div className="card p-5 space-y-4">
               <div>
-                <p className="text-xs text-[#5C5C5C] mb-1">Order ID</p>
-                <p className="text-sm font-mono text-white break-all">{id}</p>
+                <p className="text-xs text-konami-text-muted mb-1">Order ID</p>
+                <p className="text-sm font-mono text-konami-text break-all">{id}</p>
               </div>
               <div>
-                <p className="text-xs text-[#5C5C5C] mb-1">Date</p>
-                <p className="text-sm text-white">{formatDate(order.createdAt)}</p>
+                <p className="text-xs text-konami-text-muted mb-1">Date</p>
+                <p className="text-sm text-konami-text">{formatDate(order.createdAt)}</p>
               </div>
               {order.listingId && (
                 <div>
-                  <p className="text-xs text-[#5C5C5C] mb-1">Listing</p>
-                  <Link to={`/listing/${order.listingId}`} className="text-sm text-[#BF0021] hover:underline">
+                  <p className="text-xs text-konami-text-muted mb-1">Listing</p>
+                  <Link to={`/listing/${order.listingId}`} className="text-sm text-konami-blue hover:underline">
                     {order.listingTitle || 'View Listing'}
                   </Link>
                 </div>
               )}
               <div>
-                <p className="text-xs text-[#5C5C5C] mb-1">Amount</p>
-                <p className="font-heading text-xl font-bold text-white">{formatKES(order.amount)}</p>
+                <p className="text-xs text-konami-text-muted mb-1">Amount</p>
+                <p className="font-heading text-xl font-bold text-konami-text">{formatKES(order.amount)}</p>
               </div>
               {order.mpesaReceiptNumber && (
                 <div>
-                  <p className="text-xs text-[#5C5C5C] mb-1">M-Pesa Receipt</p>
-                  <p className="text-sm text-white font-mono">{order.mpesaReceiptNumber}</p>
+                  <p className="text-xs text-konami-text-muted mb-1">M-Pesa Receipt</p>
+                  <p className="text-sm text-konami-text font-mono">{order.mpesaReceiptNumber}</p>
                 </div>
               )}
               <div>
-                <p className="text-xs text-[#5C5C5C] mb-2">Status</p>
-                <span className={`text-sm font-semibold ${statusConfig.color || 'text-[#9E9E9E]'}`}>
+                <p className="text-xs text-konami-text-muted mb-2">Status</p>
+                <span className={`text-sm font-semibold ${statusConfig.color || 'text-konami-text-dim'}`}>
                   {statusConfig.label || order.status}
                 </span>
               </div>
             </div>
 
             <div className="card p-5">
-              <h3 className="font-heading text-sm font-bold text-white mb-4">Order Progress</h3>
+              <h3 className="font-heading text-sm font-bold text-konami-text mb-4">Order Progress</h3>
               <div className="relative">
-                <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-[#2A2A2A]" />
+                <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-konami-mid-gray" />
                 <div className="space-y-6">
                   {STEPS.map((step) => {
                     const isComplete = currentStepIndex >= step.index;
@@ -171,17 +171,17 @@ export default function OrderDetailPage() {
                     return (
                       <div key={step.key} className="flex items-center gap-3 relative">
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 z-10 ${
-                          isComplete ? 'bg-green-500' : isCurrent ? 'bg-[#BF0021]' : 'bg-[#2A2A2A]'
+                          isComplete ? 'bg-green-500' : isCurrent ? 'bg-konami-blue' : 'bg-konami-mid-gray'
                         }`}>
                           {isComplete ? (
                             <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
                           ) : (
-                            <div className={`w-2 h-2 rounded-full ${isCurrent ? 'bg-white' : 'bg-[#5C5C5C]'}`} />
+                            <div className={`w-2 h-2 rounded-full ${isCurrent ? 'bg-white' : 'bg-konami-text-dim'}`} />
                           )}
                         </div>
-                        <span className={`text-sm ${isComplete ? 'text-white' : isCurrent ? 'text-[#BF0021] font-semibold' : 'text-[#5C5C5C]'}`}>
+                        <span className={`text-sm ${isComplete ? 'text-konami-text font-semibold' : isCurrent ? 'text-konami-blue font-semibold' : 'text-konami-text-muted'}`}>
                           {step.label}
                         </span>
                       </div>
@@ -192,10 +192,10 @@ export default function OrderDetailPage() {
             </div>
 
             <div className="card p-5">
-              <p className="text-xs text-[#5C5C5C] mb-2">Seller</p>
-              <p className="text-sm font-medium text-white">{order.sellerDisplayName || 'Unknown'}</p>
+              <p className="text-xs text-konami-text-muted mb-2">Seller</p>
+              <p className="text-sm font-medium text-konami-text">{order.sellerDisplayName || 'Unknown'}</p>
               {order.sellerId && (
-                <p className="text-xs text-[#5C5C5C] mt-1">ID: {order.sellerId.slice(0, 12)}...</p>
+                <p className="text-xs text-konami-text-muted mt-1">ID: {order.sellerId.slice(0, 12)}...</p>
               )}
             </div>
 
@@ -204,7 +204,7 @@ export default function OrderDetailPage() {
                 <>
                   {showConfirm ? (
                     <div className="card p-4 space-y-3">
-                      <p className="text-sm text-[#9E9E9E]">Are you sure? This releases payment to the seller.</p>
+                      <p className="text-sm text-konami-text-dim">Are you sure? This releases payment to the seller.</p>
                       <div className="flex gap-2">
                         <button onClick={handleConfirmReceipt} disabled={actionLoading} className="btn-primary flex-1 text-sm py-2.5">
                           {actionLoading ? 'Processing...' : 'Yes, Release Payment'}
@@ -231,10 +231,10 @@ export default function OrderDetailPage() {
                         value={disputeReason}
                         onChange={(e) => setDisputeReason(e.target.value)}
                         placeholder="Describe the issue..."
-                        className="w-full px-3 py-2 bg-[#242424] border border-[#2A2A2A] rounded-xl text-white text-sm outline-none focus:border-[#BF0021] transition-colors resize-none min-h-[80px]"
+                        className="w-full px-3 py-2 bg-konami-light-gray border border-konami-mid-gray rounded-xl text-konami-text text-sm outline-none focus:border-konami-blue transition-colors resize-none min-h-[80px]"
                       />
                       <div className="flex gap-2">
-                        <button onClick={handleDispute} disabled={actionLoading || !disputeReason.trim()} className="btn-primary flex-1 text-sm py-2.5 bg-red-600 hover:bg-red-700">
+                        <button onClick={handleDispute} disabled={actionLoading || !disputeReason.trim()} className="btn-primary flex-1 text-sm py-2.5 bg-konami-red hover:bg-konami-red-hover">
                           {actionLoading ? 'Submitting...' : 'Submit Dispute'}
                         </button>
                         <button onClick={() => { setShowDisputeForm(false); setDisputeReason(''); }} className="btn-secondary text-sm py-2.5">
@@ -243,7 +243,7 @@ export default function OrderDetailPage() {
                       </div>
                     </div>
                   ) : (
-                    <button onClick={() => setShowDisputeForm(true)} className="w-full text-sm py-3 rounded-xl border border-red-400/30 text-red-400 hover:bg-red-400/5 transition-colors flex items-center justify-center gap-2">
+                    <button onClick={() => setShowDisputeForm(true)} className="w-full text-sm py-3 rounded-xl border border-konami-red/30 text-konami-red hover:bg-konami-red/5 transition-colors flex items-center justify-center gap-2">
                       <MessageSquare size={16} />
                       Raise a Dispute
                     </button>
@@ -260,8 +260,8 @@ export default function OrderDetailPage() {
               {showReviewForm && (
                 <div className="card p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold text-white">Leave a Review</h4>
-                    <button onClick={() => setShowReviewForm(false)} className="text-xs text-[#5C5C5C] hover:text-white">Cancel</button>
+                    <h4 className="text-sm font-semibold text-konami-text">Leave a Review</h4>
+                    <button onClick={() => setShowReviewForm(false)} className="text-xs text-konami-text-muted hover:text-konami-text">Cancel</button>
                   </div>
                   <ReviewForm onSubmit={handleSubmitReview} loading={reviewLoading} />
                 </div>

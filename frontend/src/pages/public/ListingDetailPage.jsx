@@ -48,11 +48,11 @@ export default function ListingDetailPage() {
     return () => { document.title = 'eFootball Hub Kenya — Buy & Sell eFootball Accounts with M-Pesa'; };
   }, [id]);
 
-  if (loading) return <div className="pt-16"><LoadingSpinner fullScreen /></div>;
+  if (loading) return <div className="pt-[68px]"><LoadingSpinner fullScreen /></div>;
   if (!listing) {
     return (
-      <div className="pt-16 min-h-screen bg-[#0D0D0D] flex items-center justify-center">
-        <p className="text-[#9E9E9E]">Listing not found.</p>
+      <div className="pt-[68px] min-h-screen bg-konami-light-gray flex items-center justify-center">
+        <p className="text-konami-text-muted">Listing not found.</p>
       </div>
     );
   }
@@ -72,25 +72,33 @@ export default function ListingDetailPage() {
   ];
 
   return (
-    <div className="pt-16 min-h-screen bg-[#0D0D0D]">
+    <div className="pt-[68px] min-h-screen" style={{ background: '#F5F5F5' }}>
       {isSold && (
-        <div className="bg-[#BF0021]/10 border-b border-[#BF0021]/30 py-3">
+        <div className="py-3" style={{ background: '#C8102E' }}>
           <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
-            <p className="text-sm text-[#BF0021] font-medium">
-              This account has been sold. Browse other available accounts.
+            <p className="text-sm text-white font-heading font-bold uppercase tracking-wider">
+              THIS ACCOUNT HAS BEEN SOLD
             </p>
-            <Link to="/browse" className="btn-primary text-sm py-1.5 px-4">
+            <Link to="/browse" className="btn-primary text-sm !py-1.5 !px-4">
               Browse Accounts
             </Link>
           </div>
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="text-sm mb-6" style={{ color: '#6B7280' }}>
+          <Link to="/" className="hover:underline" style={{ color: '#003BFF' }}>Home</Link>
+          <span className="mx-2">&gt;</span>
+          <Link to="/browse" className="hover:underline" style={{ color: '#003BFF' }}>Browse</Link>
+          <span className="mx-2">&gt;</span>
+          <span style={{ color: '#111111' }}>{listing.title}</span>
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-8">
-          <div className="flex-1 min-w-0 space-y-8">
-            <div>
-              <div className="relative rounded-xl overflow-hidden border border-[#2A2A2A] bg-[#1A1A1A] mb-3">
+          <div className="flex-1 min-w-0 space-y-6">
+            <div className="card overflow-hidden">
+              <div className="relative bg-konami-blue-deep">
                 {photos.length > 0 ? (
                   <img
                     src={photos[selectedPhoto]}
@@ -98,22 +106,21 @@ export default function ListingDetailPage() {
                     className="w-full aspect-video object-cover"
                   />
                 ) : (
-                  <div className="w-full aspect-video flex flex-col items-center justify-center text-[#5C5C5C] bg-[#242424]">
-                    <span className="text-5xl mb-2">⚽</span>
-                    <span className="text-sm">No photos available</span>
+                  <div className="w-full aspect-video flex items-center justify-center">
+                    <span className="text-5xl opacity-60">⚽</span>
                   </div>
                 )}
               </div>
-
               {photos.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-1">
+                <div className="flex gap-2 p-3 overflow-x-auto">
                   {photos.map((url, i) => (
                     <button
                       key={i}
                       onClick={() => setSelectedPhoto(i)}
-                      className={`shrink-0 w-20 h-14 rounded-lg overflow-hidden border-2 transition-colors ${
-                        i === selectedPhoto ? 'border-[#BF0021]' : 'border-transparent'
-                      }`}
+                      className="shrink-0 w-20 h-14 rounded-lg overflow-hidden transition-all duration-200"
+                      style={{
+                        border: i === selectedPhoto ? '2px solid #003BFF' : '2px solid transparent',
+                      }}
                     >
                       <img src={url} alt="" className="w-full h-full object-cover" />
                     </button>
@@ -122,47 +129,46 @@ export default function ListingDetailPage() {
               )}
             </div>
 
-            <div>
-              <h1 className="font-heading text-2xl md:text-3xl font-bold text-white mb-3">
+            <div className="card p-6">
+              <h1 className="font-heading text-2xl md:text-3xl font-extrabold uppercase mb-3" style={{ color: '#111111' }}>
                 {listing.title}
               </h1>
 
               <div className="flex flex-wrap items-center gap-2 mb-4">
                 <TierBadge tier={listing.tier} size="lg" />
-                <span className="badge bg-[#242424] text-[#9E9E9E] border border-[#2A2A2A]">
+                <span className="bg-konami-blue text-white rounded-full px-3 py-1 text-xs font-heading font-bold uppercase tracking-wide">
                   {platformInfo.icon} {platformInfo.label}
                 </span>
-                <span className={`badge ${
-                  listing.status === 'active' ? 'bg-green-400/10 text-green-400 border border-green-400/30' :
-                  listing.status === 'sold' ? 'bg-[#BF0021]/10 text-[#BF0021] border border-[#BF0021]/30' :
-                  'bg-[#242424] text-[#9E9E9E] border border-[#2A2A2A]'
-                }`}>
+                <span className="badge-white rounded-full px-3 py-1 text-xs font-heading font-bold uppercase" style={{ border: '1px solid #003BFF' }}>
                   {listing.status.charAt(0).toUpperCase() + listing.status.slice(1)}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 mb-6">
-                <span className="text-sm font-medium text-white">{listing.sellerDisplayName || 'Unknown Seller'}</span>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-heading font-bold" style={{ background: '#003BFF' }}>
+                  {(listing.sellerDisplayName || 'S')[0]}
+                </div>
+                <span className="font-heading text-sm font-bold" style={{ color: '#003BFF' }}>{listing.sellerDisplayName || 'Unknown Seller'}</span>
                 {listing.sellerRating > 0 ? (
                   <span className="text-sm" style={{ color: '#D4AF37' }}>
                     <Star size={14} className="inline -mt-0.5" /> {listing.sellerRating.toFixed(1)}
                   </span>
                 ) : (
-                  <span className="text-xs text-[#5C5C5C]">New Seller</span>
+                  <span className="text-xs font-heading font-bold uppercase" style={{ color: '#6B7280' }}>New Seller</span>
                 )}
               </div>
-            </div>
 
-            <div className="card p-6">
-              <h2 className="font-heading text-lg font-bold text-white mb-3">About This Account</h2>
-              <p className="text-sm text-[#9E9E9E] leading-relaxed whitespace-pre-wrap">
-                {listing.description || 'No description provided.'}
-              </p>
+              <div className="card-accent p-5">
+                <h2 className="font-heading text-base font-bold uppercase mb-3" style={{ color: '#003BFF' }}>About This Account</h2>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#6B7280' }}>
+                  {listing.description || 'No description provided.'}
+                </p>
+              </div>
             </div>
 
             {listing.featuredPlayers?.length > 0 && (
               <div className="card p-6">
-                <h2 className="font-heading text-lg font-bold text-white mb-3">Featured Players</h2>
+                <h2 className="font-heading text-base font-bold uppercase mb-3" style={{ color: '#003BFF' }}>Featured Players</h2>
                 <div className="flex flex-wrap gap-2">
                   {listing.featuredPlayers.map((player, i) => (
                     <PlayerBadge key={i} playerName={player} />
@@ -171,40 +177,36 @@ export default function ListingDetailPage() {
               </div>
             )}
 
-            <div className="card p-6">
-              <h2 className="font-heading text-lg font-bold text-white mb-4">Account Stats</h2>
-              <div className="space-y-3">
-                {statRows.map((row) => (
-                  <div key={row.key} className="flex items-center justify-between py-2 border-b border-[#2A2A2A] last:border-0">
-                    <span className="text-sm text-[#9E9E9E]">{row.label}</span>
-                    <span className="text-sm font-semibold text-white">
-                      {listing[row.key]?.toLocaleString() || '0'}
-                    </span>
+            <div className="card overflow-hidden">
+              <div className="p-6">
+                <h2 className="font-heading text-base font-bold uppercase mb-4" style={{ color: '#003BFF' }}>Account Stats</h2>
+                <div className="space-y-0">
+                  {statRows.map((row, i) => (
+                    <div key={row.key} className="flex items-center justify-between py-3 px-4" style={{ background: i % 2 === 0 ? '#F5F5F5' : '#FFFFFF' }}>
+                      <span className="text-sm" style={{ color: '#6B7280' }}>{row.label}</span>
+                      <span className="text-sm font-heading font-bold" style={{ color: '#111111' }}>
+                        {listing[row.key]?.toLocaleString() || '0'}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between py-3 px-4" style={{ background: '#F5F5F5' }}>
+                    <span className="text-sm" style={{ color: '#6B7280' }}>Platform</span>
+                    <span className="text-sm font-heading font-bold" style={{ color: '#111111' }}>{platformInfo.label}</span>
                   </div>
-                ))}
-                <div className="flex items-center justify-between py-2 border-b border-[#2A2A2A]">
-                  <span className="text-sm text-[#9E9E9E]">Platform</span>
-                  <span className="text-sm font-semibold text-white">{platformInfo.label}</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-[#2A2A2A]">
-                  <span className="text-sm text-[#9E9E9E]">Konami Link Type</span>
-                  <span className="text-sm font-semibold text-white capitalize">{listing.konamiLinkType?.replace('_', ' ') || 'N/A'}</span>
-                </div>
-                {listing.guaranteeStatement && (
-                  <div className="flex items-start justify-between py-2">
-                    <span className="text-sm text-[#9E9E9E] shrink-0 mr-4">Guarantee</span>
-                    <span className="text-sm text-white text-right">{listing.guaranteeStatement}</span>
+                  <div className="flex items-center justify-between py-3 px-4" style={{ background: '#FFFFFF' }}>
+                    <span className="text-sm" style={{ color: '#6B7280' }}>Konami Link Type</span>
+                    <span className="text-sm font-heading font-bold capitalize" style={{ color: '#111111' }}>{listing.konamiLinkType?.replace('_', ' ') || 'N/A'}</span>
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
             <div className="card p-6">
-              <h2 className="font-heading text-lg font-bold text-white mb-4">
-                Reviews ({reviews.length})
+              <h2 className="font-heading text-base font-bold uppercase mb-4" style={{ color: '#003BFF' }}>
+                Buyer Reviews ({reviews.length})
               </h2>
               {reviews.length === 0 ? (
-                <p className="text-sm text-[#5C5C5C]">No reviews yet.</p>
+                <p className="text-sm" style={{ color: '#6B7280' }}>No reviews yet.</p>
               ) : (
                 <div className="space-y-3">
                   {reviews.map((review) => (
@@ -216,46 +218,46 @@ export default function ListingDetailPage() {
           </div>
 
           <div className="lg:w-[380px] shrink-0">
-            <div className="lg:sticky lg:top-20 space-y-4">
-              <div className="card p-6">
-                <p className="text-sm text-[#9E9E9E] mb-1">Price</p>
-                <p className="font-heading text-3xl font-bold text-white mb-4">
+            <div className="lg:sticky lg:top-24 space-y-4">
+              <div className="rounded-2xl p-6 card-blue">
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>Price</p>
+                <p className="font-heading text-4xl font-extrabold mb-4" style={{ color: '#FFF100' }}>
                   {formatKES(listing.price)}
                 </p>
 
-                <div className="flex items-center gap-2 mb-4 pb-4 border-b border-[#2A2A2A]">
-                  <div className="w-8 h-8 rounded-full bg-[#BF0021] flex items-center justify-center text-white text-xs font-bold">
+                <div className="flex items-center gap-2 mb-4 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-heading font-bold" style={{ background: '#001E7A' }}>
                     {(listing.sellerDisplayName || 'S')[0]}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">{listing.sellerDisplayName}</p>
+                    <p className="text-sm font-heading font-bold text-white">{listing.sellerDisplayName}</p>
                     <div className="flex items-center gap-1">
                       {listing.sellerRating > 0 ? (
                         <>
                           <Star size={12} color="#D4AF37" fill="#D4AF37" />
-                          <span className="text-xs text-[#9E9E9E]">{listing.sellerRating.toFixed(1)}</span>
+                          <span className="text-xs text-white/60">{listing.sellerRating.toFixed(1)}</span>
                         </>
                       ) : (
-                        <span className="text-xs text-[#5C5C5C]">New seller</span>
+                        <span className="text-xs text-white/40 font-heading font-bold uppercase">New Seller</span>
                       )}
-                      <span className="text-xs text-[#5C5C5C]">· {listing.sellerTotalSales || 0} sales</span>
+                      <span className="text-xs text-white/40">· {listing.sellerTotalSales || 0} sales</span>
                     </div>
                   </div>
                 </div>
 
                 {isSold ? (
                   <div className="space-y-3">
-                    <div className="bg-[#BF0021]/10 border border-[#BF0021]/30 rounded-lg p-4 text-center">
-                      <p className="text-sm font-semibold text-[#BF0021]">SOLD — This account is no longer available</p>
+                    <div className="rounded-xl p-4 text-center" style={{ background: 'rgba(200,16,46,0.2)' }}>
+                      <p className="text-sm font-heading font-bold" style={{ color: '#C8102E' }}>SOLD — Not available</p>
                     </div>
-                    <Link to="/browse" className="btn-secondary w-full text-center text-sm block">
+                    <Link to="/browse" className="btn-secondary w-full text-center text-sm block !border-white/40 !text-white/80">
                       Browse Other Accounts
                     </Link>
                   </div>
                 ) : isOwner ? (
                   <div>
-                    <p className="text-sm text-[#9E9E9E] mb-3">This is your listing</p>
-                    <Link to={`/transfer-room/edit/${listing.id}`} className="btn-secondary w-full text-center text-sm">
+                    <p className="text-sm text-white/60 mb-3">This is your listing</p>
+                    <Link to={`/transfer-room/edit/${listing.id}`} className="btn-secondary w-full text-center text-sm block">
                       Edit Listing
                     </Link>
                   </div>
@@ -269,18 +271,19 @@ export default function ListingDetailPage() {
                   </button>
                 )}
 
-                <div className="mt-4 p-3 bg-[#242424] rounded-lg flex items-start gap-2">
-                  <Shield size={16} className="text-green-400 mt-0.5 shrink-0" />
-                  <p className="text-xs text-[#9E9E9E]">
+                <div className="rounded-xl p-3 flex items-start gap-2" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                  <Shield size={16} className="text-white/70 mt-0.5 shrink-0" />
+                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
                     Payment held in escrow until you confirm receipt
                   </p>
                 </div>
               </div>
 
-              <div className="card">
+              <div className="rounded-2xl overflow-hidden bg-white shadow-card border border-konami-mid-gray">
                 <button
                   onClick={() => setShowSteps(!showSteps)}
-                  className="w-full flex items-center justify-between p-4 text-sm font-medium text-white hover:bg-[#242424] transition-colors rounded-xl"
+                  className="w-full flex items-center justify-between p-4 text-sm font-heading font-bold uppercase transition-colors"
+                  style={{ color: '#003BFF' }}
                 >
                   How does this work?
                   {showSteps ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -288,8 +291,9 @@ export default function ListingDetailPage() {
                 {showSteps && (
                   <div className="px-4 pb-4 space-y-2">
                     {howItWorksSteps.map((step, i) => (
-                      <div key={i} className="flex items-start gap-2 text-sm text-[#9E9E9E]">
-                        <span className="w-5 h-5 rounded-full bg-[#BF0021] flex items-center justify-center text-xs text-white shrink-0 mt-0.5">
+                      <div key={i} className="flex items-start gap-2 text-sm" style={{ color: '#6B7280' }}>
+                        <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-heading font-bold text-white shrink-0 mt-0.5"
+                          style={{ background: '#003BFF' }}>
                           {i + 1}
                         </span>
                         {step}

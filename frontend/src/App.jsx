@@ -1,11 +1,15 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { ADMIN_ROUTE } from './utils/constants';
+import { useAuth } from './context/AuthContext';
 
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
+import BottomNav from './components/common/BottomNav';
+import LoadingScreen from './components/common/LoadingScreen';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import SellerRoute from './components/common/SellerRoute';
 import AdminRoute from './components/common/AdminRoute';
@@ -41,27 +45,42 @@ import AdminDisputesPage from './pages/admin/AdminDisputesPage';
 import SellerApplicationPage from './pages/SellerApplicationPage';
 
 function PageLayout({ children }) {
+  const { currentUser } = useAuth();
   return (
     <>
       <Navbar />
-      <main className="min-h-screen page-enter">{children}</main>
+      <main className={`min-h-screen animate-page-in ${currentUser ? 'pb-16 md:pb-0' : ''}`}>{children}</main>
       <Footer />
+      {currentUser && <BottomNav />}
     </>
   );
 }
 
-function App() {
+function AppContent() {
+  const { currentUser, loading } = useAuth();
+  const [initDone, setInitDone] = useState(false);
+
+  useEffect(() => {
+    if (initDone) return;
+    const timer = setTimeout(() => setInitDone(true), 2000);
+    return () => clearTimeout(timer);
+  }, [initDone]);
+
+  const showLoader = loading || !initDone;
+
   return (
-    <AuthProvider>
-      <NotificationProvider>
+    <>
+      <LoadingScreen show={showLoader} />
+      <div style={{ display: showLoader ? 'none' : 'block' }}>
         <BrowserRouter>
           <Toaster
             position="top-right"
             toastOptions={{
               style: {
-                background: '#1A1A1A',
+                background: '#003BFF',
                 color: '#FFFFFF',
-                border: '1px solid #2A2A2A',
+                borderRadius: '12px',
+                fontFamily: 'Inter, sans-serif',
               },
             }}
           />
@@ -136,6 +155,16 @@ function App() {
             <Route path="*" element={<PageLayout><HomePage /></PageLayout>} />
           </Routes>
         </BrowserRouter>
+      </div>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <NotificationProvider>
+        <AppContent />
       </NotificationProvider>
     </AuthProvider>
   );

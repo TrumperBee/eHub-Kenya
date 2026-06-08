@@ -31,65 +31,65 @@ export default function SellerEarningsPage() {
   const mpesaFee = Math.round(totalEarned * 0.005);
 
   if (loading) {
-    return <div className="pt-16 min-h-screen bg-[#0D0D0D] flex items-center justify-center">
-      <div className="w-8 h-8 border-3 border-transparent border-t-[#BF0021] rounded-full animate-spin" style={{ borderRightColor: '#BF0021' }} />
+    return <div className="pt-16 min-h-screen bg-konami-light-gray flex items-center justify-center">
+      <div className="w-8 h-8 border-3 border-transparent border-t-konami-blue rounded-full animate-spin" style={{ borderRightColor: '#003BFF' }} />
     </div>;
   }
 
   return (
-    <div className="pt-16 min-h-screen bg-[#0D0D0D]">
+    <div className="pt-16 min-h-screen bg-konami-light-gray">
       <div className="max-w-5xl mx-auto px-4 py-8">
-        <h1 className="section-heading mb-6">Earnings</h1>
+        <h1 className="font-heading text-3xl font-extrabold text-konami-text mb-6">Earnings</h1>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
             { label: 'Total Earned', value: formatKES(totalEarned), icon: Wallet, color: '#22C55E' },
             { label: 'Pending (Escrow)', value: formatKES(pendingAmount), icon: Clock, color: '#D4AF37' },
-            { label: 'This Month', value: formatKES(thisMonthTotal), icon: TrendingUp, color: '#BF0021' },
-            { label: 'M-Pesa Fee Paid', value: formatKES(mpesaFee), icon: Percent, color: '#9E9E9E' },
+            { label: 'This Month', value: formatKES(thisMonthTotal), icon: TrendingUp, color: '#003BFF' },
+            { label: 'M-Pesa Fee Paid', value: formatKES(mpesaFee), icon: Percent, color: '#6B7280' },
           ].map((stat, i) => (
             <div key={i} className="card p-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-[#9E9E9E]">{stat.label}</p>
+                <p className="text-xs text-konami-text-muted">{stat.label}</p>
                 <stat.icon size={18} style={{ color: stat.color }} />
               </div>
-              <p className="font-heading text-xl font-bold text-white">{stat.value}</p>
+              <p className="font-heading text-xl font-bold text-konami-text">{stat.value}</p>
             </div>
           ))}
         </div>
 
         {completedOrders.length === 0 ? (
           <div className="card p-8 text-center">
-            <Wallet size={40} className="mx-auto mb-3 text-[#5C5C5C]" />
-            <p className="text-[#9E9E9E]">No completed sales yet.</p>
+            <Wallet size={40} className="mx-auto mb-3 text-konami-text-muted" />
+            <p className="text-konami-text-dim">No completed sales yet.</p>
           </div>
         ) : (
           <div className="card">
-            <div className="p-5 border-b border-[#2A2A2A]">
-              <h3 className="font-heading text-lg font-bold text-white">Completed Sales</h3>
+            <div className="p-5 border-b border-konami-mid-gray">
+              <h3 className="font-heading text-lg font-bold text-konami-text">Completed Sales</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-[#2A2A2A] text-left">
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#9E9E9E]">Date</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#9E9E9E]">Listing</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#9E9E9E]">Amount</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#9E9E9E]">M-Pesa Fee</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#9E9E9E]">Net Received</th>
+                  <tr className="border-b border-konami-mid-gray text-left">
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Date</th>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Listing</th>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Amount</th>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">M-Pesa Fee</th>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Net Received</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#2A2A2A]">
+                <tbody className="divide-y divide-konami-mid-gray">
                   {completedOrders.map((order) => {
                     const fee = Math.round((order.amount || 0) * 0.005);
                     const net = (order.amount || 0) - fee;
                     return (
-                      <tr key={order.id} className="hover:bg-[#242424] transition-colors">
-                        <td className="px-5 py-3 text-sm text-[#9E9E9E]">{formatDate(order.createdAt)}</td>
-                        <td className="px-5 py-3 text-sm text-white max-w-[200px] truncate">{order.listingTitle}</td>
-                        <td className="px-5 py-3 text-sm font-semibold text-white">{formatKES(order.amount)}</td>
-                        <td className="px-5 py-3 text-sm text-[#5C5C5C]">{formatKES(fee)}</td>
-                        <td className="px-5 py-3 text-sm font-semibold text-green-400">{formatKES(net)}</td>
+                      <tr key={order.id} className="hover:bg-konami-light-gray transition-colors">
+                        <td className="px-5 py-3 text-sm text-konami-text-dim">{formatDate(order.createdAt)}</td>
+                        <td className="px-5 py-3 text-sm text-konami-text max-w-[200px] truncate">{order.listingTitle}</td>
+                        <td className="px-5 py-3 text-sm font-semibold text-konami-text">{formatKES(order.amount)}</td>
+                        <td className="px-5 py-3 text-sm text-konami-text-muted">{formatKES(fee)}</td>
+                        <td className="px-5 py-3 text-sm font-semibold text-green-500">{formatKES(net)}</td>
                       </tr>
                     );
                   })}
@@ -99,8 +99,8 @@ export default function SellerEarningsPage() {
           </div>
         )}
 
-        <div className="mt-6 p-4 bg-[#242424] rounded-xl border border-[#2A2A2A]">
-          <p className="text-xs text-[#9E9E9E]">
+        <div className="mt-6 p-4 bg-konami-light-gray rounded-xl border border-konami-mid-gray">
+          <p className="text-xs text-konami-text-muted">
             Payments are released to your M-Pesa number after buyer confirms receipt. Contact admin if you have payout issues.
           </p>
         </div>

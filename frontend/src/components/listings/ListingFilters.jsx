@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Search, SlidersHorizontal } from 'lucide-react';
+import { X, Search } from 'lucide-react';
 import { TIERS } from '../../utils/constants';
 
 const SORT_OPTIONS = [
@@ -58,8 +58,10 @@ export default function ListingFilters({ filters, onFiltersChange }) {
 
   return (
     <div className="space-y-5">
+      <h3 className="font-heading text-sm font-bold uppercase tracking-wider" style={{ color: '#003BFF' }}>FILTERS</h3>
+
       <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5C5C5C]" />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#6B7280' }} />
         <input
           type="text"
           placeholder="Search accounts..."
@@ -71,24 +73,24 @@ export default function ListingFilters({ filters, onFiltersChange }) {
       </div>
 
       <div>
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-[#9E9E9E] mb-2">Tier</h4>
+        <h4 className="font-heading text-[13px] font-bold uppercase tracking-wider mb-2" style={{ color: '#111111' }}>Tier</h4>
         <div className="space-y-1.5">
           {Object.entries(TIERS).map(([key, val]) => (
-            <label key={key} className="flex items-center gap-2 cursor-pointer">
+            <label key={key} className="flex items-center gap-2 cursor-pointer min-h-[32px]">
               <input
                 type="checkbox"
                 checked={local.tier.includes(key)}
                 onChange={() => toggleTier(key)}
-                className="accent-[#BF0021]"
+                style={{ accentColor: '#003BFF' }}
               />
-              <span className="text-sm text-white">{val.label}</span>
+              <span className="text-sm" style={{ color: '#111111' }}>{val.label}</span>
             </label>
           ))}
         </div>
       </div>
 
       <div>
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-[#9E9E9E] mb-2">Platform</h4>
+        <h4 className="font-heading text-[13px] font-bold uppercase tracking-wider mb-2" style={{ color: '#111111' }}>Platform</h4>
         <div className="space-y-1.5">
           {[
             { value: 'all', label: 'All Platforms' },
@@ -96,23 +98,23 @@ export default function ListingFilters({ filters, onFiltersChange }) {
             { value: 'ios', label: 'iOS' },
             { value: 'both', label: 'Both' },
           ].map((opt) => (
-            <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+            <label key={opt.value} className="flex items-center gap-2 cursor-pointer min-h-[32px]">
               <input
                 type="radio"
                 name="platform"
                 value={opt.value}
                 checked={local.platform === opt.value}
                 onChange={update('platform')}
-                className="accent-[#BF0021]"
+                style={{ accentColor: '#003BFF' }}
               />
-              <span className="text-sm text-white">{opt.label}</span>
+              <span className="text-sm" style={{ color: '#111111' }}>{opt.label}</span>
             </label>
           ))}
         </div>
       </div>
 
       <div>
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-[#9E9E9E] mb-2">Price Range (KES)</h4>
+        <h4 className="font-heading text-[13px] font-bold uppercase tracking-wider mb-2" style={{ color: '#111111' }}>Price Range (KES)</h4>
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -122,7 +124,7 @@ export default function ListingFilters({ filters, onFiltersChange }) {
             className="input-field text-sm"
             min="0"
           />
-          <span className="text-[#5C5C5C]">-</span>
+          <span style={{ color: '#6B7280' }}>-</span>
           <input
             type="number"
             placeholder="Max"
@@ -135,7 +137,7 @@ export default function ListingFilters({ filters, onFiltersChange }) {
       </div>
 
       <div>
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-[#9E9E9E] mb-2">Sort By</h4>
+        <h4 className="font-heading text-[13px] font-bold uppercase tracking-wider mb-2" style={{ color: '#111111' }}>Sort By</h4>
         <select
           value={local.sortBy}
           onChange={update('sortBy')}
@@ -148,11 +150,8 @@ export default function ListingFilters({ filters, onFiltersChange }) {
       </div>
 
       <div className="space-y-2">
-        <button onClick={applyFilters} className="btn-primary w-full text-sm flex items-center justify-center gap-2">
-          <Search size={14} />
-          Apply Filters
-        </button>
-        <button onClick={clearFilters} className="btn-secondary w-full text-sm">
+        <button onClick={applyFilters} className="btn-blue w-full text-sm !py-3">Apply Filters</button>
+        <button onClick={clearFilters} className="w-full text-sm font-medium text-center" style={{ color: '#003BFF' }}>
           Clear Filters
         </button>
       </div>
@@ -167,13 +166,13 @@ export function MobileFilterDrawer({ open, onClose, filters, onFiltersChange }) 
         <div className="fixed inset-0 z-40 bg-black/60" onClick={onClose} />
       )}
       <div
-        className={`fixed top-0 right-0 h-full w-[300px] max-w-[85vw] z-50 bg-[#0D0D0D] border-l border-[#2A2A2A] overflow-y-auto transition-transform duration-300 ${
+        className={`fixed top-0 right-0 h-full w-[300px] max-w-[85vw] z-50 bg-white overflow-y-auto transition-transform duration-300 shadow-card-lg ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="sticky top-0 bg-[#0D0D0D] z-10 flex items-center justify-between p-4 border-b border-[#2A2A2A]">
-          <h3 className="font-heading text-lg font-bold text-white">Filters</h3>
-          <button onClick={onClose} className="text-[#9E9E9E] hover:text-white">
+        <div className="sticky top-0 bg-white z-10 flex items-center justify-between p-4" style={{ borderBottom: '1px solid #E0E0E0' }}>
+          <h3 className="font-heading text-lg font-bold uppercase" style={{ color: '#003BFF' }}>Filters</h3>
+          <button onClick={onClose} className="min-h-[48px] min-w-[48px] flex items-center justify-center" style={{ color: '#6B7280' }}>
             <X size={20} />
           </button>
         </div>

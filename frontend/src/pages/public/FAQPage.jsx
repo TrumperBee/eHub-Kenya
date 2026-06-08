@@ -46,21 +46,21 @@ const categories = [
 
 function FAQItem({ question, answer, open, onToggle }) {
   return (
-    <div className="border border-[#2A2A2A] rounded-xl overflow-hidden">
+    <div className="border border-konami-mid-gray rounded-xl overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 text-left bg-[#1A1A1A] hover:bg-[#242424] transition-colors"
+        className="w-full flex items-center justify-between p-4 text-left bg-white hover:bg-konami-light-gray transition-colors"
       >
-        <span className="text-sm font-medium text-white pr-4">{question}</span>
+        <span className="text-sm font-medium text-konami-text pr-4">{question}</span>
         {open ? (
-          <ChevronUp size={16} className="text-[#9E9E9E] shrink-0" />
+          <ChevronUp size={16} className="text-konami-text-muted shrink-0" />
         ) : (
-          <ChevronDown size={16} className="text-[#9E9E9E] shrink-0" />
+          <ChevronDown size={16} className="text-konami-text-muted shrink-0" />
         )}
       </button>
       {open && (
-        <div className="px-4 pb-4 bg-[#1A1A1A] animate-fade-in">
-          <p className="text-sm text-[#9E9E9E] leading-relaxed">{answer}</p>
+        <div className="px-4 pb-4 bg-white animate-fade-in">
+          <p className="text-sm text-konami-text-muted leading-relaxed">{answer}</p>
         </div>
       )}
     </div>
@@ -79,12 +79,12 @@ export default function FAQPage() {
   };
 
   return (
-    <div className="pt-16 min-h-screen bg-[#0D0D0D]">
+    <div className="pt-16 min-h-screen bg-konami-light-gray">
       <section className="py-16">
         <div className="max-w-3xl mx-auto px-4">
           <div className="text-center mb-10">
-            <h1 className="section-heading mb-4">Frequently Asked Questions</h1>
-            <p className="text-[#9E9E9E]">Everything you need to know about buying and selling on eFootball Hub Kenya</p>
+            <h1 className="font-heading text-4xl font-extrabold text-konami-text mb-4">Frequently Asked Questions</h1>
+            <p className="text-konami-text-muted">Everything you need to know about buying and selling on eFootball Hub Kenya</p>
           </div>
 
           <div className="flex flex-wrap justify-center gap-2 mb-8">
@@ -94,8 +94,8 @@ export default function FAQPage() {
                 onClick={() => { setOpenCategory(i); setOpenQuestions({}); }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   openCategory === i
-                    ? 'bg-[#BF0021] text-white'
-                    : 'bg-[#1A1A1A] text-[#9E9E9E] hover:text-white border border-[#2A2A2A]'
+                    ? 'bg-konami-blue text-white'
+                    : 'bg-white text-konami-text-muted hover:text-konami-text border border-konami-mid-gray'
                 }`}
               >
                 {cat.title}

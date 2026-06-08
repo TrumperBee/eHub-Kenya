@@ -23,19 +23,19 @@ export default function SellerApplicationPage() {
 
   if (!currentUser) {
     return (
-      <div className="pt-16 min-h-screen bg-[#0D0D0D] flex items-center justify-center px-4">
-        <p className="text-[#9E9E9E]">Please log in to apply.</p>
+      <div className="pt-16 min-h-screen bg-konami-light-gray flex items-center justify-center px-4">
+        <p className="text-konami-text-dim">Please log in to apply.</p>
       </div>
     );
   }
 
   if (userProfile?.sellerApproved) {
     return (
-      <div className="pt-16 min-h-screen bg-[#0D0D0D] flex items-center justify-center px-4">
+      <div className="pt-16 min-h-screen bg-konami-light-gray flex items-center justify-center px-4">
         <div className="card p-8 max-w-md text-center">
-          <CheckCircle size={48} className="mx-auto mb-4 text-green-400" />
-          <h2 className="font-heading text-2xl font-bold text-white mb-2">You're Already a Seller!</h2>
-          <p className="text-[#9E9E9E] mb-6">Visit your Transfer Room to manage listings.</p>
+          <CheckCircle size={48} className="mx-auto mb-4 text-green-500" />
+          <h2 className="font-heading text-2xl font-bold text-konami-text mb-2">You're Already a Seller!</h2>
+          <p className="text-konami-text-muted mb-6">Visit your Transfer Room to manage listings.</p>
           <Link to="/transfer-room" className="btn-primary inline-block">Go to Transfer Room</Link>
         </div>
       </div>
@@ -44,20 +44,20 @@ export default function SellerApplicationPage() {
 
   if (checking) {
     return (
-      <div className="pt-16 min-h-screen bg-[#0D0D0D] flex items-center justify-center">
-        <div className="w-8 h-8 border-3 border-transparent border-t-[#BF0021] rounded-full animate-spin" style={{ borderRightColor: '#BF0021' }} />
+      <div className="pt-16 min-h-screen bg-konami-light-gray flex items-center justify-center">
+        <div className="w-8 h-8 border-3 border-transparent border-t-konami-blue rounded-full animate-spin" style={{ borderRightColor: '#003BFF' }} />
       </div>
     );
   }
 
   if (application?.status === 'pending') {
     return (
-      <div className="pt-16 min-h-screen bg-[#0D0D0D] flex items-center justify-center px-4">
+      <div className="pt-16 min-h-screen bg-konami-light-gray flex items-center justify-center px-4">
         <div className="card p-8 max-w-md text-center">
-          <Clock size={48} className="mx-auto mb-4 text-yellow-400" />
-          <h2 className="font-heading text-2xl font-bold text-white mb-2">Application Under Review</h2>
-          <p className="text-[#9E9E9E] mb-4">Your seller application is being reviewed by our team. You'll be notified once a decision is made.</p>
-          <span className="inline-flex items-center gap-1.5 bg-yellow-400/10 border border-yellow-400/30 rounded-lg px-3 py-1.5 text-sm text-yellow-400">
+          <Clock size={48} className="mx-auto mb-4 text-yellow-500" />
+          <h2 className="font-heading text-2xl font-bold text-konami-text mb-2">Application Under Review</h2>
+          <p className="text-konami-text-muted mb-4">Your seller application is being reviewed by our team. You'll be notified once a decision is made.</p>
+          <span className="inline-flex items-center gap-1.5 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-1.5 text-sm text-yellow-700">
             <Clock size={14} /> Pending Review
           </span>
         </div>
@@ -67,14 +67,14 @@ export default function SellerApplicationPage() {
 
   if (application?.status === 'rejected') {
     return (
-      <div className="pt-16 min-h-screen bg-[#0D0D0D] flex items-center justify-center px-4">
+      <div className="pt-16 min-h-screen bg-konami-light-gray flex items-center justify-center px-4">
         <div className="card p-8 max-w-md text-center">
-          <AlertCircle size={48} className="mx-auto mb-4 text-[#BF0021]" />
-          <h2 className="font-heading text-2xl font-bold text-white mb-2">Application Not Approved</h2>
+          <AlertCircle size={48} className="mx-auto mb-4 text-konami-red" />
+          <h2 className="font-heading text-2xl font-bold text-konami-text mb-2">Application Not Approved</h2>
           {application.rejectionReason && (
-            <p className="text-[#9E9E9E] mb-4">Reason: {application.rejectionReason}</p>
+            <p className="text-konami-text-muted mb-4">Reason: {application.rejectionReason}</p>
           )}
-          <p className="text-[#5C5C5C] text-sm mb-6">You can submit a new application at any time.</p>
+          <p className="text-konami-text-muted text-sm mb-6">You can submit a new application at any time.</p>
           <button onClick={() => { setApplication(null); setSubmitted(false); }} className="btn-primary">
             Apply Again
           </button>
@@ -85,11 +85,11 @@ export default function SellerApplicationPage() {
 
   if (submitted) {
     return (
-      <div className="pt-16 min-h-screen bg-[#0D0D0D] flex items-center justify-center px-4">
+      <div className="pt-16 min-h-screen bg-konami-light-gray flex items-center justify-center px-4">
         <div className="card p-8 max-w-md text-center">
-          <CheckCircle size={48} className="mx-auto mb-4 text-green-400" />
-          <h2 className="font-heading text-2xl font-bold text-white mb-2">Application Submitted!</h2>
-          <p className="text-[#9E9E9E]">Our team will review your application. You'll be notified once approved.</p>
+          <CheckCircle size={48} className="mx-auto mb-4 text-green-500" />
+          <h2 className="font-heading text-2xl font-bold text-konami-text mb-2">Application Submitted!</h2>
+          <p className="text-konami-text-muted">Our team will review your application. You'll be notified once approved.</p>
         </div>
       </div>
     );
@@ -124,22 +124,22 @@ export default function SellerApplicationPage() {
   };
 
   return (
-    <div className="pt-16 min-h-screen bg-[#0D0D0D]">
+    <div className="pt-16 min-h-screen bg-konami-light-gray">
       <div className="max-w-lg mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-6">
-          <Shield size={24} style={{ color: '#BF0021' }} />
-          <h1 className="section-heading">Become a Seller</h1>
+          <Shield size={24} className="text-konami-blue" />
+          <h1 className="font-heading text-3xl font-extrabold text-konami-text">Become a Seller</h1>
         </div>
-        <p className="text-[#9E9E9E] mb-8">
+        <p className="text-konami-text-muted mb-8">
           List your eFootball accounts and start selling on Kenya's #1 marketplace.
         </p>
 
         <div className="card p-6">
-          {error && <div className="mb-4 text-sm text-[#BF0021]">{error}</div>}
+          {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-konami-red">{error}</div>}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm text-[#9E9E9E] mb-1.5">Desired Seller Name</label>
+              <label className="block text-sm text-konami-text-muted mb-1.5">Desired Seller Name</label>
               <input
                 type="text"
                 placeholder="What buyers will see"
@@ -150,7 +150,7 @@ export default function SellerApplicationPage() {
             </div>
 
             <div>
-              <label className="block text-sm text-[#9E9E9E] mb-1.5">Bio / About You</label>
+              <label className="block text-sm text-konami-text-muted mb-1.5">Bio / About You</label>
               <textarea
                 placeholder="Tell buyers about yourself and your accounts"
                 value={form.bio}
@@ -161,7 +161,7 @@ export default function SellerApplicationPage() {
             </div>
 
             <div>
-              <label className="block text-sm text-[#9E9E9E] mb-1.5">WhatsApp Number</label>
+              <label className="block text-sm text-konami-text-muted mb-1.5">WhatsApp Number</label>
               <input
                 type="tel"
                 placeholder="e.g. 0712345678"
@@ -176,9 +176,9 @@ export default function SellerApplicationPage() {
                 type="checkbox"
                 checked={form.agreed}
                 onChange={(e) => setForm((p) => ({ ...p, agreed: e.target.checked }))}
-                className="mt-1 accent-[#BF0021]"
+                className="mt-1 accent-konami-blue"
               />
-              <span className="text-sm text-[#9E9E9E]">
+              <span className="text-sm text-konami-text-muted">
                 I agree to deliver accounts within 24 hours and not to scam buyers
               </span>
             </label>

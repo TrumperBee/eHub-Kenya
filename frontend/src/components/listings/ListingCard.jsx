@@ -4,10 +4,17 @@ import { formatKES } from '../../utils/formatters';
 import TierBadge from './TierBadge';
 import PlayerBadge from './PlayerBadge';
 
+const TIER_COLORS = {
+  bronze: '#CD7F32',
+  silver: '#C0C0C0',
+  gold: '#D4AF37',
+  legendary: '#9B59B6',
+};
+
 export default function ListingCard({ listing }) {
   const navigate = useNavigate();
   const tier = listing.tier || 'bronze';
-  const tierConfig = TIERS[tier];
+  const tierAccent = TIER_COLORS[tier];
 
   const platformIcon = PLATFORMS[listing.platform]?.icon || '📱';
   const platformLabel = PLATFORMS[listing.platform]?.label || listing.platform;
@@ -22,15 +29,24 @@ export default function ListingCard({ listing }) {
   return (
     <div
       onClick={handleClick}
-      className="group cursor-pointer rounded-xl overflow-hidden transition-all duration-200 hover:scale-[1.03]"
+      className="group cursor-pointer rounded-2xl overflow-hidden transition-all duration-250 bg-white"
       style={{
-        backgroundColor: '#1A1A1A',
-        border: `1px solid ${tierConfig.color}`,
-        boxShadow: `0 0 12px ${tierConfig.glow}`,
+        border: '1px solid #E0E0E0',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-4px)';
+        e.currentTarget.style.boxShadow = '0 8px 40px rgba(0,59,255,0.15)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.08)';
       }}
     >
+      <div style={{ height: 4, background: tierAccent }} className={tier === 'legendary' ? 'animate-shimmer' : ''} />
+
       <div className="relative">
-        <div className="relative aspect-[16/9] overflow-hidden bg-[#242424]">
+        <div className="relative aspect-[16/9] overflow-hidden" style={{ background: 'linear-gradient(135deg, #001E7A, #003BFF)' }}>
           {photoUrl ? (
             <img
               src={photoUrl}
@@ -38,82 +54,78 @@ export default function ListingCard({ listing }) {
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-[#5C5C5C]">
-              <span className="text-3xl mb-1">⚽</span>
-              <span className="text-xs">No preview</span>
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-5xl opacity-60">⚽</span>
             </div>
           )}
 
           {isSold && (
-            <div className="absolute inset-0 flex items-center justify-center bg-[#BF0021]/60">
-              <div className="bg-[#BF0021] text-white font-heading font-bold text-xl uppercase tracking-widest px-6 py-1 -rotate-12 shadow-lg">
+            <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(200,16,46,0.8)' }}>
+              <span className="font-heading text-[28px] font-extrabold text-white uppercase tracking-widest">
                 SOLD
-              </div>
+              </span>
             </div>
           )}
 
-          <div className="absolute top-2 left-2">
+          <div className="absolute top-3 left-3">
             <TierBadge tier={tier} />
           </div>
-          <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm rounded-md px-2 py-0.5 text-xs text-white">
+          <div className="absolute top-3 right-3 bg-konami-blue text-white rounded-full px-3 py-1 text-xs font-heading font-bold uppercase tracking-wide">
             {platformIcon} {platformLabel}
           </div>
         </div>
 
-        <div className="p-3 space-y-2.5">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-white truncate">
+        <div className="p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="font-heading text-sm font-bold" style={{ color: '#003BFF' }}>
               {listing.sellerDisplayName || 'Unknown Seller'}
             </span>
             {listing.sellerRating > 0 ? (
-              <span className="text-xs shrink-0" style={{ color: '#D4AF37' }}>
+              <span className="text-sm font-medium" style={{ color: '#D4AF37' }}>
                 {listing.sellerRating.toFixed(1)} ★
               </span>
             ) : (
-              <span className="text-xs text-[#5C5C5C] shrink-0">New Seller</span>
+              <span className="text-xs font-heading font-bold uppercase" style={{ color: '#6B7280' }}>New Seller</span>
             )}
           </div>
 
-          <h3 className="text-sm font-medium text-white leading-snug line-clamp-2">
+          <h3 className="font-heading text-lg font-bold text-konami-text leading-snug line-clamp-2 uppercase">
             {listing.title || 'Untitled Account'}
           </h3>
 
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-[#242424] rounded-lg px-2 py-1.5 text-center">
-              <p className="text-xs text-[#9E9E9E]">Stars</p>
-              <p className="text-sm font-bold text-white">⭐ {listing.fiveStarCount || 0}</p>
+          <div className="grid grid-cols-3 gap-2 rounded-xl p-[10px]" style={{ background: '#F5F5F5' }}>
+            <div className="text-center">
+              <p className="font-heading text-[13px] font-bold" style={{ color: '#111111' }}>⭐ {listing.fiveStarCount || 0}</p>
+              <p className="text-[11px]" style={{ color: '#6B7280' }}>Stars</p>
             </div>
-            <div className="bg-[#242424] rounded-lg px-2 py-1.5 text-center">
-              <p className="text-xs text-[#9E9E9E]">Coins</p>
-              <p className="text-sm font-bold text-white">🪙 {listing.goldCoins?.toLocaleString() || 0}</p>
+            <div className="text-center">
+              <p className="font-heading text-[13px] font-bold" style={{ color: '#111111' }}>🪙 {listing.goldCoins?.toLocaleString() || 0}</p>
+              <p className="text-[11px]" style={{ color: '#6B7280' }}>Coins</p>
             </div>
-            <div className="bg-[#242424] rounded-lg px-2 py-1.5 text-center">
-              <p className="text-xs text-[#9E9E9E]">GP</p>
-              <p className="text-sm font-bold text-white">📊 {listing.gp?.toLocaleString() || 0}</p>
+            <div className="text-center">
+              <p className="font-heading text-[13px] font-bold" style={{ color: '#111111' }}>📊 {listing.gp?.toLocaleString() || 0}</p>
+              <p className="text-[11px]" style={{ color: '#6B7280' }}>GP</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 flex-wrap min-h-[22px]">
+          <div className="flex items-center gap-1.5 flex-wrap min-h-[24px]">
             {(listing.featuredPlayers || []).slice(0, 3).map((player, i) => (
               <PlayerBadge key={i} playerName={player} />
             ))}
             {(listing.featuredPlayers || []).length > 3 && (
-              <span className="text-xs text-[#5C5C5C]">+{listing.featuredPlayers.length - 3}</span>
-            )}
-            {(!listing.featuredPlayers || listing.featuredPlayers.length === 0) && (
-              <span className="text-xs text-[#5C5C5C]">No featured players listed</span>
+              <span className="text-xs" style={{ color: '#6B7280' }}>+{listing.featuredPlayers.length - 3}</span>
             )}
           </div>
 
-          <div className="flex items-center justify-between pt-1 border-t border-[#2A2A2A]">
-            <span className="font-heading text-xl font-bold text-white">
+          <div className="flex items-center justify-between pt-3" style={{ borderTop: '1px solid #E0E0E0' }}>
+            <span className="font-heading text-2xl font-extrabold" style={{ color: '#003BFF' }}>
               {formatKES(listing.price || 0)}
             </span>
             <button
               onClick={(e) => { e.stopPropagation(); handleClick(); }}
-              className="bg-[#BF0021] hover:bg-[#E0001B] active:bg-[#8B0018] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-all duration-200"
+              className="btn-primary !py-2 !px-4 text-[13px]"
             >
-              View Deal
+              VIEW DEAL →
             </button>
           </div>
         </div>

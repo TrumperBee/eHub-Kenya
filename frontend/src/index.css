@@ -1,78 +1,209 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
+
   body {
-    background-color: #0D0D0D;
-    color: #FFFFFF;
+    background-color: #FFFFFF;
+    color: #111111;
     font-family: 'Inter', sans-serif;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
   }
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: #1A1A1A; }
-  ::-webkit-scrollbar-thumb { background: #BF0021; border-radius: 3px; }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: #FFFFFF;
+  }
+
+  .section-light h1,
+  .section-light h2,
+  .section-light h3,
+  .section-light h4 {
+    color: #111111;
+  }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: #001E7A; }
+  ::-webkit-scrollbar-thumb { background: #FFF100; border-radius: 3px; }
 
   input:focus, textarea:focus, select:focus {
     outline: none;
-    border-color: #BF0021 !important;
-    box-shadow: 0 0 0 1px #BF0021;
+    border-color: #003BFF !important;
+    box-shadow: 0 0 0 2px rgba(0,59,255,0.2);
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-konami-red hover:bg-konami-red-hover active:bg-konami-red-dark
-           text-white font-semibold px-6 py-3 rounded-lg
+    @apply bg-konami-yellow hover:bg-konami-yellow-hover
+           text-konami-text font-heading font-bold
+           px-8 py-4 rounded-xl uppercase tracking-wide
            transition-all duration-200 cursor-pointer
-           disabled:opacity-50 disabled:cursor-not-allowed;
+           shadow-yellow-glow hover:shadow-lg
+           active:scale-95
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none;
+    font-size: 14px;
+    letter-spacing: 0.05em;
   }
+
   .btn-secondary {
-    @apply bg-konami-surface-2 hover:bg-konami-surface-3
-           text-white font-semibold px-6 py-3 rounded-lg
-           border border-konami-border hover:border-konami-red
+    @apply bg-transparent hover:bg-white/10
+           text-white font-heading font-bold
+           px-8 py-4 rounded-xl uppercase tracking-wide
+           border-2 border-white hover:border-konami-yellow hover:text-konami-yellow
            transition-all duration-200 cursor-pointer;
+    font-size: 14px;
+    letter-spacing: 0.05em;
   }
+
+  .btn-blue {
+    @apply bg-konami-blue hover:bg-konami-blue-hover
+           text-white font-heading font-bold
+           px-8 py-4 rounded-xl uppercase tracking-wide
+           transition-all duration-200 cursor-pointer
+           active:scale-95
+           disabled:opacity-50 disabled:cursor-not-allowed;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+  }
+
   .btn-ghost {
-    @apply bg-transparent hover:bg-konami-surface-2
-           text-konami-muted hover:text-white px-4 py-2 rounded-lg
+    @apply bg-transparent hover:bg-white/10
+           text-white/80 hover:text-white
+           px-4 py-2 rounded-lg font-medium
            transition-all duration-200 cursor-pointer;
   }
+
   .card {
-    @apply bg-konami-surface border border-konami-border rounded-xl
-           shadow-card transition-all duration-200;
+    @apply bg-white rounded-2xl shadow-card
+           border border-konami-mid-gray
+           transition-all duration-300;
   }
+
+  .card:hover {
+    @apply shadow-card-hover -translate-y-1;
+  }
+
+  .card-blue {
+    @apply bg-konami-blue rounded-2xl text-white
+           transition-all duration-300;
+  }
+
+  .card-dark {
+    @apply bg-konami-blue-dark rounded-2xl text-white
+           transition-all duration-300;
+  }
+
   .input-field {
-    @apply w-full bg-konami-surface-2 border border-konami-border
-           text-white placeholder-konami-dim rounded-lg px-4 py-3
-           focus:outline-none focus:border-konami-red
-           transition-colors duration-200;
+    @apply w-full bg-konami-light-gray border border-konami-mid-gray
+           text-konami-text placeholder-konami-text-dim rounded-xl px-4 py-3
+           focus:outline-none focus:border-konami-blue focus:ring-2 focus:ring-konami-blue/20
+           transition-all duration-200;
+    font-family: 'Inter', sans-serif;
   }
+
   .badge {
-    @apply inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold;
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-heading font-bold uppercase tracking-wide;
   }
+  .badge-yellow {
+    @apply bg-konami-yellow text-konami-text;
+  }
+  .badge-blue {
+    @apply bg-konami-blue text-white;
+  }
+  .badge-red {
+    @apply bg-konami-red text-white;
+  }
+  .badge-white {
+    @apply bg-white text-konami-blue;
+  }
+
+  .section-blue {
+    @apply bg-konami-blue text-white;
+  }
+  .section-dark {
+    @apply bg-konami-blue-dark text-white;
+  }
+  .section-light {
+    @apply bg-konami-light-gray text-konami-text;
+  }
+  .section-white {
+    @apply bg-white text-konami-text;
+  }
+
+  .card-accent {
+    @apply bg-white rounded-2xl shadow-card overflow-hidden;
+    border-top: 4px solid #FFF100;
+  }
+
   .section-heading {
-    @apply font-heading text-3xl md:text-4xl font-bold uppercase tracking-wide text-white;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 48px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
   }
-  .red-accent {
-    @apply text-konami-red;
+
+  .section-heading-dark { color: #111111; }
+  .section-heading-light { color: #FFFFFF; }
+
+  .yellow-underline {
+    position: relative;
+  }
+  .yellow-underline::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 60px;
+    height: 4px;
+    background: #FFF100;
+    border-radius: 2px;
+  }
+
+  .live-dot {
+    @apply inline-block w-2 h-2 rounded-full bg-konami-red mr-2;
+    animation: livePulse 1.5s ease-in-out infinite;
   }
 }
 
-@layer utilities {
-  .animate-fade-in {
-    animation: fadeIn 0.2s ease-out;
-  }
-  .page-enter {
-    animation: fadeIn 0.2s ease-out;
-  }
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@keyframes loadProgress {
+  0% { width: 0%; }
+  100% { width: 100%; }
 }
+
+@keyframes logoReveal {
+  0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pageIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes bounceSoft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+.animate-page-in    { animation: pageIn 0.3s ease-out forwards; }

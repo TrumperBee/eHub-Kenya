@@ -1,41 +1,43 @@
 const badges = [
-  {
-    icon: '🔒',
-    title: 'Escrow Protected',
-    desc: 'Your money is held safely until you confirm receipt',
-  },
-  {
-    icon: '📱',
-    title: 'M-Pesa Native',
-    desc: 'Pay directly from your Safaricom number',
-  },
-  {
-    icon: '✅',
-    title: 'Verified Sellers',
-    desc: 'All sellers are approved by our team',
-  },
-  {
-    icon: '🛡️',
-    title: 'Buyer Guarantee',
-    desc: 'Get a full refund if delivery fails',
-  },
+  { icon: '🔒', title: 'Escrow Protected', desc: 'Funds held until you confirm delivery' },
+  { icon: '📱', title: 'M-Pesa Native', desc: 'Pay directly from Safaricom' },
+  { icon: '✅', title: 'Verified Sellers', desc: 'Every seller approved by admin' },
+  { icon: '🛡️', title: 'Buyer Guarantee', desc: 'Full refund if seller fails to deliver' },
 ];
 
 export default function TrustBadges() {
   return (
-    <section className="py-16 bg-[#0D0D0D]">
-      <div className="max-w-6xl mx-auto px-4">
+    <section className="relative py-16 overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: 'url(https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=1920)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
+      <div className="absolute inset-0" style={{ background: 'rgba(0,20,80,0.92)' }} />
+
+      <div className="relative z-10 max-w-6xl mx-auto px-4">
         <div className="text-center mb-10">
-          <h2 className="section-heading">Safe & Secure</h2>
-          <div className="w-16 h-1 bg-[#BF0021] mx-auto mt-3 rounded-full" />
+          <h2 className="section-heading section-heading-light yellow-underline inline-block">
+            Safe & Secure
+          </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {badges.map((badge, i) => (
-            <div key={i} className="card p-6 text-center hover:border-[#BF0021]/30 transition-colors duration-200">
-              <span className="text-4xl block mb-4">{badge.icon}</span>
-              <h3 className="font-heading text-lg font-bold text-white mb-2">{badge.title}</h3>
-              <p className="text-sm text-[#9E9E9E]">{badge.desc}</p>
+            <div
+              key={i}
+              className="rounded-2xl p-6 text-center transition-all duration-300 hover:-translate-y-1"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+              }}
+            >
+              <span className="text-4xl block mb-4" style={{ color: '#FFF100' }}>{badge.icon}</span>
+              <h3 className="font-heading text-lg font-bold text-white uppercase mb-2">{badge.title}</h3>
+              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>{badge.desc}</p>
             </div>
           ))}
         </div>

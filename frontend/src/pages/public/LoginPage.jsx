@@ -48,25 +48,56 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-1 mb-2">
-            <span className="font-heading text-2xl font-bold text-white tracking-wide">eFootball Hub</span>
-            <span className="font-heading text-2xl font-bold" style={{ color: '#BF0021' }}>Kenya</span>
+    <div className="min-h-screen flex flex-col md:flex-row">
+      <div className="relative md:w-1/2 min-h-[40vh] md:min-h-screen flex items-center justify-center p-8 md:p-12 overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1920&q=80)' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#003BFF]/90 to-[#001E7A]/95" />
+        <div className="relative z-10 text-center md:text-left max-w-md">
+          <div className="flex items-center justify-center md:justify-start gap-1 mb-4">
+            <span className="font-heading text-3xl font-extrabold text-white tracking-wide">eFootball Hub</span>
+            <span className="font-heading text-3xl font-extrabold text-[#FFF100]">Kenya</span>
           </div>
-          <p className="text-[#9E9E9E] text-sm">Sign in to your account</p>
+          <p className="text-white/80 text-sm mb-8">Sign in to manage your account, track orders, and more.</p>
+          <div className="space-y-4">
+            {[
+              { icon: '🔒', text: 'Secure M-Pesa payments' },
+              { icon: '⚡', text: 'Instant account delivery' },
+              { icon: '🛡️', text: 'Escrow protection on every order' },
+              { icon: '💬', text: 'Real-time chat with sellers' },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3 text-white/90 text-sm">
+                <span className="text-lg">{item.icon}</span>
+                <span>{item.text}</span>
+              </div>
+            ))}
+          </div>
         </div>
+      </div>
 
-        <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-6 shadow-card">
+      <div className="md:w-1/2 flex items-center justify-center p-6 md:p-12 bg-white min-h-screen">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-1 mb-2 md:hidden">
+              <span className="font-heading text-xl font-extrabold text-konami-text tracking-wide">eFootball Hub</span>
+              <span className="font-heading text-xl font-extrabold text-konami-yellow">Kenya</span>
+            </div>
+            <h1 className="font-heading text-2xl font-extrabold text-konami-text">Welcome Back</h1>
+            <p className="text-konami-text-muted text-sm mt-1">Sign in to your account</p>
+          </div>
+
           {message && (
-            <div className="mb-4 p-3 bg-[#242424] border border-[#BF0021] rounded-lg text-sm text-[#9E9E9E]">
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
               {message}
             </div>
           )}
 
           {error && (
-            <div className="mb-4 text-sm text-[#BF0021]">{error}</div>
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {error}
+            </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -104,17 +135,17 @@ export default function LoginPage() {
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[#2A2A2A]" />
+              <div className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-[#1A1A1A] px-2 text-[#5C5C5C]">or continue with</span>
+              <span className="bg-white px-2 text-konami-text-muted">or continue with</span>
             </div>
           </div>
 
           <button
             onClick={handleGoogle}
             disabled={loading}
-            className="btn-secondary w-full flex items-center justify-center gap-2"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 rounded-xl text-sm font-medium text-konami-text hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
@@ -128,19 +159,19 @@ export default function LoginPage() {
           <div className="mt-4 text-center">
             <button
               onClick={() => toast.error('Not yet available')}
-              className="text-xs text-[#5C5C5C] hover:text-[#9E9E9E] transition-colors"
+              className="text-xs text-konami-text-muted hover:text-konami-text transition-colors"
             >
               Forgot password?
             </button>
           </div>
-        </div>
 
-        <p className="mt-6 text-center text-sm text-[#5C5C5C]">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-[#BF0021] hover:text-[#E0001B] transition-colors">
-            Register
-          </Link>
-        </p>
+          <p className="mt-6 text-center text-sm text-konami-text-muted">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-konami-blue hover:text-konami-blue-hover font-semibold transition-colors">
+              Register
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

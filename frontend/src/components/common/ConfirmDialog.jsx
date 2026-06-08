@@ -3,9 +3,9 @@ export default function ConfirmDialog({ open, title, message, confirmLabel, onCo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onCancel}>
-      <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-6 max-w-md mx-4 w-full" onClick={(e) => e.stopPropagation()}>
-        <h3 className="font-heading text-lg font-bold text-white mb-3">{title}</h3>
-        <p className="text-sm text-[#9E9E9E] mb-6">{message}</p>
+      <div className="bg-white border border-konami-mid-gray rounded-2xl p-6 max-w-md mx-4 w-full" onClick={(e) => e.stopPropagation()}>
+        <h3 className="font-heading text-lg font-bold text-konami-text mb-3">{title}</h3>
+        <p className="text-sm text-konami-text-muted mb-6">{message}</p>
         <div className="flex gap-3">
           <button onClick={onCancel} disabled={loading} className="btn-secondary flex-1 text-sm py-2.5">
             Cancel
@@ -15,8 +15,8 @@ export default function ConfirmDialog({ open, title, message, confirmLabel, onCo
             disabled={loading}
             className={`flex-1 text-sm py-2.5 rounded-lg font-semibold transition-all disabled:opacity-50 ${
               variant === 'danger'
-                ? 'bg-red-600 hover:bg-red-700 text-white'
-                : 'bg-[#BF0021] hover:bg-[#D40025] text-white'
+                ? 'bg-konami-red hover:bg-konami-red-hover text-white'
+                : 'bg-konami-blue hover:bg-konami-blue-hover text-white'
             }`}
           >
             {loading ? (

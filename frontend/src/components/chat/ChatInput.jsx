@@ -26,7 +26,7 @@ export default function ChatInput({ onSend, disabled }) {
   };
 
   return (
-    <div className="flex items-end gap-2 p-3 border-t border-[#2A2A2A] bg-[#1A1A1A] rounded-b-2xl">
+    <div className="flex items-end gap-2 p-3 border-t border-konami-mid-gray bg-white rounded-b-2xl">
       <textarea
         ref={textareaRef}
         value={text}
@@ -35,12 +35,12 @@ export default function ChatInput({ onSend, disabled }) {
         placeholder={disabled ? 'Chat is disabled' : 'Type a message...'}
         rows={1}
         disabled={disabled}
-        className="flex-1 bg-[#242424] text-white text-sm rounded-xl px-4 py-2.5 outline-none border border-[#2A2A2A] focus:border-[#BF0021] transition-colors resize-none placeholder-[#5C5C5C] disabled:opacity-40"
+        className="flex-1 bg-konami-light-gray text-konami-text text-sm rounded-xl px-4 py-2.5 outline-none border border-konami-mid-gray focus:border-konami-blue transition-colors resize-none placeholder-konami-text-muted disabled:opacity-40"
       />
       <button
         onClick={handleSend}
         disabled={!text.trim() || disabled}
-        className="w-10 h-10 rounded-xl bg-[#BF0021] flex items-center justify-center shrink-0 hover:bg-[#D40025] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        className="w-10 h-10 rounded-xl bg-konami-blue flex items-center justify-center shrink-0 hover:bg-konami-blue-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
       >
         <Send size={16} className="text-white" />
       </button>

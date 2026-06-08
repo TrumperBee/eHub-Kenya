@@ -2,54 +2,67 @@ import { Link } from 'react-router-dom';
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0D0D0D] border-t border-[#2A2A2A]">
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <footer>
+      <div style={{ height: 4, background: '#FFF100' }} />
+      <div className="bg-[#001E7A] text-white">
+        <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-10">
           <div>
-            <div className="flex items-center gap-1 mb-3">
-              <span className="font-heading text-xl font-bold text-white tracking-wide">
-                eFootball Hub
+            <div className="flex items-center gap-1.5 mb-3">
+              <span className="font-heading text-lg font-extrabold text-white uppercase tracking-wider">
+                eFOOTBALL HUB
               </span>
-              <span className="font-heading text-xl font-bold" style={{ color: '#BF0021' }}>
-                Kenya
+              <span className="font-heading text-lg font-extrabold uppercase tracking-wider" style={{ color: '#FFF100' }}>
+                KENYA
               </span>
             </div>
-            <p className="text-sm text-[#9E9E9E]">
-              Kenya's #1 eFootball Account Marketplace
+            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              Kenya's Premier eFootball Account Marketplace
+            </p>
+            <p className="text-xs mt-4" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              Powered by M-Pesa | Protected by Escrow
             </p>
           </div>
 
           <div>
-            <h4 className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">Quick Links</h4>
-            <div className="space-y-2">
-              <Link to="/browse" className="block text-sm text-[#9E9E9E] hover:text-white transition-colors">Browse</Link>
-              <Link to="/how-it-works" className="block text-sm text-[#9E9E9E] hover:text-white transition-colors">How It Works</Link>
-              <Link to="/faq" className="block text-sm text-[#9E9E9E] hover:text-white transition-colors">FAQ</Link>
-              <Link to="/apply-seller" className="block text-sm text-[#9E9E9E] hover:text-white transition-colors">Become a Seller</Link>
-            </div>
+            <h4 className="font-heading text-sm font-bold uppercase tracking-wider mb-4" style={{ color: '#FFF100' }}>QUICK LINKS</h4>
+            <ul className="space-y-3">
+              {[
+                { label: 'Browse Accounts', path: '/browse' },
+                { label: 'How It Works', path: '/how-it-works' },
+                { label: 'FAQ', path: '/faq' },
+                { label: 'Become a Seller', path: '/apply-seller' },
+              ].map(link => (
+                <li key={link.path}>
+                  <Link to={link.path} className="text-sm transition-colors" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div>
-            <h4 className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">Trust & Safety</h4>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm text-[#9E9E9E]">
-                <span className="text-green-400">&#x2713;</span> Safe & Secure
-              </div>
-              <div className="inline-flex items-center gap-1.5 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-3 py-1.5 text-xs text-[#9E9E9E]">
-                M-Pesa Payments
-              </div>
-              <div className="inline-flex items-center gap-1.5 bg-[#1A1A1A] border border-[#BF0021] rounded-lg px-3 py-1.5 text-xs text-white ml-2">
-                Escrow Protected
-              </div>
-            </div>
+            <h4 className="font-heading text-sm font-bold uppercase tracking-wider mb-4" style={{ color: '#FFF100' }}>SAFETY</h4>
+            <ul className="space-y-3">
+              {[
+                'M-Pesa Native Payments',
+                'Buyer Escrow Protection',
+                'Verified Sellers Only',
+                'Admin-Moderated Platform',
+              ].map((item, i) => (
+                <li key={i} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                  <span style={{ color: '#FFF100' }}>✓</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-
-        <div className="border-t border-[#2A2A2A] mt-8 pt-6 text-center">
-          <p className="text-xs text-[#5C5C5C]">
-            &copy; 2024 eFootball Hub Kenya. Not affiliated with Konami.
-          </p>
-        </div>
+      </div>
+      <div className="bg-[#001450] py-4">
+        <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          &copy; 2024 eFootball Hub Kenya. Not affiliated with Konami Digital Entertainment.
+        </p>
       </div>
     </footer>
   );

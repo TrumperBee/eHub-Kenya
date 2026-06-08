@@ -35,13 +35,13 @@ export default function MpesaPopup({ amount, onSubmit, loading }) {
 
   return (
     <div className="space-y-4">
-      <div className="text-center">
-        <p className="text-xs text-[#9E9E9E] mb-1">Amount</p>
-        <p className="font-heading text-3xl font-bold text-white">{formatKES(amount)}</p>
+      <div className="rounded-xl p-4" style={{ background: '#003BFF' }}>
+        <p className="text-xs text-white/60 text-center mb-1">Amount</p>
+        <p className="font-heading text-3xl font-extrabold text-center" style={{ color: '#FFF100' }}>{formatKES(amount)}</p>
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-[#9E9E9E] mb-1.5">
+        <label className="block text-xs font-heading font-bold uppercase tracking-wider mb-1.5" style={{ color: '#003BFF' }}>
           M-Pesa Phone Number
         </label>
         <input
@@ -50,19 +50,23 @@ export default function MpesaPopup({ amount, onSubmit, loading }) {
           onChange={handlePhoneChange}
           placeholder="e.g. 0712345678"
           maxLength={12}
-          className={`w-full px-4 py-3 bg-[#242424] border ${phoneError ? 'border-red-400' : 'border-[#2A2A2A]'} rounded-xl text-white text-sm outline-none focus:border-[#BF0021] transition-colors`}
+          className="w-full px-4 py-3 bg-white border rounded-xl text-sm transition-all duration-200 input-field"
+          style={{
+            borderColor: phoneError ? '#C8102E' : '#E0E0E0',
+          }}
           disabled={loading}
         />
         {phoneError && (
-          <p className="text-xs text-red-400 mt-1">{phoneError}</p>
+          <p className="text-xs mt-1" style={{ color: '#C8102E' }}>{phoneError}</p>
         )}
-        <p className="text-xs text-[#5C5C5C] mt-1">Enter your Safaricom number e.g. 0712345678</p>
       </div>
+
+      <p className="text-xs text-center" style={{ color: '#4CAF50' }}>Lipa Na M-Pesa</p>
 
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="btn-primary w-full py-3.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+        className="btn-primary w-full py-3.5 text-sm font-bold min-h-[48px]"
       >
         {loading ? (
           <span className="flex items-center justify-center gap-2">
@@ -76,6 +80,8 @@ export default function MpesaPopup({ amount, onSubmit, loading }) {
           'Send M-Pesa Request'
         )}
       </button>
+
+      <p className="text-xs text-center" style={{ color: '#6B7280' }}>🔒 Secured by Escrow</p>
     </div>
   );
 }

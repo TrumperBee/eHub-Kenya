@@ -97,72 +97,72 @@ export default function AdminDisputesPage() {
 
   return (
     <AdminLayout>
-      <h2 className="font-heading text-xl font-bold text-white mb-6">Dispute Resolution</h2>
+      <h2 className="font-heading text-xl font-bold text-konami-text mb-6">Dispute Resolution</h2>
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-2 border-transparent border-t-[#BF0021] rounded-full animate-spin" style={{ borderRightColor: '#BF0021' }} />
+          <div className="w-8 h-8 border-2 border-transparent border-t-konami-blue rounded-full animate-spin" style={{ borderRightColor: '#003BFF' }} />
         </div>
       ) : disputes.length === 0 ? (
         <div className="text-center py-12">
-          <AlertTriangle size={40} className="mx-auto mb-3 text-[#5C5C5C]" />
-          <p className="text-[#5C5C5C] text-sm">No active disputes. Everything looks good.</p>
+          <AlertTriangle size={40} className="mx-auto mb-3 text-konami-text-muted" />
+          <p className="text-konami-text-muted text-sm">No active disputes. Everything looks good.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {disputes.map((order) => (
-            <div key={order.id} className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-5">
+            <div key={order.id} className="bg-white border border-konami-mid-gray rounded-xl p-5">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <p className="text-xs text-[#5C5C5C]">Order ID</p>
-                  <p className="text-sm font-mono text-white">{order.id}</p>
+                  <p className="text-xs text-konami-text-muted">Order ID</p>
+                  <p className="text-sm font-mono text-konami-text">{order.id}</p>
                 </div>
-                <span className="px-3 py-1 text-xs font-semibold bg-red-400/10 text-red-400 border border-red-400/30 rounded-full">
+                <span className="px-3 py-1 text-xs font-semibold bg-red-50 text-konami-red border border-konami-red/30 rounded-full">
                   DISPUTED
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <p className="text-xs text-[#5C5C5C] mb-1">Buyer</p>
-                  <p className="text-sm text-white">{order.buyerName}</p>
-                  {order.buyerEmail && <p className="text-xs text-[#5C5C5C]">{order.buyerEmail}</p>}
+                  <p className="text-xs text-konami-text-muted mb-1">Buyer</p>
+                  <p className="text-sm text-konami-text">{order.buyerName}</p>
+                  {order.buyerEmail && <p className="text-xs text-konami-text-muted">{order.buyerEmail}</p>}
                 </div>
                 <div>
-                  <p className="text-xs text-[#5C5C5C] mb-1">Seller</p>
-                  <p className="text-sm text-white">{order.sellerName}</p>
-                  {order.sellerEmail && <p className="text-xs text-[#5C5C5C]">{order.sellerEmail}</p>}
+                  <p className="text-xs text-konami-text-muted mb-1">Seller</p>
+                  <p className="text-sm text-konami-text">{order.sellerName}</p>
+                  {order.sellerEmail && <p className="text-xs text-konami-text-muted">{order.sellerEmail}</p>}
                 </div>
                 <div>
-                  <p className="text-xs text-[#5C5C5C] mb-1">Listing</p>
-                  <p className="text-sm text-white">{order.listingTitle || '—'}</p>
+                  <p className="text-xs text-konami-text-muted mb-1">Listing</p>
+                  <p className="text-sm text-konami-text">{order.listingTitle || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#5C5C5C] mb-1">Amount</p>
-                  <p className="font-heading text-lg font-bold text-white">{formatKES(order.amount)}</p>
+                  <p className="text-xs text-konami-text-muted mb-1">Amount</p>
+                  <p className="font-heading text-lg font-bold text-konami-text">{formatKES(order.amount)}</p>
                 </div>
               </div>
 
-              <div className="mb-4 p-3 bg-[#242424] rounded-xl">
-                <p className="text-xs font-semibold text-red-400 mb-1">Dispute Reason</p>
-                <p className="text-sm text-[#9E9E9E]">{order.disputeReason || 'No reason provided'}</p>
-                <p className="text-xs text-[#5C5C5C] mt-1">Disputed: {formatDate(order.updatedAt)}</p>
+              <div className="mb-4 p-3 bg-red-50 rounded-xl border border-konami-red/20">
+                <p className="text-xs font-semibold text-konami-red mb-1">Dispute Reason</p>
+                <p className="text-sm text-konami-text-dim">{order.disputeReason || 'No reason provided'}</p>
+                <p className="text-xs text-konami-text-muted mt-1">Disputed: {formatDate(order.updatedAt)}</p>
               </div>
 
               {order.messages?.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-xs font-semibold text-[#9E9E9E] mb-2">Recent Messages (last 10)</p>
-                  <div className="space-y-1 max-h-[120px] overflow-y-auto">
+                  <p className="text-xs font-semibold text-konami-text-muted mb-2">Recent Messages (last 10)</p>
+                  <div className="space-y-1 max-h-[120px] overflow-y-auto p-3 bg-konami-light-gray rounded-xl">
                     {order.messages.slice().reverse().map((msg, i) => (
-                      <p key={i} className={`text-xs ${msg.messageType === 'system' ? 'text-[#5C5C5C] italic' : 'text-[#9E9E9E]'}`}>
-                        <span className="text-[#5C5C5C]">{msg.senderDisplayName || msg.senderRole}:</span> {msg.content}
+                      <p key={i} className={`text-xs ${msg.messageType === 'system' ? 'text-konami-text-muted italic' : 'text-konami-text-dim'}`}>
+                        <span className="text-konami-text-muted">{msg.senderDisplayName || msg.senderRole}:</span> {msg.content}
                       </p>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="flex gap-3 pt-3 border-t border-[#2A2A2A]">
+              <div className="flex gap-3 pt-3 border-t border-konami-mid-gray">
                 {confirmAction === order.id ? (
                   <>
                     <button onClick={() => handleReleaseToSeller(order)} disabled={actionId === order.id} className="flex-1 px-4 py-2.5 text-sm font-semibold bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
@@ -173,7 +173,7 @@ export default function AdminDisputesPage() {
                       <RotateCcw size={16} />
                       {actionId === order.id ? 'Processing...' : 'Confirm Refund'}
                     </button>
-                    <button onClick={() => setConfirmAction(null)} className="px-4 py-2.5 text-sm text-[#5C5C5C] hover:text-white transition-colors">
+                    <button onClick={() => setConfirmAction(null)} className="px-4 py-2.5 text-sm text-konami-text-muted hover:text-konami-text transition-colors">
                       Cancel
                     </button>
                   </>
