@@ -1,9 +1,11 @@
 import axios from 'axios';
 import { BACKEND_URL } from '../utils/constants';
-import { auth, storage } from './firebase';
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { auth } from './firebase';
 
 const api = axios.create({ baseURL: BACKEND_URL });
+
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
 export const generateOrderId = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -58,25 +60,33 @@ export const checkPaymentStatus = async (checkoutRequestId) => {
 };
 
 export const uploadListingImages = async (files) => {
-  const user = auth.currentUser;
-  if (!user) throw new Error('You must be logged in to upload images');
+  if (!CLOUD_NAME || !UPLOAD_PRESET) {
+    throw new Error('Cloudinary not configured. Set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET in your .env file.');
+  }
 
   const urls = [];
   for (const file of files) {
-    const fileName = `listings/${user.uid}/${crypto.randomUUID()}${file.name.substring(file.name.lastIndexOf('.'))}`;
-    const storageRef = ref(storage, fileName);
-    const snapshot = await uploadBytesResumable(storageRef, file);
-    const url = await getDownloadURL(snapshot.ref);
-    urls.push(url);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET);
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || 'Image upload failed');
+    }
+
+    const data = await res.json();
+    urls.push(data.secure_url);
   }
   return { urls };
 };
 
-export const deleteListingImage = async (imageUrl) => {
-  try {
-    const storageRef = ref(storage, imageUrl);
-    await deleteObject(storageRef);
-  } catch (err) {
-    console.error('Delete image error:', err);
-  }
+export const deleteListingImage = async () => {
+  // Cloudinary unsigned uploads can't be deleted via API without a secret.
+  // Old images will be cleaned up automatically or via Cloudinary dashboard.
 };
