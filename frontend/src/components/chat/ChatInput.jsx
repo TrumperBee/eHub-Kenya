@@ -1,0 +1,49 @@
+import { useState, useRef, useEffect } from 'react';
+import { Send } from 'lucide-react';
+
+export default function ChatInput({ onSend, disabled }) {
+  const [text, setText] = useState('');
+  const textareaRef = useRef(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 80) + 'px';
+    }
+  }, [text]);
+
+  const handleSend = () => {
+    if (!text.trim() || disabled) return;
+    onSend(text.trim());
+    setText('');
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  return (
+    <div className="flex items-end gap-2 p-3 border-t border-[#2A2A2A] bg-[#1A1A1A] rounded-b-2xl">
+      <textarea
+        ref={textareaRef}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={disabled ? 'Chat is disabled' : 'Type a message...'}
+        rows={1}
+        disabled={disabled}
+        className="flex-1 bg-[#242424] text-white text-sm rounded-xl px-4 py-2.5 outline-none border border-[#2A2A2A] focus:border-[#BF0021] transition-colors resize-none placeholder-[#5C5C5C] disabled:opacity-40"
+      />
+      <button
+        onClick={handleSend}
+        disabled={!text.trim() || disabled}
+        className="w-10 h-10 rounded-xl bg-[#BF0021] flex items-center justify-center shrink-0 hover:bg-[#D40025] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+      >
+        <Send size={16} className="text-white" />
+      </button>
+    </div>
+  );
+}
