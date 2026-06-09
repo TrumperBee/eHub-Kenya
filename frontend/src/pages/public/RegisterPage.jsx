@@ -33,8 +33,19 @@ export default function RegisterPage() {
       await register(form.email, form.password, form.displayName);
       navigate('/account');
     } catch (err) {
-      const msg = err.message.replace('Firebase: ', '').replace(/\(.*\)/, '').trim();
-      setError(msg || 'Registration failed');
+      const code = err.code || '';
+      const msg = err.message.replace('Firebase: ', '').trim();
+      if (code === 'auth/email-already-in-use') {
+        setError('This email is already registered. Try logging in instead.');
+      } else if (code === 'auth/operation-not-allowed') {
+        setError('Email/password sign-in is not enabled. Check Firebase Console → Authentication → Sign-in method.');
+      } else if (code === 'auth/weak-password') {
+        setError('Password is too weak. Use at least 8 characters including a number or symbol.');
+      } else if (code === 'auth/invalid-email') {
+        setError('Invalid email address.');
+      } else {
+        setError(msg || 'Registration failed. Check your details and try again.');
+      }
     } finally {
       setLoading(false);
     }
