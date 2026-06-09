@@ -27,7 +27,7 @@ export default function BrowsePage() {
     setCurrentFilters(filtersFromParams());
   }, [filtersFromParams]);
 
-  const { listings, loading, hasMore, loadMore } = useListings(currentFilters);
+  const { listings, loading, hasMore, loadMore, error } = useListings(currentFilters);
 
   const handleFiltersChange = (newFilters) => {
     const params = {};
@@ -78,6 +78,12 @@ export default function BrowsePage() {
                 Filters
               </button>
             </div>
+
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                {error}
+              </div>
+            )}
 
             <ListingGrid
               listings={listings}
