@@ -60,53 +60,33 @@ export const checkPaymentStatus = async (checkoutRequestId) => {
 };
 
 export const uploadListingImages = async (files) => {
-  const urls = [];
-
-  if (CLOUD_NAME && UPLOAD_PRESET) {
-    for (const file of files) {
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', UPLOAD_PRESET);
-
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          console.error('Cloudinary upload error:', err);
-          throw new Error(err.error?.message || `Cloudinary returned status ${res.status}`);
-        }
-
-        const data = await res.json();
-        urls.push(data.secure_url);
-        continue;
-      } catch (err) {
-        console.error('Cloudinary upload failed, falling back to base64:', err.message);
-      }
-    }
+  if (!CLOUD_NAME || !UPLOAD_PRESET) {
+    throw new Error('Image upload is not configured. Contact the admin to set up Cloudinary.');
   }
 
-  if (urls.length === 0) {
-    for (const file of files) {
-      const dataUrl = await fileToBase64(file);
-      urls.push(dataUrl);
+  const urls = [];
+
+  for (const file of files) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET);
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `Image upload failed (status ${res.status}). Try smaller images or try again.`);
     }
+
+    const data = await res.json();
+    urls.push(data.secure_url);
   }
 
   return { urls };
 };
-
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
 
 export const deleteListingImage = async () => {
   // Cloudinary unsigned uploads can't be deleted via API without a secret.
