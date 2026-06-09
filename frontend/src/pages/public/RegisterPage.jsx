@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Lock, Zap, Shield, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function RegisterPage() {
@@ -63,17 +64,14 @@ export default function RegisterPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#003BFF]/90 to-[#001E7A]/95" />
         <div className="relative z-10 text-center md:text-left max-w-md">
-          <div className="flex items-center justify-center md:justify-start gap-1 mb-4">
-            <span className="font-heading text-3xl font-extrabold text-white tracking-wide">eFootball Hub</span>
-            <span className="font-heading text-3xl font-extrabold text-[#FFF100]">Kenya</span>
-          </div>
+          <img src="/logo.png" alt="eFootball Hub Kenya" className="h-16 w-auto mb-4 mx-auto md:mx-0" />
           <p className="text-white/80 text-sm mb-8">Join the #1 marketplace for verified eFootball accounts in Kenya.</p>
           <div className="space-y-4">
             {[
-              { icon: '🔒', text: 'Secure M-Pesa payments' },
-              { icon: '⚡', text: 'Instant account delivery' },
-              { icon: '🛡️', text: 'Escrow protection on every order' },
-              { icon: '💬', text: 'Real-time chat with sellers' },
+              { icon: <Lock size={18} />, text: 'Secure M-Pesa payments' },
+              { icon: <Zap size={18} />, text: 'Instant account delivery' },
+              { icon: <Shield size={18} />, text: 'Escrow protection on every order' },
+              { icon: <MessageCircle size={18} />, text: 'Real-time chat with sellers' },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-3 text-white/90 text-sm">
                 <span className="text-lg">{item.icon}</span>
@@ -87,10 +85,7 @@ export default function RegisterPage() {
       <div className="md:w-1/2 flex items-center justify-center p-6 md:p-12 bg-white min-h-screen">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-1 mb-2 md:hidden">
-              <span className="font-heading text-xl font-extrabold text-konami-text tracking-wide">eFootball Hub</span>
-              <span className="font-heading text-xl font-extrabold text-konami-yellow">Kenya</span>
-            </div>
+            <img src="/logo.png" alt="eFootball Hub Kenya" className="h-10 w-auto mb-2 mx-auto md:hidden" />
             <h1 className="font-heading text-2xl font-extrabold text-konami-text">Create Account</h1>
             <p className="text-konami-text-muted text-sm mt-1">Start buying and selling today</p>
           </div>

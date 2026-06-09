@@ -1,3 +1,4 @@
+import { Star } from 'lucide-react';
 import { formatRelativeTime } from '../../utils/formatters';
 
 export default function ReviewCard({ review }) {
@@ -11,7 +12,7 @@ export default function ReviewCard({ review }) {
       </div>
       <div className="flex items-center gap-0.5 mb-2">
         {stars.map((filled, i) => (
-          <span key={i} className={`text-sm ${filled ? 'text-konami-gold' : 'text-konami-mid-gray'}`}>★</span>
+          <span key={i} className={`text-sm ${filled ? 'text-konami-gold' : 'text-konami-mid-gray'}`}><Star size={14} className={filled ? 'text-konami-gold fill-current' : 'text-konami-mid-gray'} /></span>
         ))}
       </div>
       {review.comment && (

@@ -8,12 +8,12 @@ import TierBadge from '../../components/listings/TierBadge';
 import toast from 'react-hot-toast';
 
 const TIER_OPTIONS = ['bronze', 'silver', 'gold', 'legendary'];
-const PLATFORM_OPTIONS = ['android', 'ios', 'both'];
-const LINK_TYPE_OPTIONS = [
-  { value: 'google', label: 'Linked to Google' },
-  { value: 'apple', label: 'Linked to Apple' },
-  { value: 'konami_only', label: 'Konami ID Only' },
-];
+const TIER_STRENGTH_DESC = {
+  bronze: 'Squad Strength: 3100 – 3179',
+  silver: 'Squad Strength: 3180 – 3199',
+  gold: 'Squad Strength: 3200 – 3249',
+  legendary: 'Squad Strength: 3250 and above',
+};
 
 export default function CreateListingPage() {
   const navigate = useNavigate();
@@ -27,16 +27,11 @@ export default function CreateListingPage() {
   const [form, setForm] = useState({
     title: '',
     tier: '',
-    platform: '',
-    fiveStarCount: '',
     goldCoins: '',
     gp: '',
-    epicLegendaryCount: '',
-    konamiLinkType: '',
     featuredPlayers: [],
     photos: [],
     description: '',
-    guaranteeStatement: '',
     price: '',
   });
 
@@ -83,10 +78,8 @@ export default function CreateListingPage() {
     const errs = {};
     if (!form.title || form.title.length > 80) errs.title = 'Title is required (max 80 chars)';
     if (!form.tier) errs.tier = 'Select a tier';
-    if (!form.platform) errs.platform = 'Select a platform';
-    if (form.description.length < 50) errs.description = 'Description must be at least 50 characters';
+    if (form.description.length < 30) errs.description = 'Description must be at least 30 characters';
     if (form.description.length > 1000) errs.description = 'Description max 1000 characters';
-    if (!form.guaranteeStatement) errs.guaranteeStatement = 'Guarantee statement is required';
     const price = Number(form.price);
     if (!price || price < 100) errs.price = 'Price must be at least KES 100';
     setErrors(errs);
@@ -120,17 +113,12 @@ export default function CreateListingPage() {
         sellerRating: userProfile.sellerRating || 0,
         title: form.title,
         description: form.description,
-        platform: form.platform,
         tier: form.tier,
         price: Number(form.price),
         photos: photoUrls,
-        fiveStarCount: Number(form.fiveStarCount) || 0,
         goldCoins: Number(form.goldCoins) || 0,
         gp: Number(form.gp) || 0,
-        epicLegendaryCount: Number(form.epicLegendaryCount) || 0,
         featuredPlayers: form.featuredPlayers,
-        konamiLinkType: form.konamiLinkType,
-        guaranteeStatement: form.guaranteeStatement,
       });
       toast.success('Listing published successfully!');
       navigate('/transfer-room');
@@ -171,30 +159,16 @@ export default function CreateListingPage() {
                       }}
                     >
                       <TierBadge tier={t} size="lg" />
+                      <p className="text-[11px] mt-1" style={{color:'#6B7280'}}>{TIER_STRENGTH_DESC[t]}</p>
                     </button>
                   ))}
                 </div>
                 {errors.tier && <p className="text-xs mt-1" style={{ color: '#C8102E' }}>{errors.tier}</p>}
+                <p className="text-xs italic mt-2" style={{ color: '#6B7280' }}>
+                  Select the tier that matches your squad's overall strength rating. You can find your squad strength in eFootball → Squad → Overall.
+                </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-heading font-bold uppercase tracking-wider mb-2" style={{ color: '#111111' }}>Platform</label>
-                <div className="flex gap-2">
-                  {PLATFORM_OPTIONS.map((p) => (
-                    <button key={p} type="button" onClick={() => setForm(f => ({ ...f, platform: p }))}
-                      className="flex-1 p-3 rounded-xl border-2 text-center capitalize text-sm font-bold transition-all min-h-[48px]"
-                      style={{
-                        borderColor: selectedTierColor(p),
-                        color: form.platform === p ? '#003BFF' : '#6B7280',
-                        background: form.platform === p ? 'rgba(0,59,255,0.05)' : '#FFFFFF',
-                      }}
-                    >
-                      {p === 'both' ? 'Both' : p}
-                    </button>
-                  ))}
-                </div>
-                {errors.platform && <p className="text-xs mt-1" style={{ color: '#C8102E' }}>{errors.platform}</p>}
-              </div>
             </div>
           </div>
 
@@ -202,34 +176,14 @@ export default function CreateListingPage() {
             <h2 className="font-heading text-base font-bold uppercase" style={{ color: '#003BFF' }}>Account Stats</h2>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { label: '5-Star Player Count', key: 'fiveStarCount' },
                 { label: 'Gold Coins', key: 'goldCoins' },
                 { label: 'GP / Game Points', key: 'gp' },
-                { label: 'Epic/Legendary Count', key: 'epicLegendaryCount' },
               ].map((field) => (
                 <div key={field.key}>
                   <label className="block text-sm font-heading font-bold uppercase tracking-wider mb-1.5" style={{ color: '#111111' }}>{field.label}</label>
                   <input type="number" value={form[field.key]} onChange={update(field.key)} className="input-field" min="0" />
                 </div>
               ))}
-            </div>
-
-            <div>
-              <label className="block text-sm font-heading font-bold uppercase tracking-wider mb-2" style={{ color: '#111111' }}>Konami Account Link Type</label>
-              <div className="flex gap-2">
-                {LINK_TYPE_OPTIONS.map((opt) => (
-                  <button key={opt.value} type="button" onClick={() => setForm(f => ({ ...f, konamiLinkType: opt.value }))}
-                    className="flex-1 p-3 rounded-xl border-2 text-center text-sm font-bold transition-all min-h-[48px]"
-                    style={{
-                      borderColor: form.konamiLinkType === opt.value ? '#003BFF' : '#E0E0E0',
-                      color: form.konamiLinkType === opt.value ? '#003BFF' : '#6B7280',
-                      background: form.konamiLinkType === opt.value ? 'rgba(0,59,255,0.05)' : '#FFFFFF',
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
 
@@ -291,16 +245,19 @@ export default function CreateListingPage() {
           </div>
 
           <div className="card p-6 space-y-4">
-            <h2 className="font-heading text-base font-bold uppercase" style={{ color: '#003BFF' }}>Description & Guarantee</h2>
+            <h2 className="font-heading text-base font-bold uppercase" style={{ color: '#003BFF' }}>Description</h2>
             <div>
-              <label className="block text-sm font-heading font-bold uppercase tracking-wider mb-1.5" style={{ color: '#111111' }}>Description <span className="text-xs font-normal lowercase" style={{ color: '#6B7280' }}>({form.description.length}/1000)</span></label>
-              <textarea value={form.description} onChange={update('description')} className="input-field min-h-[120px] resize-y" rows={4} placeholder="Describe what this account offers. Include key details about the squad..." />
+              <label className="block text-sm font-heading font-bold uppercase tracking-wider mb-1.5" style={{ color: '#111111' }}>DESCRIPTION</label>
+              <textarea value={form.description} onChange={update('description')} className="input-field min-h-[120px] resize-y" rows={4} placeholder="e.g. This is a high-rated squad with multiple Legendary players. I have been using this account for 2 seasons.
+
+Guarantee: This account's email has never been changed before. I guarantee delivery within 3 hours of payment." />
               {errors.description && <p className="text-xs mt-1" style={{ color: '#C8102E' }}>{errors.description}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-heading font-bold uppercase tracking-wider mb-1.5" style={{ color: '#111111' }}>Guarantee Statement</label>
-              <input type="text" value={form.guaranteeStatement} onChange={update('guaranteeStatement')} className="input-field" placeholder="e.g. Email never previously changed, fresh account" />
-              {errors.guaranteeStatement && <p className="text-xs mt-1" style={{ color: '#C8102E' }}>{errors.guaranteeStatement}</p>}
+              <p className="text-xs mt-1" style={{ color: '#6B7280' }}>
+                Describe your account. You may also include a guarantee statement (e.g. 'Email never previously changed', 'Delivered within 2 hours'). A guarantee builds buyer trust and increases sales.
+              </p>
+              <p className="text-xs italic mt-1" style={{ color: '#6B7280' }}>
+                Including a guarantee is optional but highly recommended.
+              </p>
             </div>
           </div>
 
@@ -310,7 +267,6 @@ export default function CreateListingPage() {
               <label className="block text-sm font-heading font-bold uppercase tracking-wider mb-1.5" style={{ color: '#111111' }}>Price (KES)</label>
               <input type="number" value={form.price} onChange={update('price')} className="input-field max-w-xs" min="100" placeholder="e.g. 5000" />
               {errors.price && <p className="text-xs mt-1" style={{ color: '#C8102E' }}>{errors.price}</p>}
-              <p className="text-xs mt-2" style={{ color: '#6B7280' }}>0.5% M-Pesa fee on each sale (max KES 200)</p>
             </div>
           </div>
 

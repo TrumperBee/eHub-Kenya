@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Bell, LogOut, Shield, ShoppingBag, User } from 'lucide-react';
+import { Menu, X, Bell, LogOut, Shield, ShoppingBag, User, House, Search, HelpCircle, MessageCircle, Package, Store, Plus, BarChart3, Settings, Clipboard, Users, DoorOpen, ArrowRight, Wallet, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { ADMIN_EMAIL, ADMIN_ROUTE } from '../../utils/constants';
@@ -100,13 +100,8 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-[68px]" style={{ background: '#003BFF' }}>
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-1.5">
-          <span className="font-heading text-xl font-extrabold text-white uppercase tracking-wider">
-            eFOOTBALL HUB
-          </span>
-          <span className="font-heading text-xl font-extrabold uppercase tracking-wider" style={{ color: '#FFF100' }}>
-            KENYA
-          </span>
+        <Link to="/" className="flex items-center">
+          <img src="/logo.png" alt="eFootball Hub Kenya" className="h-10 w-auto" />
         </Link>
 
         <div className="hidden md:flex items-center gap-5">
@@ -169,7 +164,7 @@ export default function Navbar() {
                           style={!n.read ? { background: 'rgba(255,241,0,0.05)' } : {}}
                         >
                           <span className="text-base shrink-0 mt-0.5">
-                            {n.type === 'payment' ? '💰' : n.type === 'order' ? '🛒' : n.type === 'chat' ? '💬' : n.type === 'approval' ? '✅' : '🔔'}
+                            {n.type === 'payment' ? <Wallet size={16} /> : n.type === 'order' ? <ShoppingBag size={16} /> : n.type === 'chat' ? <MessageCircle size={16} /> : n.type === 'approval' ? <CheckCircle size={16} /> : <Bell size={16} />}
                           </span>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-white truncate">{n.title}</p>
@@ -269,10 +264,7 @@ export default function Navbar() {
       >
         <div style={{ background: '#003BFF', padding: '24px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-1.5">
-              <span className="font-heading text-lg font-extrabold text-white uppercase tracking-wider">eFOOTBALL HUB</span>
-              <span className="font-heading text-lg font-extrabold uppercase tracking-wider" style={{ color: '#FFF100' }}>KENYA</span>
-            </div>
+            <img src="/logo.png" alt="eFootball Hub Kenya" className="h-8 w-auto" />
             <button onClick={closeDrawer} className="flex items-center justify-center w-11 h-11 shrink-0" aria-label="Close menu">
               <X size={24} className="text-white" />
             </button>
@@ -292,23 +284,23 @@ export default function Navbar() {
         </div>
 
         <SectionLabel label="MENU" />
-        <DrawerNavItem icon="🏠" label="Home" href="/" />
-        <DrawerNavItem icon="🔍" label="Browse Accounts" href="/browse" />
-        <DrawerNavItem icon="❓" label="How It Works" href="/how-it-works" />
-        <DrawerNavItem icon="💬" label="FAQ" href="/faq" />
+        <DrawerNavItem icon={<House size={18} />} label="Home" href="/" />
+        <DrawerNavItem icon={<Search size={18} />} label="Browse Accounts" href="/browse" />
+        <DrawerNavItem icon={<HelpCircle size={18} />} label="How It Works" href="/how-it-works" />
+        <DrawerNavItem icon={<MessageCircle size={18} />} label="FAQ" href="/faq" />
 
         {currentUser && (
           <>
             <div className="mx-5 mt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} />
             <SectionLabel label="MY ACCOUNT" />
-            <DrawerNavItem icon="📦" label="My Orders" href="/orders" />
-            <DrawerNavItem icon="👤" label="Profile" href="/profile" />
+            <DrawerNavItem icon={<Package size={18} />} label="My Orders" href="/orders" />
+            <DrawerNavItem icon={<User size={18} />} label="Profile" href="/profile" />
             <Link
               to={location.pathname}
               onClick={() => setNotifOpen(true)}
               className="flex items-center gap-3.5 mx-2 px-4 rounded-lg transition-colors min-h-[52px] text-white hover:bg-white/10"
             >
-              <span style={{ fontSize: 18, width: 20, textAlign: 'center', flexShrink: 0 }}>🔔</span>
+              <span style={{ fontSize: 18, width: 20, textAlign: 'center', flexShrink: 0 }}><Bell size={18} /></span>
               <span className="font-heading text-sm font-bold uppercase tracking-wide flex-1">Notifications</span>
               {unreadCount > 0 && (
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: '#FFF100', color: '#111' }}>{unreadCount}</span>
@@ -321,9 +313,9 @@ export default function Navbar() {
           <>
             <div className="mx-5 mt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} />
             <SectionLabel label="SELLER" />
-            <DrawerNavItem icon="🏪" label="Transfer Room" href="/transfer-room" />
-            <DrawerNavItem icon="➕" label="New Listing" href="/transfer-room/new" />
-            <DrawerNavItem icon="📊" label="My Earnings" href="/transfer-room/earnings" />
+            <DrawerNavItem icon={<Store size={18} />} label="Transfer Room" href="/transfer-room" />
+            <DrawerNavItem icon={<Plus size={18} />} label="New Listing" href="/transfer-room/new" />
+            <DrawerNavItem icon={<BarChart3 size={18} />} label="My Earnings" href="/transfer-room/earnings" />
           </>
         )}
 
@@ -339,7 +331,7 @@ export default function Navbar() {
               className="flex items-center justify-center w-full h-10 rounded-xl font-heading text-sm font-bold transition-colors"
               style={{ background: '#FFF100', color: '#111111' }}
             >
-              APPLY NOW →
+              APPLY NOW <ArrowRight size={14} />
             </Link>
           </div>
         )}
@@ -348,10 +340,10 @@ export default function Navbar() {
           <>
             <div className="mx-5 mt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} />
             <SectionLabel label="ADMIN" color="#C8102E" />
-            <DrawerNavItem icon="⚙️" label="Command Center" href={ADMIN_ROUTE} activeColor="#C8102E" />
-            <DrawerNavItem icon="📋" label="Applications" href={`${ADMIN_ROUTE}/applications`} activeColor="#C8102E" />
-            <DrawerNavItem icon="👥" label="Manage Sellers" href={`${ADMIN_ROUTE}/sellers`} activeColor="#C8102E" />
-            <DrawerNavItem icon="🚨" label="Disputes" href={`${ADMIN_ROUTE}/disputes`} activeColor="#C8102E" />
+            <DrawerNavItem icon={<Settings size={18} />} label="Command Center" href={ADMIN_ROUTE} activeColor="#C8102E" />
+            <DrawerNavItem icon={<Clipboard size={18} />} label="Applications" href={`${ADMIN_ROUTE}/applications`} activeColor="#C8102E" />
+            <DrawerNavItem icon={<Users size={18} />} label="Manage Sellers" href={`${ADMIN_ROUTE}/sellers`} activeColor="#C8102E" />
+            <DrawerNavItem icon={<AlertTriangle size={18} />} label="Disputes" href={`${ADMIN_ROUTE}/disputes`} activeColor="#C8102E" />
           </>
         )}
 
@@ -362,7 +354,7 @@ export default function Navbar() {
               className="flex items-center justify-center gap-2 w-full h-12 rounded-xl font-heading text-sm font-bold uppercase transition-colors"
               style={{ border: '1px solid rgba(255,255,255,0.3)', color: '#FFFFFF', background: 'transparent' }}
             >
-              <span>🚪</span> Logout
+              <span><DoorOpen size={18} /></span> Logout
             </button>
           ) : (
             <div className="flex flex-col gap-2">

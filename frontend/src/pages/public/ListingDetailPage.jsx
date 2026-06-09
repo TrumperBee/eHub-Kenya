@@ -11,7 +11,7 @@ import PlayerBadge from '../../components/listings/PlayerBadge';
 import ReviewCard from '../../components/reviews/ReviewCard';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import BuyNowModal from '../../components/checkout/BuyNowModal';
-import { ChevronDown, ChevronUp, Shield, Star } from 'lucide-react';
+import { ChevronDown, ChevronUp, Shield, Star, Circle } from 'lucide-react';
 
 const statRows = [
   { label: '5-Star Players', key: 'fiveStarCount' },
@@ -107,7 +107,7 @@ export default function ListingDetailPage() {
                   />
                 ) : (
                   <div className="w-full aspect-video flex items-center justify-center">
-                    <span className="text-5xl opacity-60">⚽</span>
+                    <span className="text-5xl opacity-60"><Circle size={48} /></span>
                   </div>
                 )}
               </div>

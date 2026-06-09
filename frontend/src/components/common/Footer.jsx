@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Check } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -7,14 +8,7 @@ export default function Footer() {
       <div className="bg-[#001E7A] text-white">
         <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-10">
           <div>
-            <div className="flex items-center gap-1.5 mb-3">
-              <span className="font-heading text-lg font-extrabold text-white uppercase tracking-wider">
-                eFOOTBALL HUB
-              </span>
-              <span className="font-heading text-lg font-extrabold uppercase tracking-wider" style={{ color: '#FFF100' }}>
-                KENYA
-              </span>
-            </div>
+            <img src="/logo.png" alt="eFootball Hub Kenya" className="h-12 w-auto mb-3" />
             <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
               Kenya's Premier eFootball Account Marketplace
             </p>
@@ -51,7 +45,7 @@ export default function Footer() {
                 'Admin-Moderated Platform',
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                  <span style={{ color: '#FFF100' }}>✓</span>
+                  <span style={{ color: '#FFF100' }}><Check size={14} /></span>
                   {item}
                 </li>
               ))}

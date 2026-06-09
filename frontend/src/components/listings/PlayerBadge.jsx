@@ -1,3 +1,5 @@
+import { Circle } from 'lucide-react';
+
 export default function PlayerBadge({ playerName }) {
   return (
     <span
@@ -9,7 +11,7 @@ export default function PlayerBadge({ playerName }) {
       }}
       title={playerName}
     >
-      <span style={{ fontSize: 8, color: '#003BFF' }}>⚽</span>
+      <Circle size={6} className="fill-current" />
       {playerName}
     </span>
   );

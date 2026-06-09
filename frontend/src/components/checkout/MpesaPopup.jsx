@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Lock } from 'lucide-react';
 import { formatKES } from '../../utils/formatters';
 
 function validatePhone(value) {
@@ -81,7 +82,7 @@ export default function MpesaPopup({ amount, onSubmit, loading }) {
         )}
       </button>
 
-      <p className="text-xs text-center" style={{ color: '#6B7280' }}>🔒 Secured by Escrow</p>
+      <p className="text-xs text-center" style={{ color: '#6B7280' }}><Lock size={12} className="inline" /> Secured by Escrow</p>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Smartphone } from 'lucide-react';
+import { Smartphone, X } from 'lucide-react';
 
 export default function PaymentStatus({
   checkoutRequestId,
@@ -105,7 +105,7 @@ export default function PaymentStatus({
       {(state === 'failed') && (
         <>
           <div className="w-16 h-16 mx-auto flex items-center justify-center">
-            <span className="text-5xl" style={{ color: '#C8102E' }}>✗</span>
+            <span className="text-5xl" style={{ color: '#C8102E' }}><X size={36} /></span>
           </div>
           <div>
             <p className="font-heading text-xl font-extrabold text-white uppercase">Payment Not Completed</p>

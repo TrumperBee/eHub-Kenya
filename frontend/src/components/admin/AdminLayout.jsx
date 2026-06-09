@@ -1,14 +1,15 @@
 import { Link, useLocation } from 'react-router-dom';
+import { BarChart3, Clipboard, User, Package, ShoppingCart, Users, Scale } from 'lucide-react';
 import { ADMIN_ROUTE } from '../../utils/constants';
 
 const NAV_ITEMS = [
-  { path: ADMIN_ROUTE,            label: 'Overview',          icon: '📊' },
-  { path: `${ADMIN_ROUTE}/applications`, label: 'Applications', icon: '📋' },
-  { path: `${ADMIN_ROUTE}/sellers`,      label: 'Sellers',      icon: '👤' },
-  { path: `${ADMIN_ROUTE}/listings`,     label: 'Listings',     icon: '📦' },
-  { path: `${ADMIN_ROUTE}/orders`,       label: 'Orders',       icon: '🛒' },
-  { path: `${ADMIN_ROUTE}/users`,        label: 'Users',        icon: '👥' },
-  { path: `${ADMIN_ROUTE}/disputes`,     label: 'Disputes',     icon: '⚖️' },
+  { path: ADMIN_ROUTE,            label: 'Overview',          icon: <BarChart3 size={16} /> },
+  { path: `${ADMIN_ROUTE}/applications`, label: 'Applications', icon: <Clipboard size={16} /> },
+  { path: `${ADMIN_ROUTE}/sellers`,      label: 'Sellers',      icon: <User size={16} /> },
+  { path: `${ADMIN_ROUTE}/listings`,     label: 'Listings',     icon: <Package size={16} /> },
+  { path: `${ADMIN_ROUTE}/orders`,       label: 'Orders',       icon: <ShoppingCart size={16} /> },
+  { path: `${ADMIN_ROUTE}/users`,        label: 'Users',        icon: <Users size={16} /> },
+  { path: `${ADMIN_ROUTE}/disputes`,     label: 'Disputes',     icon: <Scale size={16} /> },
 ];
 
 export default function AdminLayout({ children }) {

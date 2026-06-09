@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Smartphone, Star, CircleDollarSign, BarChart3, ArrowRight, Circle } from 'lucide-react';
 import { TIERS, PLATFORMS } from '../../utils/constants';
 import { formatKES } from '../../utils/formatters';
 import TierBadge from './TierBadge';
@@ -16,7 +17,6 @@ export default function ListingCard({ listing }) {
   const tier = listing.tier || 'bronze';
   const tierAccent = TIER_COLORS[tier];
 
-  const platformIcon = PLATFORMS[listing.platform]?.icon || '📱';
   const platformLabel = PLATFORMS[listing.platform]?.label || listing.platform;
 
   const photoUrl = listing.photos?.[0];
@@ -55,7 +55,7 @@ export default function ListingCard({ listing }) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <span className="text-5xl opacity-60">⚽</span>
+              <span className="text-5xl opacity-60"><Circle size={48} /></span>
             </div>
           )}
 
@@ -71,7 +71,7 @@ export default function ListingCard({ listing }) {
             <TierBadge tier={tier} />
           </div>
           <div className="absolute top-3 right-3 bg-konami-blue text-white rounded-full px-3 py-1 text-xs font-heading font-bold uppercase tracking-wide">
-            {platformIcon} {platformLabel}
+            <Smartphone size={14} /> {platformLabel}
           </div>
         </div>
 
@@ -82,7 +82,7 @@ export default function ListingCard({ listing }) {
             </span>
             {listing.sellerRating > 0 ? (
               <span className="text-sm font-medium" style={{ color: '#D4AF37' }}>
-                {listing.sellerRating.toFixed(1)} ★
+                {listing.sellerRating.toFixed(1)} <Star size={14} className="inline" />
               </span>
             ) : (
               <span className="text-xs font-heading font-bold uppercase" style={{ color: '#6B7280' }}>New Seller</span>
@@ -95,15 +95,15 @@ export default function ListingCard({ listing }) {
 
           <div className="grid grid-cols-3 gap-2 rounded-xl p-[10px]" style={{ background: '#F5F5F5' }}>
             <div className="text-center">
-              <p className="font-heading text-[13px] font-bold" style={{ color: '#111111' }}>⭐ {listing.fiveStarCount || 0}</p>
+              <p className="font-heading text-[13px] font-bold" style={{ color: '#111111' }}><Star size={14} className="inline" /> {listing.fiveStarCount || 0}</p>
               <p className="text-[11px]" style={{ color: '#6B7280' }}>Stars</p>
             </div>
             <div className="text-center">
-              <p className="font-heading text-[13px] font-bold" style={{ color: '#111111' }}>🪙 {listing.goldCoins?.toLocaleString() || 0}</p>
+              <p className="font-heading text-[13px] font-bold" style={{ color: '#111111' }}><CircleDollarSign size={14} className="inline" /> {listing.goldCoins?.toLocaleString() || 0}</p>
               <p className="text-[11px]" style={{ color: '#6B7280' }}>Coins</p>
             </div>
             <div className="text-center">
-              <p className="font-heading text-[13px] font-bold" style={{ color: '#111111' }}>📊 {listing.gp?.toLocaleString() || 0}</p>
+              <p className="font-heading text-[13px] font-bold" style={{ color: '#111111' }}><BarChart3 size={14} className="inline" /> {listing.gp?.toLocaleString() || 0}</p>
               <p className="text-[11px]" style={{ color: '#6B7280' }}>GP</p>
             </div>
           </div>
@@ -125,7 +125,7 @@ export default function ListingCard({ listing }) {
               onClick={(e) => { e.stopPropagation(); handleClick(); }}
               className="btn-primary !py-2 !px-4 text-[13px]"
             >
-              VIEW DEAL →
+              VIEW DEAL <ArrowRight size={14} />
             </button>
           </div>
         </div>

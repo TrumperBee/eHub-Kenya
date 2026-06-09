@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
+import { House, Search, Package, User } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { path: '/',        label: 'Home',   icon: '🏠' },
-  { path: '/browse',  label: 'Browse', icon: '🔍' },
-  { path: '/orders',  label: 'Orders', icon: '📦' },
-  { path: '/account', label: 'Profile', icon: '👤' },
+  { path: '/',        label: 'Home',   icon: <House size={20} /> },
+  { path: '/browse',  label: 'Browse', icon: <Search size={20} /> },
+  { path: '/orders',  label: 'Orders', icon: <Package size={20} /> },
+  { path: '/account', label: 'Profile', icon: <User size={20} /> },
 ];
 
 export default function BottomNav() {

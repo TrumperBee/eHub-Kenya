@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
@@ -9,7 +9,7 @@ import { useAuth } from './context/AuthContext';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import BottomNav from './components/common/BottomNav';
-import LoadingScreen from './components/common/LoadingScreen';
+
 import ProtectedRoute from './components/common/ProtectedRoute';
 import SellerRoute from './components/common/SellerRoute';
 import AdminRoute from './components/common/AdminRoute';
@@ -30,9 +30,7 @@ import ProfilePage from './pages/buyer/ProfilePage';
 import TransferRoomPage from './pages/seller/TransferRoomPage';
 import CreateListingPage from './pages/seller/CreateListingPage';
 import EditListingPage from './pages/seller/EditListingPage';
-import SellerOrdersPage from './pages/seller/SellerOrdersPage';
-import SellerEarningsPage from './pages/seller/SellerEarningsPage';
-import SellerProfilePage from './pages/seller/SellerProfilePage';
+
 
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminApplicationsPage from './pages/admin/AdminApplicationsPage';
@@ -58,20 +56,9 @@ function PageLayout({ children }) {
 
 function AppContent() {
   const { currentUser, loading } = useAuth();
-  const [initDone, setInitDone] = useState(false);
-
-  useEffect(() => {
-    if (initDone) return;
-    const timer = setTimeout(() => setInitDone(true), 2000);
-    return () => clearTimeout(timer);
-  }, [initDone]);
-
-  const showLoader = loading || !initDone;
 
   return (
     <>
-      <LoadingScreen show={showLoader} />
-      <div style={{ display: showLoader ? 'none' : 'block' }}>
         <BrowserRouter>
           <Toaster
             position="top-right"
@@ -120,15 +107,6 @@ function AppContent() {
             <Route path="/transfer-room/edit/:id" element={
               <PageLayout><SellerRoute><EditListingPage /></SellerRoute></PageLayout>
             } />
-            <Route path="/transfer-room/orders" element={
-              <PageLayout><SellerRoute><SellerOrdersPage /></SellerRoute></PageLayout>
-            } />
-            <Route path="/transfer-room/earnings" element={
-              <PageLayout><SellerRoute><SellerEarningsPage /></SellerRoute></PageLayout>
-            } />
-            <Route path="/transfer-room/profile" element={
-              <PageLayout><SellerRoute><SellerProfilePage /></SellerRoute></PageLayout>
-            } />
 
             <Route path={ADMIN_ROUTE} element={
               <PageLayout><AdminRoute><AdminDashboardPage /></AdminRoute></PageLayout>
@@ -155,7 +133,6 @@ function AppContent() {
             <Route path="*" element={<PageLayout><HomePage /></PageLayout>} />
           </Routes>
         </BrowserRouter>
-      </div>
     </>
   );
 }

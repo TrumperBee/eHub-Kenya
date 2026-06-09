@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { X, Circle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { createOrder } from '../../services/ordersService';
 import { formatKES } from '../../utils/formatters';
@@ -111,7 +111,7 @@ export default function BuyNowModal({ listing, onClose }) {
                 {listing.photos?.[0] ? (
                   <img src={listing.photos[0]} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-xl opacity-60">⚽</span>
+                  <span className="text-xl opacity-60"><Circle size={24} /></span>
                 )}
               </div>
               <div className="flex-1 min-w-0">
@@ -190,7 +190,7 @@ export default function BuyNowModal({ listing, onClose }) {
             {step === 'failed' && (
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 mx-auto flex items-center justify-center">
-                  <span className="text-5xl" style={{ color: '#C8102E' }}>✗</span>
+                  <span className="text-5xl" style={{ color: '#C8102E' }}><X size={36} /></span>
                 </div>
                 <div>
                   <p className="font-heading text-xl font-extrabold text-white uppercase">Payment Not Completed</p>

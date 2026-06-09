@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Globe, Smartphone, Lock, CheckCircle } from 'lucide-react';
 
 export default function HeroSection() {
   return (
@@ -26,7 +26,7 @@ export default function HeroSection() {
         <div className="max-w-3xl">
           <div className="animate-fade-in-up inline-flex items-center gap-2 rounded-full px-5 py-2 mb-6"
             style={{ background: '#FFF100' }}>
-            <span className="text-sm">🇰🇪</span>
+            <span className="text-sm"><Globe size={16} /></span>
             <span className="font-heading text-[12px] font-bold uppercase tracking-[0.1em]" style={{ color: '#111111' }}>
               KENYA'S #1 eFOOTBALL MARKETPLACE
             </span>
@@ -52,7 +52,7 @@ export default function HeroSection() {
           </div>
 
           <div className="animate-fade-in-up mt-10 flex items-center gap-6" style={{ animationDelay: '1.2s' }}>
-            {['📱 M-PESA NATIVE', '🔒 ESCROW PROTECTED', '✅ VERIFIED SELLERS'].map((item, i) => (
+            {[<><Smartphone size={14} /> M-PESA NATIVE</>, <><Lock size={14} /> ESCROW PROTECTED</>, <><CheckCircle size={14} /> VERIFIED SELLERS</>].map((item, i) => (
               <div key={i} className="flex items-center gap-2">
                 <span className="font-heading text-[12px] font-bold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.7)' }}>
                   {item}

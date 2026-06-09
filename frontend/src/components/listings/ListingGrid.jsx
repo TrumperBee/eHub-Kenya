@@ -1,3 +1,4 @@
+import { Circle } from 'lucide-react';
 import ListingCard from './ListingCard';
 
 function SkeletonCard() {
@@ -42,7 +43,7 @@ export default function ListingGrid({ listings, loading, emptyMessage = 'No list
   if (!listings || listings.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <span className="text-5xl mb-4">⚽</span>
+        <span className="text-5xl mb-4"><Circle size={48} /></span>
         <p className="text-konami-text-muted text-lg mb-4">{emptyMessage}</p>
         {onClearFilters && (
           <button onClick={onClearFilters} className="text-sm text-konami-blue hover:text-konami-blue-hover transition-colors">

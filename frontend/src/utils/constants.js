@@ -9,9 +9,9 @@ export const TIERS = {
 };
 
 export const PLATFORMS = {
-  android: { label: 'Android', icon: '🤖' },
-  ios:     { label: 'iOS',     icon: '🍎' },
-  both:    { label: 'Both',    icon: '📱' },
+  android: { label: 'Android', icon: 'smartphone' },
+  ios:     { label: 'iOS',     icon: 'smartphone' },
+  both:    { label: 'Both',    icon: 'smartphone' },
 };
 
 export const ORDER_STATUS = {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { getAllSellers, removeSeller } from '../../services/usersService';
@@ -60,7 +61,7 @@ export default function AdminSellersPage() {
                   <td className="py-3 text-sm text-konami-text">{seller.displayName || '—'}</td>
                   <td className="py-3 text-sm text-konami-text-dim">{seller.email}</td>
                   <td className="py-3 text-sm text-konami-text">{seller.sellerDisplayName || '—'}</td>
-                  <td className="py-3 text-sm text-konami-gold">{seller.sellerRating ? `${seller.sellerRating} ★` : '—'}</td>
+                  <td className="py-3 text-sm text-konami-gold">{seller.sellerRating ? <><Star size={12} className="inline" /> {seller.sellerRating}</> : '—'}</td>
                   <td className="py-3 text-sm text-konami-text">{seller.totalSales || 0}</td>
                   <td className="py-3 text-sm text-konami-text-dim">{formatDate(seller.createdAt)}</td>
                   <td className="py-3">

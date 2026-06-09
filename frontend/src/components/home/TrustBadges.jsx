@@ -1,8 +1,10 @@
+import { Lock, Smartphone, CheckCircle, Shield } from 'lucide-react';
+
 const badges = [
-  { icon: '🔒', title: 'Escrow Protected', desc: 'Funds held until you confirm delivery' },
-  { icon: '📱', title: 'M-Pesa Native', desc: 'Pay directly from Safaricom' },
-  { icon: '✅', title: 'Verified Sellers', desc: 'Every seller approved by admin' },
-  { icon: '🛡️', title: 'Buyer Guarantee', desc: 'Full refund if seller fails to deliver' },
+  { icon: <Lock size={36} />, title: 'Escrow Protected', desc: 'Funds held until you confirm delivery' },
+  { icon: <Smartphone size={36} />, title: 'M-Pesa Native', desc: 'Pay directly from Safaricom' },
+  { icon: <CheckCircle size={36} />, title: 'Verified Sellers', desc: 'Every seller approved by admin' },
+  { icon: <Shield size={36} />, title: 'Buyer Guarantee', desc: 'Full refund if seller fails to deliver' },
 ];
 
 export default function TrustBadges() {
