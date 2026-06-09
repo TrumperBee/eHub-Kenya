@@ -105,7 +105,8 @@ export default function EditListingPage() {
         const result = await uploadListingImages(newPhotos);
         photoUrls = [...photoUrls, ...result.urls];
       } catch (err) {
-        toast.error('Image upload failed');
+        console.error('Upload error:', err);
+        toast.error(err.message || 'Image upload failed');
         setSubmitting(false);
         setUploadProgress(false);
         return;

@@ -98,7 +98,8 @@ export default function CreateListingPage() {
         const result = await uploadListingImages(form.photos);
         photoUrls = result.urls;
       } catch (err) {
-        toast.error('Image upload failed. Try again.');
+        console.error('Upload error:', err);
+        toast.error(err.message || 'Image upload failed. Try again.');
         setSubmitting(false);
         setUploadProgress(false);
         return;
