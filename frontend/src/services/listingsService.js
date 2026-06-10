@@ -1,5 +1,6 @@
 import { db } from './firebase';
 import { collection, query, where, orderBy, limit, startAfter, getDocs, getDoc, doc, addDoc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
+import { incrementListingCount, decrementListingCount } from './statsService';
 
 const listingsRef = collection(db, 'listings');
 const PAGE_SIZE = 12;
@@ -77,7 +78,7 @@ export const getSellerListings = async (sellerId) => {
 };
 
 export const createListing = async (data) => {
-  return addDoc(listingsRef, {
+  const ref = await addDoc(listingsRef, {
     ...data,
     status: 'active',
     viewCount: 0,
@@ -85,6 +86,8 @@ export const createListing = async (data) => {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+  incrementListingCount();
+  return ref;
 };
 
 export const updateListing = async (id, data) => {
@@ -92,7 +95,8 @@ export const updateListing = async (id, data) => {
 };
 
 export const deleteListingSoft = async (id) => {
-  return updateDoc(doc(db, 'listings', id), { status: 'removed', updatedAt: serverTimestamp() });
+  await updateDoc(doc(db, 'listings', id), { status: 'removed', updatedAt: serverTimestamp() });
+  decrementListingCount();
 };
 
 export const incrementViewCount = async (id) => {

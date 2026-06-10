@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { db } from '../../services/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { subscribeToStats } from '../../services/statsService';
 
 function useCountUp(target, duration = 2000) {
   const [count, setCount] = useState(0);
@@ -54,39 +53,44 @@ function StatItem({ label, target }) {
   );
 }
 
+function StatSkeleton() {
+  return (
+    <div className="animate-pulse text-center">
+      <div className="h-[56px] w-24 bg-blue-200 rounded-lg mx-auto mb-2" />
+      <div className="h-4 w-32 bg-blue-100 rounded mx-auto" />
+    </div>
+  );
+}
+
 export default function StatsBar() {
-  const [stats, setStats] = useState({ listings: 0, sales: 0, users: 0, sellers: 0 });
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [listingsSnap, ordersSnap, usersSnap, sellersSnap] = await Promise.all([
-          getDocs(query(collection(db, 'listings'), where('status', '==', 'active'))),
-          getDocs(query(collection(db, 'orders'), where('status', '==', 'completed'))),
-          getDocs(collection(db, 'users')),
-          getDocs(query(collection(db, 'users'), where('sellerApproved', '==', true))),
-        ]);
-        setStats({
-          listings: listingsSnap.size || 15,
-          sales: ordersSnap.size || 8,
-          users: usersSnap.size || 42,
-          sellers: sellersSnap.size || 5,
-        });
-      } catch {
-        setStats({ listings: 0, sales: 0, users: 0, sellers: 0 });
-      }
-    };
-    fetchStats();
+    const unsub = subscribeToStats((data) => {
+      setStats(data);
+    });
+    return unsub;
   }, []);
 
   return (
     <section className="py-10" style={{ background: '#FFF100' }}>
       <div className="max-w-5xl mx-auto px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          <StatItem label="Total Accounts Listed" target={stats.listings} />
-          <StatItem label="Total Sales Completed" target={stats.sales} />
-          <StatItem label="Registered Sellers" target={stats.sellers} />
-          <StatItem label="Transactions Processed" target={stats.sales + Math.floor(stats.listings / 2)} />
+          {!stats ? (
+            <>
+              <StatSkeleton />
+              <StatSkeleton />
+              <StatSkeleton />
+              <StatSkeleton />
+            </>
+          ) : (
+            <>
+              <StatItem label="Total Accounts Listed" target={stats.totalAccountsListed || 0} />
+              <StatItem label="Total Sales Completed" target={stats.totalSalesCompleted || 0} />
+              <StatItem label="Registered Sellers" target={stats.registeredSellers || 0} />
+              <StatItem label="Transactions Processed" target={stats.transactionsProcessed || 0} />
+            </>
+          )}
         </div>
       </div>
     </section>

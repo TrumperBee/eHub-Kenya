@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { ADMIN_ROUTE } from './utils/constants';
 import { useAuth } from './context/AuthContext';
+import { seedStatsIfMissing } from './services/statsService';
 
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
@@ -56,6 +57,10 @@ function PageLayout({ children }) {
 
 function AppContent() {
   const { currentUser, loading } = useAuth();
+
+  useEffect(() => {
+    seedStatsIfMissing();
+  }, []);
 
   return (
     <>

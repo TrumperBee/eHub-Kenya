@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
-import { ChevronDown, Globe, Smartphone, Lock, CheckCircle } from 'lucide-react';
+import { ChevronDown, Smartphone, Lock, CheckCircle } from 'lucide-react';
 
 export default function HeroSection() {
   return (
     <section
-      className="relative min-h-screen flex items-center overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden text-center"
       style={{ minHeight: 600 }}
     >
       <div
@@ -22,45 +22,52 @@ export default function HeroSection() {
         }}
       />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 w-full">
-        <div className="max-w-3xl">
-          <div className="animate-fade-in-up inline-flex items-center gap-2 rounded-full px-5 py-2 mb-6"
-            style={{ background: '#FFF100' }}>
-            <span className="text-sm"><Globe size={16} /></span>
-            <span className="font-heading text-[12px] font-bold uppercase tracking-[0.1em]" style={{ color: '#111111' }}>
-              KENYA'S #1 eFOOTBALL MARKETPLACE
-            </span>
-          </div>
+      <div className="relative z-10 max-w-4xl mx-auto px-6 w-full flex flex-col items-center justify-center">
+        <img
+          src="/logo.png"
+          alt="eFootball Hub Kenya"
+          className="h-20 w-auto mb-6 drop-shadow-2xl"
+          style={{ filter: 'drop-shadow(0 0 24px rgba(255,241,0,0.4))' }}
+        />
 
-          <div className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-            <h1 className="text-[40px] md:text-[64px] font-heading font-extrabold uppercase leading-[1.0] tracking-[0.02em]">
-              <span className="text-white">BUY & SELL </span>
-              <span style={{ color: '#FFF100' }}>eFOOTBALL</span>
-              <span className="text-white"> ACCOUNTS</span>
-            </h1>
-          </div>
+        <div className="inline-flex items-center gap-2 rounded-full px-5 py-2 mb-6" style={{ background: 'rgba(255,241,0,0.1)', border: '1px solid rgba(255,241,0,0.4)' }}>
+          <span className="font-heading font-bold text-[#FFF100] text-xs uppercase tracking-widest">
+            Kenya's #1 eFootball Marketplace
+          </span>
+        </div>
 
-          <div className="animate-fade-in-up mt-6" style={{ animationDelay: '0.6s' }}>
-            <p className="text-lg md:text-xl leading-relaxed max-w-[480px]" style={{ color: 'rgba(255,255,255,0.8)' }}>
-              M-Pesa payments. Escrow protected. Verified sellers. No scams. No stress. Just football.
-            </p>
-          </div>
+        <div>
+          <h1 className="text-[36px] md:text-[64px] font-heading font-extrabold uppercase leading-[1.05] tracking-[0.02em]">
+            <div className="text-white">BUY & SELL</div>
+            <div style={{ color: '#FFF100' }}>eFOOTBALL</div>
+            <div className="text-white">ACCOUNTS</div>
+          </h1>
+        </div>
 
-          <div className="animate-fade-in-up mt-8 flex flex-col sm:flex-row gap-4" style={{ animationDelay: '0.9s' }}>
-            <Link to="/browse" className="btn-primary text-base !px-10 !py-5">Browse Accounts</Link>
-            <Link to="/apply-seller" className="btn-secondary text-base !px-10 !py-5">Become a Seller</Link>
-          </div>
+        <div className="mt-6 max-w-[520px] mx-auto">
+          <p className="text-[15px] md:text-[18px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>
+            M-Pesa payments. Escrow protected. Verified sellers. No scams. No stress. Just football.
+          </p>
+        </div>
 
-          <div className="animate-fade-in-up mt-10 flex items-center gap-6" style={{ animationDelay: '1.2s' }}>
-            {[<><Smartphone size={14} /> M-PESA NATIVE</>, <><Lock size={14} /> ESCROW PROTECTED</>, <><CheckCircle size={14} /> VERIFIED SELLERS</>].map((item, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span className="font-heading text-[12px] font-bold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                  {item}
-                </span>
-                {i < 2 && <span className="w-px h-4" style={{ background: 'rgba(255,255,255,0.2)' }} />}
-              </div>
-            ))}
-          </div>
+        <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+          <Link to="/browse" className="btn-primary text-base !px-10 !py-5">Browse Accounts</Link>
+          <Link to="/apply-seller" className="btn-secondary text-base !px-10 !py-5">Become a Seller</Link>
+        </div>
+
+        <div className="mt-10 flex items-center justify-center gap-4 md:gap-8 flex-wrap">
+          {[
+            <><Smartphone size={14} /> M-PESA NATIVE</>,
+            <><Lock size={14} /> ESCROW PROTECTED</>,
+            <><CheckCircle size={14} /> VERIFIED SELLERS</>,
+          ].map((item, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="font-heading text-[13px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                {item}
+              </span>
+              {i < 2 && <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>·</span>}
+            </div>
+          ))}
         </div>
       </div>
 

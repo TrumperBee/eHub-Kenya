@@ -47,6 +47,10 @@ async function release(req, res) {
       });
     }
 
+    await adminDb.doc('stats/global').update({
+      totalSalesCompleted: admin.firestore.FieldValue.increment(1),
+    });
+
     const messagesRef = orderRef.collection('messages');
     await messagesRef.add({
       type: 'system',

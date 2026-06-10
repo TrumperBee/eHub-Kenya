@@ -91,6 +91,10 @@ async function handleCallback(body) {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
+      await adminDb.doc('stats/global').update({
+        transactionsProcessed: admin.firestore.FieldValue.increment(1),
+      });
+
       await transactionRef.update({
         resultCode: 0,
         resultDesc: ResultDesc,
