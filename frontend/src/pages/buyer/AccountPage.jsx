@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateProfile } from 'firebase/auth';
 import { doc, collection, query, where, orderBy, limit, getDocs, writeBatch, setDoc } from 'firebase/firestore';
 import { auth } from '../../services/firebase';
 import { db } from '../../services/firebase';
@@ -190,8 +190,35 @@ export default function AccountPage() {
   };
 
   const handlePhotoUpload = async (e) => {
-    // Will implement with Cloudinary
-    toast.error('Photo upload not yet available');
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+    if (!CLOUD_NAME || !UPLOAD_PRESET) {
+      toast.error('Image upload is not configured');
+      return;
+    }
+    setChangingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', UPLOAD_PRESET);
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      const photoURL = data.secure_url;
+      await updateUserDocument(currentUser.uid, { photoURL });
+      await updateProfile(currentUser, { photoURL });
+      toast.success('Photo updated');
+      window.location.reload();
+    } catch (err) {
+      toast.error(err.message || 'Failed to upload photo');
+    } finally {
+      setChangingPhoto(false);
+    }
   };
 
   const handleNotifToggle = async (key, value) => {
