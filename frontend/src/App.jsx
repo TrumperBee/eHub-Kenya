@@ -22,11 +22,13 @@ import HowItWorksPage from './pages/public/HowItWorksPage';
 import FAQPage from './pages/public/FAQPage';
 import LoginPage from './pages/public/LoginPage';
 import RegisterPage from './pages/public/RegisterPage';
+import SellerPublicProfilePage from './pages/public/SellerPublicProfilePage';
+import SetupUsernamePage from './pages/public/SetupUsernamePage';
 
 import BuyerDashboardPage from './pages/buyer/BuyerDashboardPage';
 import MyOrdersPage from './pages/buyer/MyOrdersPage';
 import OrderDetailPage from './pages/buyer/OrderDetailPage';
-import ProfilePage from './pages/buyer/ProfilePage';
+import AccountPage from './pages/buyer/AccountPage';
 
 import TransferRoomPage from './pages/seller/TransferRoomPage';
 import CreateListingPage from './pages/seller/CreateListingPage';
@@ -42,6 +44,7 @@ import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminDisputesPage from './pages/admin/AdminDisputesPage';
 
 import SellerApplicationPage from './pages/SellerApplicationPage';
+import AIAssistant from './components/ai/AIAssistant';
 
 function PageLayout({ children }) {
   const { currentUser } = useAuth();
@@ -85,12 +88,17 @@ function AppContent() {
             <Route path="/listing/:id" element={<PageLayout><ListingDetailPage /></PageLayout>} />
             <Route path="/how-it-works" element={<PageLayout><HowItWorksPage /></PageLayout>} />
             <Route path="/faq" element={<PageLayout><FAQPage /></PageLayout>} />
+            <Route path="/seller/:sellerId" element={<PageLayout><SellerPublicProfilePage /></PageLayout>} />
+
+            <Route path="/setup-username" element={
+              <ProtectedRoute><SetupUsernamePage /></ProtectedRoute>
+            } />
 
             <Route path="/apply-seller" element={
               <PageLayout><ProtectedRoute><SellerApplicationPage /></ProtectedRoute></PageLayout>
             } />
 
-            <Route path="/account" element={
+            <Route path="/dashboard" element={
               <PageLayout><ProtectedRoute><BuyerDashboardPage /></ProtectedRoute></PageLayout>
             } />
             <Route path="/orders" element={
@@ -99,8 +107,8 @@ function AppContent() {
             <Route path="/orders/:id" element={
               <PageLayout><ProtectedRoute><OrderDetailPage /></ProtectedRoute></PageLayout>
             } />
-            <Route path="/profile" element={
-              <PageLayout><ProtectedRoute><ProfilePage /></ProtectedRoute></PageLayout>
+            <Route path="/account" element={
+              <PageLayout><ProtectedRoute><AccountPage /></ProtectedRoute></PageLayout>
             } />
 
             <Route path="/transfer-room" element={
@@ -137,6 +145,7 @@ function AppContent() {
 
             <Route path="*" element={<PageLayout><HomePage /></PageLayout>} />
           </Routes>
+          <AIAssistant />
         </BrowserRouter>
     </>
   );

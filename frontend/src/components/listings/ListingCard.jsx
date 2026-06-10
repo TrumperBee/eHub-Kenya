@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Smartphone, Star, CircleDollarSign, BarChart3, ArrowRight, Circle } from 'lucide-react';
 import { TIERS, PLATFORMS } from '../../utils/constants';
 import { formatKES } from '../../utils/formatters';
@@ -77,9 +77,14 @@ export default function ListingCard({ listing }) {
 
         <div className="p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="font-heading text-sm font-bold" style={{ color: '#003BFF' }}>
+            <Link
+              to={`/seller/${listing.sellerId}`}
+              onClick={(e) => e.stopPropagation()}
+              className="font-heading text-sm font-bold hover:underline"
+              style={{ color: '#003BFF' }}
+            >
               {listing.sellerDisplayName || 'Unknown Seller'}
-            </span>
+            </Link>
             {listing.sellerRating > 0 ? (
               <span className="text-sm font-medium" style={{ color: '#D4AF37' }}>
                 {listing.sellerRating.toFixed(1)} <Star size={14} className="inline" />

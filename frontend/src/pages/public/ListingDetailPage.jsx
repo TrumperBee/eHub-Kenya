@@ -148,7 +148,7 @@ export default function ListingDetailPage() {
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-heading font-bold" style={{ background: '#003BFF' }}>
                   {(listing.sellerDisplayName || 'S')[0]}
                 </div>
-                <span className="font-heading text-sm font-bold" style={{ color: '#003BFF' }}>{listing.sellerDisplayName || 'Unknown Seller'}</span>
+                <Link to={`/seller/${listing.sellerId}`} className="font-heading text-sm font-bold hover:underline" style={{ color: '#003BFF' }}>{listing.sellerDisplayName || 'Unknown Seller'}</Link>
                 {listing.sellerRating > 0 ? (
                   <span className="text-sm" style={{ color: '#D4AF37' }}>
                     <Star size={14} className="inline -mt-0.5" /> {listing.sellerRating.toFixed(1)}
@@ -230,7 +230,9 @@ export default function ListingDetailPage() {
                     {(listing.sellerDisplayName || 'S')[0]}
                   </div>
                   <div>
-                    <p className="text-sm font-heading font-bold text-white">{listing.sellerDisplayName}</p>
+                    <Link to={`/seller/${listing.sellerId}`} className="text-sm font-heading font-bold text-white hover:underline">{listing.sellerDisplayName}</Link>
+                    <br />
+                    <Link to={`/seller/${listing.sellerId}`} className="text-xs text-white/50 hover:underline">View Seller Profile</Link>
                     <div className="flex items-center gap-1">
                       {listing.sellerRating > 0 ? (
                         <>

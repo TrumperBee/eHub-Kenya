@@ -7,6 +7,7 @@ export const createUserDocument = async (uid, data) => {
     uid,
     email: data.email,
     displayName: data.displayName || '',
+    username: data.username || null,
     phoneNumber: data.phoneNumber || null,
     photoURL: data.photoURL || null,
     role: 'buyer',
@@ -32,9 +33,9 @@ export const updateUserDocument = async (uid, data) => {
   await updateDoc(doc(db, 'users', uid), { ...data, updatedAt: serverTimestamp() });
 };
 
-export const registerWithEmail = async (email, password, displayName) => {
+export const registerWithEmail = async (email, password, displayName, username) => {
   const cred = await createUserWithEmailAndPassword(auth, email, password);
-  await createUserDocument(cred.user.uid, { email, displayName });
+  await createUserDocument(cred.user.uid, { email, displayName, username: username.toLowerCase() });
   return cred.user;
 };
 

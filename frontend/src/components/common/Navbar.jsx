@@ -204,9 +204,9 @@ export default function Navbar() {
                       <ShoppingBag size={16} />
                       My Orders
                     </Link>
-                    <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors">
+                    <Link to="/account" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors">
                       <User size={16} />
-                      Profile
+                      My Account
                     </Link>
 
                     {userProfile?.sellerApproved && (
@@ -294,7 +294,7 @@ export default function Navbar() {
             <div className="mx-5 mt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} />
             <SectionLabel label="MY ACCOUNT" />
             <DrawerNavItem icon={<Package size={18} />} label="My Orders" href="/orders" />
-            <DrawerNavItem icon={<User size={18} />} label="Profile" href="/profile" />
+            <DrawerNavItem icon={<User size={18} />} label="My Account" href="/account" />
             <Link
               to={location.pathname}
               onClick={() => setNotifOpen(true)}

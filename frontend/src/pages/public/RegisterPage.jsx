@@ -1,36 +1,88 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Lock, Zap, Shield, MessageCircle } from 'lucide-react';
+import { Lock, Zap, Shield, MessageCircle, CheckCircle, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { validateUsernameFormat, isUsernameTaken, generateSuggestions, checkUsername } from '../../utils/usernameUtils';
 
 export default function RegisterPage() {
   const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ displayName: '', email: '', password: '', confirmPassword: '' });
+  const [form, setForm] = useState({ displayName: '', username: '', email: '', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [usernameError, setUsernameError] = useState(null);
+  const [usernameAvailable, setUsernameAvailable] = useState(null);
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [usernameTaken, setUsernameTaken] = useState(false);
+  const debounceRef = useRef(null);
+
   const update = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
+  const handleUsernameChange = (e) => {
+    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    setForm(prev => ({ ...prev, username: value }));
+    setUsernameTaken(false);
+    setUsernameAvailable(null);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    const formatError = validateUsernameFormat(value);
+    if (formatError) {
+      setUsernameError(formatError);
+      setUsernameChecking(false);
+      return;
+    }
+    setUsernameError(null);
+
+    if (!value) {
+      setUsernameChecking(false);
+      return;
+    }
+
+    setUsernameChecking(true);
+    debounceRef.current = setTimeout(async () => {
+      const result = await checkUsername(value);
+      setUsernameChecking(false);
+      if (result.valid) {
+        setUsernameAvailable(value);
+        setUsernameTaken(false);
+      } else if (result.error === 'taken') {
+        setUsernameTaken(value);
+        setUsernameAvailable(null);
+      } else {
+        setUsernameError(result.error);
+      }
+    }, 600);
+  };
+
   const validate = () => {
-    if (!form.displayName || !form.email || !form.password || !form.confirmPassword) {
+    if (!form.displayName || !form.username || !form.email || !form.password || !form.confirmPassword) {
       return 'Please fill in all fields';
     }
     if (form.displayName.length < 2) return 'Name must be at least 2 characters';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Invalid email address';
     if (form.password.length < 8) return 'Password must be at least 8 characters';
     if (form.password !== form.confirmPassword) return 'Passwords do not match';
+    if (usernameError) return usernameError;
+    if (usernameChecking) return 'Please wait, checking username availability...';
+    if (usernameTaken) return 'Username is already taken';
     return null;
   };
+
+  const canSubmit = form.displayName && form.username && form.email && form.password && form.confirmPassword
+    && !usernameError && !usernameChecking && !usernameTaken && form.username.length >= 3;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    const validationError = validate();
-    if (validationError) { setError(validationError); return; }
+    if (!canSubmit) {
+      const validationError = validate();
+      if (validationError) { setError(validationError); return; }
+    }
     setLoading(true);
     try {
-      await register(form.email, form.password, form.displayName);
+      await register(form.email, form.password, form.displayName, form.username);
       navigate('/account');
     } catch (err) {
       const code = err.code || '';
@@ -38,7 +90,7 @@ export default function RegisterPage() {
       if (code === 'auth/email-already-in-use') {
         setError('This email is already registered. Try logging in instead.');
       } else if (code === 'auth/operation-not-allowed') {
-        setError('Email/password sign-in is not enabled. Check Firebase Console → Authentication → Sign-in method.');
+        setError('Email/password sign-in is not enabled. Check Firebase Console.');
       } else if (code === 'auth/weak-password') {
         setError('Password is too weak. Use at least 8 characters including a number or symbol.');
       } else if (code === 'auth/invalid-email') {
@@ -55,8 +107,12 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
     try {
-      await loginWithGoogle();
-      navigate('/account');
+      const result = await loginWithGoogle();
+      if (result?.isNew) {
+        navigate('/setup-username');
+      } else {
+        navigate('/account');
+      }
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user') {
         setError(err.message.replace('Firebase: ', '').replace(/\(.*\)/, '').trim() || 'Google sign-in failed');
@@ -65,6 +121,12 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
@@ -97,8 +159,8 @@ export default function RegisterPage() {
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <img src="/logo.png" alt="eFootball Hub Kenya" className="h-10 w-auto mb-2 mx-auto md:hidden" />
-            <h1 className="font-heading text-2xl font-extrabold text-konami-text">Create Account</h1>
-            <p className="text-konami-text-muted text-sm mt-1">Start buying and selling today</p>
+            <h1 className="font-heading text-2xl font-extrabold" style={{ color: '#111111' }}>Create Account</h1>
+            <p className="text-sm mt-1" style={{ color: '#6B7280' }}>Start buying and selling today</p>
           </div>
 
           {error && (
@@ -108,41 +170,133 @@ export default function RegisterPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="text"
-              placeholder="Full name"
-              value={form.displayName}
-              onChange={update('displayName')}
-              className="input-field"
-              autoComplete="name"
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={update('email')}
-              className="input-field"
-              autoComplete="email"
-            />
-            <input
-              type="password"
-              placeholder="Password (min 8 characters)"
-              value={form.password}
-              onChange={update('password')}
-              className="input-field"
-              autoComplete="new-password"
-            />
-            <input
-              type="password"
-              placeholder="Confirm password"
-              value={form.confirmPassword}
-              onChange={update('confirmPassword')}
-              className="input-field"
-              autoComplete="new-password"
-            />
+            <div>
+              <input
+                type="text"
+                placeholder="Full name"
+                value={form.displayName}
+                onChange={update('displayName')}
+                className="input-field"
+                autoComplete="name"
+              />
+            </div>
+
+            <div>
+              <input
+                type="text"
+                placeholder="Username (e.g. victork254)"
+                value={form.username}
+                onChange={handleUsernameChange}
+                className={`input-field ${usernameError || usernameTaken ? '!border-red-500' : ''} ${usernameAvailable ? '!border-green-500' : ''}`}
+                autoComplete="off"
+              />
+              <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
+                Only lowercase letters, numbers, and underscores. No spaces.
+              </p>
+
+              {usernameChecking && (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <Loader2 size={14} className="animate-spin" style={{ color: '#003BFF' }} />
+                  <span className="text-xs" style={{ color: '#6B7280' }}>Checking availability...</span>
+                </div>
+              )}
+
+              {usernameError && !usernameChecking && (
+                <p className="text-xs mt-1" style={{ color: '#EF4444' }}>{usernameError}</p>
+              )}
+
+              {usernameAvailable && (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <CheckCircle size={14} style={{ color: '#10B981' }} />
+                  <span className="text-xs" style={{ color: '#10B981' }}>{form.username} is available</span>
+                </div>
+              )}
+
+              {usernameTaken && (
+                <div className="mt-2 bg-red-50 border border-red-200 rounded-xl p-4 animate-fade-in-up">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                      <X size={16} className="text-red-500" />
+                    </div>
+                    <div>
+                      <p className="font-heading font-bold text-red-700 text-sm uppercase tracking-wide">
+                        Username Taken
+                      </p>
+                      <p className="text-red-600 text-sm mt-1">
+                        <strong>@{form.username}</strong> is already in use.
+                        Try one of these instead:
+                      </p>
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {generateSuggestions(form.username).map(suggestion => (
+                          <button
+                            key={suggestion}
+                            type="button"
+                            onClick={() => {
+                              setForm(prev => ({ ...prev, username: suggestion }));
+                              setUsernameTaken(false);
+                              setUsernameChecking(true);
+                              setTimeout(async () => {
+                                const result = await checkUsername(suggestion);
+                                setUsernameChecking(false);
+                                if (result.valid) {
+                                  setUsernameAvailable(suggestion);
+                                  setUsernameTaken(false);
+                                } else if (result.error === 'taken') {
+                                  setUsernameTaken(suggestion);
+                                  setUsernameAvailable(null);
+                                } else {
+                                  setUsernameError(result.error);
+                                }
+                              }, 100);
+                            }}
+                            className="px-3 py-1 bg-white border border-[#003BFF] rounded-full text-[#003BFF] text-xs font-heading font-bold hover:bg-[#003BFF] hover:text-white transition-colors"
+                          >
+                            @{suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <input
+                type="email"
+                placeholder="Email"
+                value={form.email}
+                onChange={update('email')}
+                className="input-field"
+                autoComplete="email"
+              />
+            </div>
+
+            <div>
+              <input
+                type="password"
+                placeholder="Password (min 8 characters)"
+                value={form.password}
+                onChange={update('password')}
+                className="input-field"
+                autoComplete="new-password"
+              />
+            </div>
+
+            <div>
+              <input
+                type="password"
+                placeholder="Confirm password"
+                value={form.confirmPassword}
+                onChange={update('confirmPassword')}
+                className="input-field"
+                autoComplete="new-password"
+              />
+            </div>
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={!canSubmit || loading}
               className="btn-primary w-full flex items-center justify-center gap-2"
             >
               {loading ? (
@@ -157,14 +311,15 @@ export default function RegisterPage() {
               <div className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-white px-2 text-konami-text-muted">or continue with</span>
+              <span className="bg-white px-2" style={{ color: '#6B7280' }}>or continue with</span>
             </div>
           </div>
 
           <button
             onClick={handleGoogle}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 rounded-xl text-sm font-medium text-konami-text hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ color: '#111111' }}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
@@ -175,9 +330,9 @@ export default function RegisterPage() {
             Google
           </button>
 
-          <p className="mt-6 text-center text-sm text-konami-text-muted">
+          <p className="mt-6 text-center text-sm" style={{ color: '#6B7280' }}>
             Already have an account?{' '}
-            <Link to="/login" className="text-konami-blue hover:text-konami-blue-hover font-semibold transition-colors">
+            <Link to="/login" className="font-semibold hover:underline" style={{ color: '#003BFF' }}>
               Login
             </Link>
           </p>

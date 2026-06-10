@@ -37,8 +37,12 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await loginWithGoogle();
-      navigate('/account');
+      const result = await loginWithGoogle();
+      if (result?.isNew) {
+        navigate('/setup-username');
+      } else {
+        navigate('/account');
+      }
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user') {
         setError(err.message.replace('Firebase: ', '').replace(/\(.*\)/, '').trim() || 'Google login failed');

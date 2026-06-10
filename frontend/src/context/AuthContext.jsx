@@ -54,14 +54,15 @@ export function AuthProvider({ children }) {
         displayName: user.displayName,
         photoURL: user.photoURL,
       });
+      return { isNew: true };
     }
-    return result;
+    return { isNew: false };
   };
 
-  const register = async (email, password, displayName) => {
+  const register = async (email, password, displayName, username) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName });
-    await createUserDocument(cred.user.uid, { email, displayName });
+    await createUserDocument(cred.user.uid, { email, displayName, username: username?.toLowerCase() });
     return cred.user;
   };
 
