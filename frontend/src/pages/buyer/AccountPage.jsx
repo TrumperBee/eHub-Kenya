@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 import {
   User, Lock, Bell, ShoppingBag, Settings, LogOut, Camera, CheckCircle,
   Store, Calendar, Clock, AlertTriangle, X, Loader2, HelpCircle, MessageCircle,
-  ChevronRight, Eye, Shield, Check, UserCheck, Package, Star,
+  ChevronRight, Eye, Shield, Check, UserCheck, Package, Star, Save,
 } from 'lucide-react';
 
 const TABS = [
