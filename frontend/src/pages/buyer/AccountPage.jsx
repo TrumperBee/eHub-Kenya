@@ -100,6 +100,9 @@ export default function AccountPage() {
       );
       getDocs(q).then(snap => {
         setNotifications(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      }).catch(err => {
+        console.warn('Notifications query error:', err.code);
+        setNotifications([]);
       });
     }
   }, [activeTab, currentUser]);
@@ -113,6 +116,9 @@ export default function AccountPage() {
       );
       getDocs(q).then(snap => {
         setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      }).catch(err => {
+        console.warn('Orders query error:', err.code);
+        setOrders([]);
       });
     }
   }, [activeTab, currentUser]);

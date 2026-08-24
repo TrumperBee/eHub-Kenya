@@ -4,20 +4,26 @@ import { db } from './firebase';
 const STATS_REF = doc(db, 'stats', 'global');
 
 export const seedStatsIfMissing = async () => {
-  const snap = await getDoc(STATS_REF);
-  if (!snap.exists()) {
-    await setDoc(STATS_REF, {
-      totalAccountsListed: 0,
-      totalSalesCompleted: 8,
-      registeredSellers: 0,
-      transactionsProcessed: 8,
-    });
+  try {
+    const snap = await getDoc(STATS_REF);
+    if (!snap.exists()) {
+      await setDoc(STATS_REF, {
+        totalAccountsListed: 0,
+        totalSalesCompleted: 8,
+        registeredSellers: 0,
+        transactionsProcessed: 8,
+      });
+    }
+  } catch (err) {
+    console.warn('Stats seed skipped:', err.code || err.message);
   }
 };
 
 export const subscribeToStats = (callback) => {
   return onSnapshot(STATS_REF, (snap) => {
     if (snap.exists()) callback(snap.data());
+  }, (err) => {
+    console.warn('Stats subscription error:', err.code);
   });
 };
 

@@ -74,6 +74,9 @@ export default function SellerPublicProfilePage() {
     const q = query(reviewsRef, orderBy('createdAt', 'desc'));
     const unsub = onSnapshot(q, snap => {
       setReviews(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, err => {
+      console.warn('Reviews subscription error:', err.code);
+      setReviews([]);
     });
     return unsub;
   }, [sellerId]);

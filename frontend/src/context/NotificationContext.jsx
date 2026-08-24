@@ -28,6 +28,8 @@ export function NotificationProvider({ children }) {
       const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setNotifications(items);
       setUnreadCount(items.filter(n => !n.read).length);
+    }, (err) => {
+      console.warn('Notifications subscription error:', err.code);
     });
 
     return unsub;

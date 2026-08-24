@@ -4,16 +4,22 @@ service cloud.firestore {
 
     function isLoggedIn() { return request.auth != null; }
     function isOwner(uid) { return request.auth.uid == uid; }
-    function isAdmin() { return request.auth.token.email == 'ochiengv250@gmail.com'; }
+    function isAdmin() { return request.auth != null && request.auth.token.email == 'ochiengv250@gmail.com'; }
     function isSeller() {
       return isLoggedIn() &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.sellerApproved == true;
     }
 
     match /users/{userId} {
-      allow read: if isLoggedIn();
+      allow read: if true;
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) || isAdmin();
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isLoggedIn();
+        allow update, delete: if false;
+      }
     }
 
     match /listings/{listingId} {
@@ -21,12 +27,12 @@ service cloud.firestore {
       allow create: if isSeller();
       allow update: if isSeller() && resource.data.sellerId == request.auth.uid || isAdmin();
       allow delete: if isAdmin();
-    }
 
-    match /listings/{listingId}/reviews/{reviewId} {
-      allow read: if true;
-      allow create: if isLoggedIn();
-      allow update, delete: if isAdmin();
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isLoggedIn();
+        allow update, delete: if false;
+      }
     }
 
     match /orders/{orderId} {
@@ -39,14 +45,14 @@ service cloud.firestore {
         (resource.data.buyerId == request.auth.uid ||
          resource.data.sellerId == request.auth.uid ||
          isAdmin());
-    }
 
-    match /orders/{orderId}/messages/{messageId} {
-      allow read: if isLoggedIn() &&
-        (get(/databases/$(database)/documents/orders/$(orderId)).data.buyerId == request.auth.uid ||
-         get(/databases/$(database)/documents/orders/$(orderId)).data.sellerId == request.auth.uid ||
-         isAdmin());
-      allow create: if isLoggedIn();
+      match /messages/{messageId} {
+        allow read: if isLoggedIn() &&
+          (get(/databases/$(database)/documents/orders/$(orderId)).data.buyerId == request.auth.uid ||
+           get(/databases/$(database)/documents/orders/$(orderId)).data.sellerId == request.auth.uid ||
+           isAdmin());
+        allow create: if isLoggedIn();
+      }
     }
 
     match /sellerApplications/{userId} {
@@ -60,10 +66,18 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Public platform counters (read by everyone, written by backend Admin SDK
+    // which bypasses rules — client write allowed for listing/seller counters)
+    match /stats/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
     match /notifications/{notifId} {
       allow read: if isLoggedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isLoggedIn();
       allow update: if isLoggedIn() && resource.data.userId == request.auth.uid;
-      allow write: if isAdmin();
+      allow delete: if false;
     }
   }
 }
