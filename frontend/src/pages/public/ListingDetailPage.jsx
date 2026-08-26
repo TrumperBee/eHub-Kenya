@@ -14,10 +14,8 @@ import BuyNowModal from '../../components/checkout/BuyNowModal';
 import { ChevronDown, ChevronUp, Shield, Star, Circle } from 'lucide-react';
 
 const statRows = [
-  { label: '5-Star Players', key: 'fiveStarCount' },
   { label: 'Gold Coins', key: 'goldCoins' },
   { label: 'GP', key: 'gp' },
-  { label: 'Epic/Legendary Items', key: 'epicLegendaryCount' },
 ];
 
 export default function ListingDetailPage() {
@@ -189,14 +187,6 @@ export default function ListingDetailPage() {
                       </span>
                     </div>
                   ))}
-                  <div className="flex items-center justify-between py-3 px-4" style={{ background: '#F5F5F5' }}>
-                    <span className="text-sm" style={{ color: '#6B7280' }}>Platform</span>
-                    <span className="text-sm font-heading font-bold" style={{ color: '#111111' }}>{platformInfo.label}</span>
-                  </div>
-                  <div className="flex items-center justify-between py-3 px-4" style={{ background: '#FFFFFF' }}>
-                    <span className="text-sm" style={{ color: '#6B7280' }}>Konami Link Type</span>
-                    <span className="text-sm font-heading font-bold capitalize" style={{ color: '#111111' }}>{listing.konamiLinkType?.replace('_', ' ') || 'N/A'}</span>
-                  </div>
                 </div>
               </div>
             </div>
