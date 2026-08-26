@@ -1,4 +1,4 @@
-import { Star } from 'lucide-react';
+import { Star, CheckCircle } from 'lucide-react';
 import { formatRelativeTime } from '../../utils/formatters';
 
 export default function ReviewCard({ review, showListingTitle }) {
@@ -21,13 +21,20 @@ export default function ReviewCard({ review, showListingTitle }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0">
+            <div className="min-w-0 flex items-center gap-2 flex-wrap">
               <span className="text-sm font-semibold" style={{ color: '#111111' }}>
                 {review.buyerDisplayName || 'Anonymous'}
               </span>
               {review.buyerUsername && (
-                <span className="text-xs ml-1.5" style={{ color: '#9CA3AF' }}>
+                <span className="text-xs" style={{ color: '#9CA3AF' }}>
                   @{review.buyerUsername}
+                </span>
+              )}
+              {review.isVerifiedPurchase && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-heading font-bold uppercase"
+                  style={{ background: '#DCFCE7', color: '#166534' }}>
+                  <CheckCircle size={9} className="flex-shrink-0" />
+                  Verified Purchase
                 </span>
               )}
             </div>
@@ -37,11 +44,11 @@ export default function ReviewCard({ review, showListingTitle }) {
           </div>
           <div className="flex items-center gap-0.5 mt-1">
             {stars.map((filled, i) => (
-              <Star key={i} size={14} className={filled ? 'text-[#FFF100] fill-current' : 'text-gray-300'} />
+              <Star key={i} size={13} className={filled ? 'text-[#FFF100] fill-current' : 'text-gray-300'} />
             ))}
           </div>
           {review.comment && (
-            <p className="text-sm mt-1.5 leading-relaxed" style={{ color: '#6B7280' }}>{review.comment}</p>
+            <p className="text-sm mt-1.5 leading-relaxed" style={{ color: '#374151' }}>{review.comment}</p>
           )}
           {showListingTitle && review.listingTitle && (
             <p className="text-xs mt-2" style={{ color: '#9CA3AF' }}>

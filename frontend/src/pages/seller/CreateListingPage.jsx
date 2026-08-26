@@ -111,6 +111,7 @@ export default function CreateListingPage() {
       await createListing({
         sellerId: userProfile.uid,
         sellerDisplayName: userProfile.sellerDisplayName || userProfile.displayName,
+        sellerPhotoURL: userProfile.photoURL || null,
         sellerRating: userProfile.sellerRating || 0,
         title: form.title,
         description: form.description,

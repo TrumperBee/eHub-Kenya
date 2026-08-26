@@ -1,5 +1,5 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { Smartphone, Star, CircleDollarSign, BarChart3, ArrowRight, Circle } from 'lucide-react';
+import { Smartphone, Star, CircleDollarSign, BarChart3, ArrowRight, Circle, ExternalLink } from 'lucide-react';
 import { TIERS, PLATFORMS } from '../../utils/constants';
 import { formatKES } from '../../utils/formatters';
 import TierBadge from './TierBadge';
@@ -80,10 +80,23 @@ export default function ListingCard({ listing }) {
             <Link
               to={`/seller/${listing.sellerId}`}
               onClick={(e) => e.stopPropagation()}
-              className="font-heading text-sm font-bold hover:underline"
-              style={{ color: '#003BFF' }}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full
+                         bg-blue-50 border border-konami-blue/30
+                         hover:bg-konami-blue hover:text-white hover:border-konami-blue
+                         active:scale-95 transition-all duration-150 group"
             >
-              {listing.sellerDisplayName || 'Unknown Seller'}
+              <div className="w-5 h-5 rounded-full bg-konami-blue flex items-center justify-center flex-shrink-0">
+                {listing.sellerPhotoURL
+                  ? <img src={listing.sellerPhotoURL} className="w-5 h-5 rounded-full object-cover" alt="" />
+                  : <span className="text-white font-heading font-bold text-[9px]">
+                      {listing.sellerDisplayName?.[0]?.toUpperCase() || 'S'}
+                    </span>
+                }
+              </div>
+              <span className="font-heading font-bold text-konami-blue group-hover:text-white text-xs uppercase tracking-wide">
+                {listing.sellerDisplayName || 'Unknown Seller'}
+              </span>
+              <ExternalLink size={11} className="text-konami-blue/60 group-hover:text-white flex-shrink-0" />
             </Link>
             {listing.sellerRating > 0 ? (
               <span className="text-sm font-medium" style={{ color: '#D4AF37' }}>

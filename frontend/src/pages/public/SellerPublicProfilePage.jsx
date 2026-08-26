@@ -8,7 +8,7 @@ import ListingCard from '../../components/listings/ListingCard';
 import ReviewCard from '../../components/reviews/ReviewCard';
 import ReviewForm from '../../components/reviews/ReviewForm';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { Star, ShieldCheck, MessageCircle, X } from 'lucide-react';
+import { Star, ShieldCheck, MessageCircle, X, Star as StarIcon } from 'lucide-react';
 
 export default function SellerPublicProfilePage() {
   const { sellerId } = useParams();
@@ -100,9 +100,6 @@ export default function SellerPublicProfilePage() {
   const totalRating = seller.sellerRating || 0;
   const totalReviews = seller.sellerTotalRatings || 0;
   const totalSales = seller.totalSales || 0;
-
-  const canReview = currentUser && hasCompletedOrder;
-  const showReviewButton = currentUser ? (hasCompletedOrder ? 'review' : 'no-order') : 'login';
 
   const handleReviewSuccess = () => {
     setShowReviewModal(false);
@@ -198,37 +195,17 @@ export default function SellerPublicProfilePage() {
                 {reviews.length} verified {reviews.length === 1 ? 'review' : 'reviews'}
               </p>
             </div>
-            {showReviewButton === 'login' && (
-              <button
-                onClick={() => navigate('/login')}
-                className="btn-blue text-sm"
-              >
+            {!currentUser && (
+              <Link to="/login" className="btn-blue text-sm px-4 py-2">
                 Login to Write a Review
-              </button>
+              </Link>
             )}
-            {showReviewButton === 'no-order' && (
-              <div className="relative group">
-                <button
-                  disabled
-                  className="btn-blue text-sm opacity-50 cursor-not-allowed"
-                >
-                  <MessageCircle size={14} />
-                  Write a Review
-                </button>
-                <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block z-10">
-                  <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
-                    You must purchase from this seller to leave a review
-                  </div>
-                </div>
-              </div>
+            {currentUser && currentUser.uid === sellerId && (
+              <span className="text-white/40 text-xs">You cannot review yourself</span>
             )}
-            {showReviewButton === 'review' && (
-              <button
-                onClick={() => setShowReviewModal(true)}
-                className="btn-blue text-sm"
-              >
-                <MessageCircle size={14} />
-                Write a Review
+            {currentUser && currentUser.uid !== sellerId && (
+              <button onClick={() => setShowReviewModal(true)} className="btn-blue text-sm px-4 py-2">
+                <StarIcon size={14} className="mr-1.5" /> Write a Review
               </button>
             )}
           </div>

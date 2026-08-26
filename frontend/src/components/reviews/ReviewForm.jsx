@@ -11,23 +11,41 @@ export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, u
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [completedOrder, setCompletedOrder] = useState(null);
   const [fetching, setFetching] = useState(true);
+  const [existingReview, setExistingReview] = useState(null);
+  const [isVerifiedPurchase, setIsVerifiedPurchase] = useState(false);
 
   useEffect(() => {
     if (!sellerId || !currentUser) return;
+    
+    const checkExistingReview = async () => {
+      try {
+        const reviewRef = doc(db, 'users', sellerId, 'reviews', currentUser.uid);
+        const reviewSnap = await getDoc(reviewRef);
+        if (reviewSnap.exists()) {
+          const data = reviewSnap.data();
+          setExistingReview(data);
+          setRating(data.rating || 0);
+          setComment(data.comment || '');
+        }
+      } catch (err) {
+        console.warn('Error fetching existing review:', err);
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    checkExistingReview();
+
+    // Check if user has completed orders with this seller (for verified purchase badge)
     const q = query(
       collection(db, 'orders'),
       where('buyerId', '==', currentUser.uid),
       where('sellerId', '==', sellerId),
       where('status', '==', 'completed'),
-      orderBy('createdAt', 'desc'),
     );
     getDocs(q).then(snap => {
-      if (snap.docs.length > 0) {
-        setCompletedOrder({ id: snap.docs[0].id, ...snap.docs[0].data() });
-      }
-      setFetching(false);
+      setIsVerifiedPurchase(snap.docs.length > 0);
     });
   }, [sellerId, currentUser]);
 
@@ -41,22 +59,21 @@ export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, u
       toast.error('Review must be at least 10 characters');
       return;
     }
-    if (!completedOrder) {
-      toast.error('No completed order found with this seller');
-      return;
-    }
-
-    const orderId = completedOrder.id;
-    const listingId = completedOrder.listingId;
 
     setSubmitting(true);
     try {
-      const reviewRef = doc(db, 'listings', listingId, 'reviews', orderId);
-      const existingSnap = await getDoc(reviewRef);
-      if (existingSnap.exists()) {
-        toast.error('You have already reviewed this seller for this order');
-        setSubmitting(false);
-        return;
+      // We need a listingId - find one from a completed order
+      let listingId = null;
+      const ordersQuery = query(
+        collection(db, 'orders'),
+        where('buyerId', '==', currentUser.uid),
+        where('sellerId', '==', sellerId),
+        where('status', '==', 'completed'),
+        orderBy('createdAt', 'desc'),
+      );
+      const ordersSnap = await getDocs(ordersQuery);
+      if (ordersSnap.docs.length > 0) {
+        listingId = ordersSnap.docs[0].data().listingId;
       }
 
       const reviewData = {
@@ -64,33 +81,68 @@ export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, u
         buyerDisplayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Anonymous',
         buyerUsername: userProfile?.username || currentUser.email?.split('@')[0] || 'anonymous',
         buyerPhotoURL: currentUser.photoURL || null,
-        orderId,
-        listingId,
-        listingTitle: completedOrder.listingTitle || completedOrder.title || 'Account',
         rating,
         comment: comment.trim(),
         createdAt: serverTimestamp(),
+        isVerifiedPurchase: false, // Will be set below
       };
 
-      await runTransaction(db, async (transaction) => {
-        transaction.set(doc(db, 'listings', listingId, 'reviews', orderId), reviewData);
-        transaction.set(doc(db, 'users', sellerId, 'reviews', orderId), reviewData);
+      // Check if user has completed orders for verified badge
+      const ordersQuery2 = query(
+        collection(db, 'orders'),
+        where('buyerId', '==', currentUser.uid),
+        where('sellerId', '==', sellerId),
+        where('status', '==', 'completed'),
+      );
+      const ordersSnap2 = await getDocs(ordersQuery2);
+      if (ordersSnap2.docs.length > 0) {
+        reviewData.isVerifiedPurchase = true;
+      }
 
+      // If we have a listingId, also add listingTitle
+      if (listingId) {
+        const listingSnap = await getDoc(doc(db, 'listings', listingId));
+        if (listingSnap.exists()) {
+          reviewData.listingId = listingId;
+          reviewData.listingTitle = listingSnap.data().title || 'Account';
+        }
+      }
+
+      await runTransaction(db, async (transaction) => {
+        // Write to both locations with currentUser.uid as doc ID
+        transaction.set(doc(db, 'users', sellerId, 'reviews', currentUser.uid), reviewData);
+        if (listingId) {
+          transaction.set(doc(db, 'listings', listingId, 'reviews', currentUser.uid), reviewData);
+        }
+
+        // Update seller's aggregate rating
         const sellerRef = doc(db, 'users', sellerId);
         const sellerSnap = await transaction.get(sellerRef);
         if (sellerSnap.exists()) {
           const sellerData = sellerSnap.data();
           const currentRating = sellerData.sellerRating || 0;
           const totalRatings = sellerData.sellerTotalRatings || 0;
-          const newRating = ((currentRating * totalRatings) + rating) / (totalRatings + 1);
+          
+          let newRating, newTotalRatings;
+          if (existingReview) {
+            // Updating existing review - adjust rating
+            const oldRating = existingReview.rating || 0;
+            newRating = ((currentRating * totalRatings) - oldRating + rating) / totalRatings;
+            newTotalRatings = totalRatings;
+          } else {
+            // New review
+            newRating = ((currentRating * totalRatings) + rating) / (totalRatings + 1);
+            newTotalRatings = totalRatings + 1;
+          }
+          
           transaction.update(sellerRef, {
             sellerRating: newRating,
-            sellerTotalRatings: totalRatings + 1,
+            sellerTotalRatings: newTotalRatings,
           });
         }
       });
 
-      toast.success('Review posted successfully');
+      toast.success(existingReview ? 'Review updated successfully' : 'Review posted successfully');
       onSuccess();
     } catch (err) {
       toast.error(err.message || 'Failed to submit review. Try again.');
@@ -113,7 +165,7 @@ export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, u
         <div className="p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-heading font-extrabold text-lg" style={{ color: '#003BFF' }}>
-              Rate Your Experience with {sellerDisplayName}
+              {existingReview ? 'Update Your Review' : 'Rate Your Experience'} with {sellerDisplayName}
             </h2>
             <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 transition-colors">
               <X size={20} style={{ color: '#6B7280' }} />
@@ -123,10 +175,6 @@ export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, u
           {fetching ? (
             <div className="flex items-center justify-center py-8">
               <div className="w-6 h-6 border-2 border-[#003BFF] border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : !completedOrder ? (
-            <div className="text-center py-6">
-              <p style={{ color: '#6B7280' }}>You need to complete a purchase from this seller before reviewing.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -194,7 +242,7 @@ export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, u
                   opacity: (rating === 0 || !isValidLength || submitting) ? 0.5 : 1,
                 }}
               >
-                {submitting ? 'Posting...' : 'Post Review'}
+                {submitting ? 'Posting...' : (existingReview ? 'Update Review' : 'Post Review')}
               </button>
 
               <div className="text-center">

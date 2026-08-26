@@ -11,7 +11,7 @@ import PlayerBadge from '../../components/listings/PlayerBadge';
 import ReviewCard from '../../components/reviews/ReviewCard';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import BuyNowModal from '../../components/checkout/BuyNowModal';
-import { ChevronDown, ChevronUp, Shield, Star, Circle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Shield, Star, Circle, ChevronRight } from 'lucide-react';
 
 const statRows = [
   { label: 'Gold Coins', key: 'goldCoins' },
@@ -216,26 +216,41 @@ export default function ListingDetailPage() {
                 </p>
 
                 <div className="flex items-center gap-2 mb-4 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-heading font-bold" style={{ background: '#001E7A' }}>
-                    {(listing.sellerDisplayName || 'S')[0]}
-                  </div>
-                  <div>
-                    <Link to={`/seller/${listing.sellerId}`} className="text-sm font-heading font-bold text-white hover:underline">{listing.sellerDisplayName}</Link>
-                    <br />
-                    <Link to={`/seller/${listing.sellerId}`} className="text-xs text-white/50 hover:underline">View Seller Profile</Link>
-                    <div className="flex items-center gap-1">
-                      {listing.sellerRating > 0 ? (
-                        <>
-                          <Star size={12} color="#D4AF37" fill="#D4AF37" />
-                          <span className="text-xs text-white/60">{listing.sellerRating.toFixed(1)}</span>
-                        </>
-                      ) : (
-                        <span className="text-xs text-white/40 font-heading font-bold uppercase">New Seller</span>
-                      )}
-                      <span className="text-xs text-white/40">· {listing.sellerTotalSales || 0} sales</span>
+                  <Link
+                    to={`/seller/${listing.sellerId}`}
+                    className="flex items-center gap-3 p-3 rounded-xl
+                               bg-white/10 hover:bg-white/20 active:scale-[0.98]
+                               border border-white/20 hover:border-white/40
+                               transition-all duration-150 group"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-konami-blue-dark border-2 border-white/30
+                                    flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {listing.sellerPhotoURL
+                        ? <img src={listing.sellerPhotoURL} className="w-full h-full object-cover" alt="" />
+                        : <span className="text-white font-heading font-bold text-sm">
+                            {listing.sellerDisplayName?.[0]?.toUpperCase()}
+                          </span>
+                      }
                     </div>
-                  </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-heading font-bold text-white text-sm uppercase tracking-wide truncate">
+                        {listing.sellerDisplayName}
+                      </p>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <Star size={11} className="text-yellow-400 fill-yellow-400" />
+                        <span className="text-white/70 text-xs">
+                          {listing.sellerRating > 0 ? listing.sellerRating.toFixed(1) : 'New Seller'}
+                        </span>
+                        <span className="text-white/40 text-xs">·</span>
+                        <span className="text-white/70 text-xs">{listing.sellerTotalSales || 0} sales</span>
+                      </div>
+                    </div>
+                    <ChevronRight size={16} className="text-white/50 group-hover:text-white transition-colors" />
+                  </Link>
                 </div>
+                <p className="text-white/40 text-[11px] text-center mt-1">
+                  Tap to view seller profile and reviews
+                </p>
 
                 {isSold ? (
                   <div className="space-y-3">
