@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Bell, LogOut, Shield, ShoppingBag, User, House, Search, HelpCircle, MessageCircle, Package, Store, Plus, BarChart3, Settings, Clipboard, Users, DoorOpen, ArrowRight, Wallet, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Menu, X, Bell, LogOut, Shield, ShoppingBag, User, House, Search, HelpCircle, MessageCircle, Package, Store, Plus, BarChart3, Settings, Clipboard, Users, DoorOpen, ArrowRight, Wallet, CheckCircle, AlertTriangle, Bookmark } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { ADMIN_EMAIL, ADMIN_ROUTE } from '../../utils/constants';
@@ -208,6 +208,10 @@ export default function Navbar() {
                       <User size={16} />
                       My Account
                     </Link>
+                    <Link to="/saved" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors">
+                      <Bookmark size={16} />
+                      Saved Accounts
+                    </Link>
 
                     {userProfile?.sellerApproved && (
                       <Link to="/transfer-room" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors">
@@ -295,6 +299,7 @@ export default function Navbar() {
             <SectionLabel label="MY ACCOUNT" />
             <DrawerNavItem icon={<Package size={18} />} label="My Orders" href="/orders" />
             <DrawerNavItem icon={<User size={18} />} label="My Account" href="/account" />
+            <DrawerNavItem icon={<Bookmark size={18} />} label="Saved Accounts" href="/saved" />
             <Link
               to={location.pathname}
               onClick={() => setNotifOpen(true)}

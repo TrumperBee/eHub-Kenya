@@ -29,6 +29,7 @@ import BuyerDashboardPage from './pages/buyer/BuyerDashboardPage';
 import MyOrdersPage from './pages/buyer/MyOrdersPage';
 import OrderDetailPage from './pages/buyer/OrderDetailPage';
 import AccountPage from './pages/buyer/AccountPage';
+import SavedListingsPage from './pages/buyer/SavedListingsPage';
 
 import TransferRoomPage from './pages/seller/TransferRoomPage';
 import CreateListingPage from './pages/seller/CreateListingPage';
@@ -109,6 +110,9 @@ function AppContent() {
             } />
             <Route path="/account" element={
               <PageLayout><ProtectedRoute><AccountPage /></ProtectedRoute></PageLayout>
+            } />
+            <Route path="/saved" element={
+              <PageLayout><ProtectedRoute><SavedListingsPage /></ProtectedRoute></PageLayout>
             } />
 
             <Route path="/transfer-room" element={

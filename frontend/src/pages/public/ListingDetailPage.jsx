@@ -11,7 +11,10 @@ import PlayerBadge from '../../components/listings/PlayerBadge';
 import ReviewCard from '../../components/reviews/ReviewCard';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import BuyNowModal from '../../components/checkout/BuyNowModal';
-import { ChevronDown, ChevronUp, Shield, Star, Circle, ChevronRight } from 'lucide-react';
+import SaveButton from '../../components/listings/SaveButton';
+import { toggleSaveListing, subscribeSavedListingIds } from '../../services/savedListingsService';
+import { ChevronDown, ChevronUp, Shield, Star, Circle, ChevronRight, Bookmark } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const statRows = [
   { label: 'Gold Coins', key: 'goldCoins' },
@@ -27,6 +30,16 @@ export default function ListingDetailPage() {
   const [showSteps, setShowSteps] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(0);
   const [showBuyModal, setShowBuyModal] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+
+  // Subscribe to saved listings
+  useEffect(() => {
+    if (!currentUser || !listing) return;
+    const unsubscribe = subscribeSavedListingIds(currentUser.uid, (ids) => {
+      setIsSaved(ids.includes(listing.id));
+    });
+    return unsubscribe;
+  }, [currentUser, listing]);
 
   useEffect(() => {
     if (!id) return;
@@ -56,6 +69,20 @@ export default function ListingDetailPage() {
   }
 
   const tierConfig = TIERS[listing.tier] || TIERS.bronze;
+
+  const handleToggleSave = async () => {
+    if (!currentUser) {
+      toast.error('Login to save listings');
+      return;
+    }
+    try {
+      const nowSaved = await toggleSaveListing(currentUser.uid, listing);
+      setIsSaved(nowSaved);
+      toast.success(nowSaved ? 'Saved to your list' : 'Removed from saved');
+    } catch (err) {
+      toast.error('Failed to save listing');
+    }
+  };
   const platformInfo = PLATFORMS[listing.platform] || { label: listing.platform };
   const isOwner = currentUser && listing.sellerId === currentUser.uid;
   const photos = listing.photos || [];
@@ -211,9 +238,21 @@ export default function ListingDetailPage() {
             <div className="lg:sticky lg:top-24 space-y-4">
               <div className="rounded-2xl p-6 card-blue">
                 <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>Price</p>
-                <p className="font-heading text-4xl font-extrabold mb-4" style={{ color: '#FFF100' }}>
-                  {formatKES(listing.price)}
-                </p>
+                <div className="flex items-center justify-between mb-4">
+                  <p className="font-heading text-4xl font-extrabold" style={{ color: '#FFF100' }}>
+                    {formatKES(listing.price)}
+                  </p>
+                  <SaveButton
+                    listing={listing}
+                    isSaved={isSaved}
+                    onToggle={handleToggleSave}
+                    size="md"
+                  />
+                </div>
+                {isSaved
+                  ? <p className="text-white/50 text-xs text-center">Saved to your account</p>
+                  : <p className="text-white/50 text-xs text-center">Save for later</p>
+                }
 
                 <div className="flex items-center gap-2 mb-4 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
                   <Link

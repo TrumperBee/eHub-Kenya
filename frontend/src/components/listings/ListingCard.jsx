@@ -1,9 +1,12 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { Smartphone, Star, CircleDollarSign, BarChart3, ArrowRight, Circle, ExternalLink } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { Smartphone, Star, CircleDollarSign, BarChart3, ArrowRight, Circle, ExternalLink, Bookmark } from 'lucide-react';
 import { TIERS, PLATFORMS } from '../../utils/constants';
 import { formatKES } from '../../utils/formatters';
 import TierBadge from './TierBadge';
 import PlayerBadge from './PlayerBadge';
+import { toggleSaveListing } from '../../services/savedListingsService';
+import toast from 'react-hot-toast';
 
 const TIER_COLORS = {
   bronze: '#CD7F32',
@@ -14,6 +17,7 @@ const TIER_COLORS = {
 
 export default function ListingCard({ listing }) {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const tier = listing.tier || 'bronze';
   const tierAccent = TIER_COLORS[tier];
 
@@ -24,6 +28,21 @@ export default function ListingCard({ listing }) {
 
   const handleClick = () => {
     navigate(`/listing/${listing.id}`);
+  };
+
+  const handleToggleSave = async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!currentUser) {
+      toast.error('Login to save listings');
+      return;
+    }
+    try {
+      const nowSaved = await toggleSaveListing(currentUser.uid, listing);
+      toast.success(nowSaved ? 'Saved to your list' : 'Removed from saved');
+    } catch (err) {
+      toast.error('Failed to save listing');
+    }
   };
 
   return (
@@ -45,21 +64,36 @@ export default function ListingCard({ listing }) {
     >
       <div style={{ height: 4, background: tierAccent }} className={tier === 'legendary' ? 'animate-shimmer' : ''} />
 
-      <div className="relative">
-        <div className="relative aspect-[16/9] overflow-hidden" style={{ background: 'linear-gradient(135deg, #001E7A, #003BFF)' }}>
-          {photoUrl ? (
-            <img
-              src={photoUrl}
-              alt={listing.title}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="text-5xl opacity-60"><Circle size={48} /></span>
-            </div>
-          )}
+<div className="relative">
+          <div className="relative aspect-[16/9] overflow-hidden" style={{ background: 'linear-gradient(135deg, #001E7A, #003BFF)' }}>
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt={listing.title}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-5xl opacity-60"><Circle size={48} /></span>
+              </div>
+            )}
 
-          {isSold && (
+            {/* Save button overlay */}
+            <div className="absolute top-2 right-2">
+              <button
+                onClick={handleToggleSave}
+                className={`flex items-center justify-center rounded-full
+                            transition-all duration-200 active:scale-90
+                            w-8 h-8
+                            bg-white border border-gray-200 text-gray-400 hover:border-[#003BFF] hover:text-[#003BFF]`}
+                aria-label="Save listing"
+                title="Save for later"
+              >
+                <Bookmark size={16} />
+              </button>
+            </div>
+
+            {isSold && (
             <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(200,16,46,0.8)' }}>
               <span className="font-heading text-[28px] font-extrabold text-white uppercase tracking-widest">
                 SOLD
