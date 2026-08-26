@@ -12,6 +12,7 @@ import ReviewCard from '../../components/reviews/ReviewCard';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import BuyNowModal from '../../components/checkout/BuyNowModal';
 import SaveButton from '../../components/listings/SaveButton';
+import CommentSection from '../../components/comments/CommentSection';
 import { toggleSaveListing, subscribeSavedListingIds } from '../../services/savedListingsService';
 import { ChevronDown, ChevronUp, Shield, Star, Circle, ChevronRight, Bookmark } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -232,6 +233,9 @@ export default function ListingDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* Discussion / Comments Section */}
+            <CommentSection listingId={listing.id} sellerId={listing.sellerId} />
           </div>
 
           <div className="lg:w-[380px] shrink-0">
