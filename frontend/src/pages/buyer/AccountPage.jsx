@@ -217,9 +217,9 @@ export default function AccountPage() {
       const data = await res.json();
       const photoURL = data.secure_url;
       await updateUserDocument(currentUser.uid, { photoURL });
-      await updateProfile(currentUser, { photoURL });
+      await updateProfile({ photoURL });
       toast.success('Photo updated');
-      window.location.reload();
+      // window.location.reload(); // Removed - causes white screen; Firestore onSnapshot will update avatar automatically
     } catch (err) {
       toast.error(err.message || 'Failed to upload photo');
     } finally {

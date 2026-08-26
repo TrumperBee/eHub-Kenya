@@ -3,7 +3,7 @@ import { collection, query, where, orderBy, limit, startAfter, getDocs, getDoc, 
 import { incrementListingCount, decrementListingCount } from './statsService';
 
 const listingsRef = collection(db, 'listings');
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 50;
 
 export const getActiveListings = async (filters = {}) => {
   let constraints = [
