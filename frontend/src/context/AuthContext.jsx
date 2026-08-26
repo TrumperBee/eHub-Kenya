@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, createUserWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, createUserWithEmailAndPassword, updateProfile as updateAuthProfile, signOut } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../services/firebase';
 import { getUserDocument, createUserDocument, updateUserDocument } from '../services/authService';
@@ -61,7 +61,7 @@ export function AuthProvider({ children }) {
 
   const register = async (email, password, displayName, username) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(cred.user, { displayName });
+    await updateAuthProfile(cred.user, { displayName });
     await createUserDocument(cred.user.uid, { email, displayName, username: username?.toLowerCase() });
     return cred.user;
   };
@@ -72,7 +72,7 @@ export function AuthProvider({ children }) {
     setUserProfile(null);
   };
 
-  const updateProfile = async (data) => {
+  const updateUserProfile = async (data) => {
     if (!currentUser) return;
     await updateUserDocument(currentUser.uid, data);
   };
@@ -85,7 +85,7 @@ export function AuthProvider({ children }) {
     loginWithGoogle,
     register,
     logout,
-    updateProfile,
+    updateProfile: updateUserProfile,
   };
 
   return (
