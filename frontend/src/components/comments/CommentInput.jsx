@@ -135,14 +135,19 @@ export default function CommentInput({
   return (
     <div className="relative" ref={dropdownRef}>
       {replyingTo && (
-        <div className="flex items-center gap-2 bg-blue-50 border border-blue-100
-                        rounded-xl px-3 py-2 mb-2">
-          <CornerDownRight size={14} className="text-[#003BFF]" />
-          <span className="text-sm text-[#003BFF]">
-            Replying to <strong>@{replyingTo.authorUsername}</strong>
-          </span>
+        <div className="flex items-center gap-2 mb-2 rounded-xl px-3 py-2"
+          style={{ background: '#F1F5FF', borderLeft: '3px solid #003BFF' }}>
+          <CornerDownRight size={14} className="text-[#003BFF] flex-shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold text-[#003BFF] truncate">
+              Replying to @{replyingTo.authorUsername || replyingTo.authorDisplayName}
+            </p>
+            {replyingTo.content && (
+              <p className="text-xs text-gray-500 truncate">{replyingTo.content}</p>
+            )}
+          </div>
           <button onClick={() => onSubmit('cancel-reply', [])}
-                  className="ml-auto text-gray-400 hover:text-gray-600">
+                  className="text-gray-400 hover:text-gray-600 flex-shrink-0" aria-label="Cancel reply">
             <X size={14} />
           </button>
         </div>

@@ -210,7 +210,7 @@ export default function Navbar() {
                     </Link>
                     <Link to="/saved" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors">
                       <Bookmark size={16} />
-                      Saved Accounts
+                      Favourites
                     </Link>
 
                     {userProfile?.sellerApproved && (
@@ -299,7 +299,7 @@ export default function Navbar() {
             <SectionLabel label="MY ACCOUNT" />
             <DrawerNavItem icon={<Package size={18} />} label="My Orders" href="/orders" />
             <DrawerNavItem icon={<User size={18} />} label="My Account" href="/account" />
-            <DrawerNavItem icon={<Bookmark size={18} />} label="Saved Accounts" href="/saved" />
+            <DrawerNavItem icon={<Bookmark size={18} />} label="Favourites" href="/saved" />
             <Link
               to={location.pathname}
               onClick={() => setNotifOpen(true)}

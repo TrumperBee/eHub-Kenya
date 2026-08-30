@@ -15,7 +15,15 @@ export const toggleSaveListing = async (uid, listing) => {
         title: listing.title,
         price: listing.price,
         tier: listing.tier,
+        platform: listing.platform,
+        sellerId: listing.sellerId,
         sellerDisplayName: listing.sellerDisplayName,
+        sellerPhotoURL: listing.sellerPhotoURL || null,
+        sellerRating: listing.sellerRating || 0,
+        fiveStarCount: listing.fiveStarCount || 0,
+        goldCoins: listing.goldCoins || 0,
+        gp: listing.gp || 0,
+        featuredPlayers: listing.featuredPlayers?.slice(0, 3) || [],
         photos: listing.photos?.slice(0, 1) || [],
       }
     });

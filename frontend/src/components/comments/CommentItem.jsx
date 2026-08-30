@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { Heart, CornerDownRight, X, Pen, AlertTriangle } from 'lucide-react';
+import { Heart, Pen, X, AlertTriangle, CornerDownRight } from 'lucide-react';
 import { formatRelativeTime } from '../../utils/formatters';
 import { toggleLike, deleteComment, editComment } from '../../services/commentsService';
-import CommentInput from './CommentInput';
 import toast from 'react-hot-toast';
 
 const ConfirmModal = ({ message, onConfirm, onCancel }) => (
@@ -12,7 +11,7 @@ const ConfirmModal = ({ message, onConfirm, onCancel }) => (
         <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
           <AlertTriangle size={20} className="text-red-500" />
         </div>
-        <h3 className="font-heading font-bold text-gray-900">Confirm Delete</h3>
+        <h3 className="font-heading font-bold text-gray-900">Delete message?</h3>
       </div>
       <p className="text-gray-600 text-sm mb-4">{message}</p>
       <div className="flex gap-3 justify-end">
@@ -27,46 +26,48 @@ const ConfirmModal = ({ message, onConfirm, onCancel }) => (
   </div>
 );
 
-const renderContent = (text) => {
+const renderContent = (text, mentionColor) => {
   const parts = text.split(/(@\w+)/g);
   return parts.map((part, i) => {
     if (part.startsWith('@')) {
-      return <span key={i} className="text-[#003BFF] font-semibold">{part}</span>;
+      return <span key={i} className="font-semibold" style={{ color: mentionColor }}>{part}</span>;
     }
     return part;
   });
 };
 
-export default function CommentItem({ comment, listingId, currentUser, onReply }) {
+export default function CommentItem({
+  comment, listingId, currentUser, sellerId,
+  onReply, isStart, isEnd, onScrollToComment,
+}) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const isOwn = currentUser?.uid === comment.authorId;
   const isLiked = currentUser && comment.likedBy?.includes(currentUser.uid);
+  const isSeller = comment.authorId === sellerId;
+  const quote = comment.replyTo;
+  const hasQuote = quote && quote.commentId && (quote.content || quote.authorDisplayName);
 
   const handleLike = async () => {
     if (!currentUser) {
-      toast.error('Login to like comments');
+      toast.error('Login to like messages');
       return;
     }
     try {
       await toggleLike(listingId, comment.id, currentUser.uid, isLiked);
     } catch (err) {
-      toast.error('Failed to like comment');
+      toast.error('Failed to like message');
     }
-  };
-
-  const handleDelete = async () => {
-    setShowDeleteModal(true);
   };
 
   const handleConfirmDelete = async () => {
     setShowDeleteModal(false);
     try {
       await deleteComment(listingId, comment.id);
-      toast.success('Comment deleted');
+      toast.success('Message deleted');
     } catch (err) {
-      toast.error('Failed to delete comment');
+      toast.error('Failed to delete message');
     }
   };
 
@@ -81,117 +82,172 @@ export default function CommentItem({ comment, listingId, currentUser, onReply }
       }
       await editComment(listingId, comment.id, editContent.trim(), newMentions);
       setIsEditing(false);
-      toast.success('Comment updated');
+      toast.success('Message updated');
     } catch (err) {
-      toast.error('Failed to update comment');
+      toast.error('Failed to update message');
     }
   };
 
+  const bubbleClass = [
+    'relative rounded-2xl px-3.5 py-2 text-sm leading-relaxed shadow-sm break-words whitespace-pre-wrap transition-all duration-150',
+    isOwn
+      ? 'bg-[#003BFF] text-white rounded-br-md'
+      : 'bg-white border border-gray-200 text-[#111111] rounded-bl-md',
+    isStart
+      ? (isOwn ? 'rounded-tr-md' : 'rounded-tl-md')
+      : '',
+    isEnd && !isOwn ? 'rounded-bl-sm' : '',
+    isEnd && isOwn ? 'rounded-br-sm' : '',
+    isOwn ? 'group-hover:shadow-md' : 'group-hover:shadow-md',
+  ].join(' ');
+
+  const nameColor = isSeller ? '#003BFF' : isOwn ? 'rgba(255,255,255,0.95)' : '#111111';
+
   return (
-    <div>
-      <div className="flex gap-3 group">
-
-        {/* Avatar */}
-        <div className="flex-shrink-0 pt-0.5">
-          {comment.authorPhotoURL
-            ? <img src={comment.authorPhotoURL}
-                   className="w-8 h-8 rounded-full object-cover border border-gray-100" alt="" />
-            : <div className="w-8 h-8 rounded-full bg-[#003BFF] flex items-center justify-center">
-                <span className="text-white font-heading font-bold text-xs">
-                  {comment.authorDisplayName?.[0]?.toUpperCase()}
-                </span>
+    <>
+      <div className={`flex px-0.5 ${isOwn ? 'justify-end' : 'justify-start'} ${isStart ? 'mt-3 first:mt-0' : 'mt-0.5'}`} data-comment="true" data-comment-id={comment.id}>
+        {!isOwn && isStart && (
+          <div className="mr-2 self-end flex-shrink-0">
+            {comment.authorPhotoURL ? (
+              <img
+                src={comment.authorPhotoURL}
+                className={`w-8 h-8 rounded-full object-cover border border-gray-200 ${isSeller ? 'ring-2' : ''}`}
+                style={isSeller ? { borderColor: '#003BFF' } : {}}
+                alt=""
+              />
+            ) : (
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-heading font-bold text-xs ${isSeller ? '' : 'bg-gray-300'}`}
+                style={isSeller ? { background: '#003BFF' } : {}}>
+                {comment.authorDisplayName?.[0]?.toUpperCase() || '?'}
               </div>
-          }
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-
-          {/* Name + username + time */}
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="font-heading font-bold text-gray-900 text-sm">
-              {comment.authorDisplayName}
-            </span>
-            <span className="text-gray-400 text-xs">@{comment.authorUsername}</span>
-            <span className="text-gray-400 text-xs">{formatRelativeTime(comment.createdAt)}</span>
-            {comment.edited && (
-              <span className="text-gray-400 text-[11px] italic">(edited)</span>
             )}
           </div>
+        )}
 
-          {/* Comment text or edit input */}
-          {isEditing
-            ? <div className="mt-1">
-                <CommentInput
-                  initialValue={editContent}
-                  onSubmit={handleSaveEdit}
-                  placeholder="Edit your comment..."
-                  autoFocus
-                />
-                <button onClick={() => setIsEditing(false)}
-                        className="text-gray-400 text-xs mt-1 hover:text-gray-600">
-                  Cancel
-                </button>
-              </div>
-            : <p className="text-gray-700 text-sm mt-0.5 leading-relaxed break-words">
-                {renderContent(comment.content)}
-              </p>
-          }
+        {!isOwn && !isStart && <div className="w-8 mr-2 flex-shrink-0" />}
 
-          {/* Action row */}
-          {!isEditing && (
-            <div className="flex items-center gap-3 mt-1.5">
-
-              {/* Like button */}
-              <button
-                onClick={handleLike}
-                className={`flex items-center gap-1 text-xs transition-colors
-                            ${isLiked ? 'text-[#003BFF] font-semibold' : 'text-gray-400 hover:text-[#003BFF]'}`}
-              >
-                <Heart size={13} className={isLiked ? 'fill-[#003BFF]' : ''} />
-                {comment.likes > 0 && <span>{comment.likes}</span>}
-              </button>
-
-              {/* Reply button */}
-              {currentUser && (
-                <button
-                  onClick={() => onReply(comment)}
-                  className="text-gray-400 hover:text-[#003BFF] text-xs flex items-center gap-1 transition-colors"
-                >
-                  <CornerDownRight size={13} />
-                  Reply
-                </button>
-              )}
-
-              {/* Own comment: edit + delete */}
-              {isOwn && (
-                <>
-                  <button
-                    onClick={() => { setEditContent(comment.content); setIsEditing(true); }}
-                    className="text-gray-400 hover:text-[#003BFF] text-xs transition-colors opacity-0 group-hover:opacity-100"
-                  >
-                    <Pen size={11} className="mr-0.5" /> Edit
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    className="text-gray-400 hover:text-red-500 text-xs transition-colors opacity-0 group-hover:opacity-100"
-                  >
-                    <X size={11} className="mr-0.5" /> Delete
-                  </button>
-                </>
+        <div className={`flex flex-col max-w-[78%] md:max-w-[68%] min-w-0 ${isOwn ? 'items-end' : 'items-start'}`}>
+          {!isOwn && isStart && (
+            <div className="flex items-center gap-1.5 mb-1 ml-1">
+              <span className="text-[12.5px] font-bold" style={{ color: nameColor }}>{comment.authorDisplayName || 'User'}</span>
+              {isSeller && (
+                <span className="text-[9px] font-heading font-bold uppercase tracking-wider bg-[#003BFF] text-white px-1.5 py-0.5 rounded-full">Seller</span>
               )}
             </div>
           )}
+
+          <div className="group">
+            <div className={bubbleClass}>
+              {hasQuote && (
+                <button
+                  onClick={() => onScrollToComment?.(quote.commentId)}
+                  className="block w-full text-left mb-1.5 rounded-lg px-2.5 py-1.5 transition-colors"
+                  style={{
+                    background: isOwn ? 'rgba(255,255,255,0.14)' : '#F1F5FF',
+                    borderLeft: '3px solid #003BFF',
+                  }}
+                  title="Tap to jump to the original message"
+                >
+                  <p className="text-[11px] font-bold truncate" style={{ color: isOwn ? '#FFFFFF' : '#003BFF' }}>
+                    {quote.authorDisplayName || 'User'}
+                  </p>
+                  <p className="text-xs truncate" style={{ color: isOwn ? 'rgba(255,255,255,0.75)' : '#4B5563' }}>
+                    {quote.content || '...'}
+                  </p>
+                </button>
+              )}
+
+              {isEditing ? (
+                <div>
+                  <textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    rows={2}
+                    maxLength={500}
+                    autoFocus
+                    className="w-full bg-transparent resize-none outline-none text-sm leading-relaxed"
+                    style={{ color: isOwn ? '#FFFFFF' : '#111111' }}
+                  />
+                  <div className="flex items-center justify-end gap-2 mt-1">
+                    <button onClick={() => setIsEditing(false)}
+                            className="text-xs font-medium hover:underline"
+                            style={{ color: isOwn ? 'rgba(255,255,255,0.8)' : '#6B7280' }}>
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveEdit}
+                      disabled={!editContent.trim()}
+                      className="text-xs font-bold px-3 py-1 rounded-full transition-opacity disabled:opacity-40"
+                      style={{ background: isOwn ? '#FFF100' : '#003BFF', color: isOwn ? '#111111' : '#FFFFFF' }}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="break-words whitespace-pre-wrap leading-relaxed">{renderContent(comment.content, isOwn ? '#FFF100' : '#003BFF')}</p>
+                  <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : 'justify-between'}`}>
+                    <span className="text-[10px]" style={{ color: isOwn ? 'rgba(255,255,255,0.65)' : '#9CA3AF' }}>
+                      {formatRelativeTime(comment.createdAt)}{comment.edited ? ' · edited' : ''}
+                    </span>
+
+                    {isOwn && (
+                      <span className="flex items-center gap-2">
+                        <button
+                          onClick={() => { setEditContent(comment.content); setIsEditing(true); }}
+                          className="text-white/70 hover:text-white transition-colors"
+                          aria-label="Edit message"
+                        >
+                          <Pen size={11} />
+                        </button>
+                        <button
+                          onClick={() => setShowDeleteModal(true)}
+                          className="text-white/70 hover:text-red-300 transition-colors"
+                          aria-label="Delete message"
+                        >
+                          <X size={13} />
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {!isEditing && (
+              <div className={`flex items-center gap-2 mt-0.5 px-1 ${isOwn ? 'justify-end' : ''}`}>
+                <button
+                  onClick={handleLike}
+                  className={`flex items-center gap-1 text-[11px] transition-colors ${isLiked ? 'font-bold' : ''}`}
+                  style={{ color: isLiked ? '#E11D48' : (isOwn ? 'rgba(255,255,255,0.5)' : '#9CA3AF') }}
+                >
+                  <Heart size={12} className={isLiked ? 'fill-[#E11D48]' : ''} />
+                  {comment.likes > 0 && <span>{comment.likes}</span>}
+                </button>
+                {currentUser && (
+                  <button
+                    onClick={() => onReply(comment)}
+                    className="flex items-center gap-1 text-[11px] transition-colors"
+                    style={{ color: '#003BFF' }}
+                  >
+                    <CornerDownRight size={12} />
+                    Reply
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {showDeleteModal && (
         <ConfirmModal
-          message="Are you sure you want to delete this comment?"
+          message="Are you sure you want to delete this message? This cannot be undone."
           onConfirm={handleConfirmDelete}
           onCancel={() => setShowDeleteModal(false)}
         />
       )}
-    </div>
+    </>
   );
 }

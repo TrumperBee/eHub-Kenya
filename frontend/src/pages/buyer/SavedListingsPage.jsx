@@ -29,12 +29,12 @@ export default function SavedListingsPage() {
         <div className="text-sm mb-4" style={{ color: '#6B7280' }}>
           <Link to="/" className="hover:underline" style={{ color: '#003BFF' }}>Home</Link>
           <span className="mx-2">{' > '}</span>
-          <span style={{ color: '#111111' }}>Saved Accounts</span>
+          <span style={{ color: '#111111' }}>Favourites</span>
         </div>
 
         <div className="mb-6">
           <h1 className="font-heading text-2xl md:text-[28px] font-extrabold" style={{ color: '#111111' }}>
-            Saved Accounts
+            Favourites
           </h1>
           <p className="text-sm mt-1" style={{ color: '#6B7280' }}>
             {savedListings.length} {savedListings.length === 1 ? 'account' : 'accounts'} saved
@@ -46,7 +46,7 @@ export default function SavedListingsPage() {
             <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-4">
               <Bookmark size={32} style={{ color: '#003BFF' }} />
             </div>
-            <p className="font-heading text-lg font-bold mb-2" style={{ color: '#111111' }}>No saved accounts yet</p>
+            <p className="font-heading text-lg font-bold mb-2" style={{ color: '#111111' }}>No favourites yet</p>
             <p className="text-sm mb-6" style={{ color: '#6B7280' }}>
               Browse and tap the bookmark icon to save accounts for later
             </p>
@@ -56,7 +56,7 @@ export default function SavedListingsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {savedListings.map((saved) => {
+            {savedListings.filter(s => s.listingSnapshot).map((saved) => {
               const snapshot = saved.listingSnapshot || {};
               const listing = {
                 ...snapshot,

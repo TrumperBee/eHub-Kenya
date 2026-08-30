@@ -1,25 +1,40 @@
 import {
-  collection, addDoc, updateDoc, deleteDoc, doc, getDoc,
-  query, orderBy, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, increment
+  collection, addDoc, updateDoc, deleteDoc, doc, getDoc, getDocs,
+  query, orderBy, where, limit, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, increment
 } from 'firebase/firestore';
 import { db } from './firebase';
 
+export const COMMENTS_PAGE = 100;
+
 export const subscribeToComments = (listingId, callback) => {
   const ref = collection(db, 'listings', listingId, 'comments');
-  const q = query(ref, orderBy('createdAt', 'desc'));
+  const q = query(ref, orderBy('createdAt', 'desc'), limit(COMMENTS_PAGE));
   return onSnapshot(q, snap => {
     callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
   });
 };
 
+export const fetchOlderComments = async (listingId, beforeCreatedAt, pageSize = COMMENTS_PAGE) => {
+  const ref = collection(db, 'listings', listingId, 'comments');
+  const q = query(
+    ref,
+    orderBy('createdAt', 'desc'),
+    where('createdAt', '<', beforeCreatedAt),
+    limit(pageSize)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
 export const postComment = async (listingId, { authorId, authorDisplayName, authorUsername,
-  authorPhotoURL, content, mentions, parentId }) => {
+  authorPhotoURL, content, mentions, parentId, replyTo }) => {
   const ref = collection(db, 'listings', listingId, 'comments');
   return addDoc(ref, {
     listingId, authorId, authorDisplayName, authorUsername,
     authorPhotoURL: authorPhotoURL || null,
     content, mentions: mentions || [],
     parentId: parentId || null,
+    replyTo: replyTo || null,
     likes: 0, likedBy: [], edited: false,
     createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
   });
