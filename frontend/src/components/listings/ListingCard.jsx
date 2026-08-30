@@ -21,7 +21,7 @@ export default function ListingCard({ listing }) {
   const tier = listing.tier || 'bronze';
   const tierAccent = TIER_COLORS[tier];
 
-  const platformLabel = PLATFORMS[listing.platform]?.label || listing.platform;
+  const platformLabel = PLATFORMS[listing.platform]?.label || listing.platform || 'eFootball';
 
   const photoUrl = listing.photos?.[0];
   const isSold = listing.status === 'sold';
