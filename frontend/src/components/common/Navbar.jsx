@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Bell, LogOut, Shield, ShoppingBag, User, House, Search, HelpCircle, MessageCircle, Package, Store, Plus, BarChart3, Settings, Clipboard, Users, DoorOpen, ArrowRight, Wallet, CheckCircle, AlertTriangle, Bookmark } from 'lucide-react';
+import { Menu, X, Bell, LogOut, Shield, ShoppingBag, User, House, Search, HelpCircle, MessageCircle, Package, Store, Plus, BarChart3, Settings, Clipboard, Users, DoorOpen, ArrowRight, Wallet, CheckCircle, AlertTriangle, Bookmark, Flame } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { ADMIN_EMAIL, ADMIN_ROUTE } from '../../utils/constants';
 import { formatRelativeTime } from '../../utils/formatters';
+import { isDropLive } from '../../utils/fridayUtils';
 
 export default function Navbar() {
   const { currentUser, userProfile, logout } = useAuth();
@@ -45,11 +46,18 @@ export default function Navbar() {
     setNotifOpen(false);
   }, [location.pathname]);
 
+  const [dropLive, setDropLive] = useState(() => isDropLive());
+  useEffect(() => {
+    const id = setInterval(() => setDropLive(isDropLive()), 60000);
+    return () => clearInterval(id);
+  }, []);
+
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   const navLinks = [
     { label: 'Home', path: '/' },
     { label: 'Browse', path: '/browse' },
+    { label: 'Friday Drops', path: '/friday-drops' },
     { label: 'How It Works', path: '/how-it-works' },
     { label: 'FAQ', path: '/faq' },
   ];
@@ -64,6 +72,7 @@ export default function Navbar() {
     if (!n.read) markAsRead(n.id);
     if (n.orderId) navigate(`/orders/${n.orderId}`);
     else if (n.type === 'approval') navigate('/transfer-room');
+    else if (n.type === 'drop') navigate(n.link || '/friday-drops');
     setNotifOpen(false);
   };
 
@@ -114,7 +123,14 @@ export default function Navbar() {
                 color: location.pathname === link.path ? '#FFF100' : '#FFFFFF',
               }}
             >
-              {link.label}
+              {link.path === '/friday-drops' && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Flame size={13} style={{ color: dropLive ? '#C8102E' : '#FFF100' }} />
+                  {link.label}
+                  {dropLive && <span className="live-dot" />}
+                </span>
+              )}
+              {link.path !== '/friday-drops' && link.label}
             </Link>
           ))}
           <span className="text-white/30 text-xs">|</span>
@@ -164,7 +180,7 @@ export default function Navbar() {
                           style={!n.read ? { background: 'rgba(255,241,0,0.05)' } : {}}
                         >
                           <span className="text-base shrink-0 mt-0.5">
-                            {n.type === 'payment' ? <Wallet size={16} /> : n.type === 'order' ? <ShoppingBag size={16} /> : n.type === 'chat' ? <MessageCircle size={16} /> : n.type === 'approval' ? <CheckCircle size={16} /> : <Bell size={16} />}
+                            {n.type === 'payment' ? <Wallet size={16} /> : n.type === 'order' ? <ShoppingBag size={16} /> : n.type === 'chat' ? <MessageCircle size={16} /> : n.type === 'approval' ? <CheckCircle size={16} /> : n.type === 'drop' ? <Flame size={16} /> : <Bell size={16} />}
                           </span>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-white truncate">{n.title}</p>
@@ -211,6 +227,10 @@ export default function Navbar() {
                     <Link to="/saved" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors">
                       <Bookmark size={16} />
                       Favourites
+                    </Link>
+                    <Link to="/friday-drops" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors">
+                      <Flame size={16} style={{ color: dropLive ? '#C8102E' : undefined }} />
+                      Friday Drops
                     </Link>
 
                     {userProfile?.sellerApproved && (
@@ -290,6 +310,7 @@ export default function Navbar() {
         <SectionLabel label="MENU" />
         <DrawerNavItem icon={<House size={18} />} label="Home" href="/" />
         <DrawerNavItem icon={<Search size={18} />} label="Browse Accounts" href="/browse" />
+        <DrawerNavItem icon={<Flame size={18} />} label="Friday Drops" href="/friday-drops" />
         <DrawerNavItem icon={<HelpCircle size={18} />} label="How It Works" href="/how-it-works" />
         <DrawerNavItem icon={<MessageCircle size={18} />} label="FAQ" href="/faq" />
 

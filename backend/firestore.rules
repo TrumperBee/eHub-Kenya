@@ -95,5 +95,23 @@ service cloud.firestore {
       allow update: if isLoggedIn() && resource.data.userId == request.auth.uid;
       allow delete: if false;
     }
+
+    match /fridayDrops/{dropId} {
+      allow read: if isLoggedIn() && resource.data.sellerId == request.auth.uid
+                 || resource.data.status == 'approved'
+                 || isAdmin();
+      allow create: if isSeller();
+      allow update: if isSeller() && resource.data.sellerId == request.auth.uid
+                 || isAdmin()
+                 || isLoggedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']);
+      allow delete: if isAdmin();
+    }
+
+    match /dropNotifications/{notifId} {
+      allow read: if isLoggedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isLoggedIn();
+      allow update: if isLoggedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
   }
 }

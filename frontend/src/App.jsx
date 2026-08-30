@@ -1,11 +1,14 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { ADMIN_ROUTE } from './utils/constants';
 import { useAuth } from './context/AuthContext';
 import { seedStatsIfMissing } from './services/statsService';
+import { db } from './services/firebase';
+import { getEATDay, getEATYear, getWeekNumber, isDropLive } from './utils/fridayUtils';
 
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
@@ -24,6 +27,7 @@ import LoginPage from './pages/public/LoginPage';
 import RegisterPage from './pages/public/RegisterPage';
 import SellerPublicProfilePage from './pages/public/SellerPublicProfilePage';
 import SetupUsernamePage from './pages/public/SetupUsernamePage';
+import FridayDropsPage from './pages/public/FridayDropsPage';
 
 import BuyerDashboardPage from './pages/buyer/BuyerDashboardPage';
 import MyOrdersPage from './pages/buyer/MyOrdersPage';
@@ -43,6 +47,7 @@ import AdminListingsPage from './pages/admin/AdminListingsPage';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminDisputesPage from './pages/admin/AdminDisputesPage';
+import AdminFridayDropsPage from './pages/admin/AdminFridayDropsPage';
 
 import SellerApplicationPage from './pages/SellerApplicationPage';
 import AIAssistant from './components/ai/AIAssistant';
@@ -60,11 +65,55 @@ function PageLayout({ children }) {
 }
 
 function AppContent() {
-  const { currentUser, loading } = useAuth();
+  const { currentUser, userProfile, loading } = useAuth();
 
   useEffect(() => {
     seedStatsIfMissing();
   }, []);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const now = new Date();
+    const year = getEATYear(now);
+    const weekNum = getWeekNumber(now);
+
+    const trySend = async (key, payload) => {
+      if (localStorage.getItem(key)) return;
+      try {
+        await addDoc(collection(db, 'notifications'), {
+          ...payload,
+          orderId: null,
+          read: false,
+          createdAt: serverTimestamp(),
+        });
+        localStorage.setItem(key, '1');
+      } catch (err) {
+        console.warn('Drop notification error:', err.code);
+      }
+    };
+
+    const eatDay = getEATDay(now);
+
+    if (eatDay === 4 && userProfile?.sellerApproved) {
+      trySend(`drop_reminder_${year}_${weekNum}`, {
+        userId: currentUser.uid,
+        title: 'Friday Drops — Submit Deals!',
+        message: 'Friday Drops go live tomorrow at 12:00 EAT. Discount one of your listings now.',
+        type: 'drop',
+        link: '/transfer-room',
+      });
+    }
+
+    if (eatDay === 5 && isDropLive(now)) {
+      trySend(`drop_alert_${year}_${weekNum}`, {
+        userId: currentUser.uid,
+        title: 'Friday Drops Are Live!',
+        message: 'This week\u2019s discounts are unlocked. Grab verified accounts at slashed prices before they sell out.',
+        type: 'drop',
+        link: '/friday-drops',
+      });
+    }
+  }, [currentUser, userProfile?.sellerApproved]);
 
   return (
     <>
@@ -86,6 +135,7 @@ function AppContent() {
 
             <Route path="/" element={<PageLayout><HomePage /></PageLayout>} />
             <Route path="/browse" element={<PageLayout><BrowsePage /></PageLayout>} />
+            <Route path="/friday-drops" element={<PageLayout><FridayDropsPage /></PageLayout>} />
             <Route path="/listing/:id" element={<PageLayout><ListingDetailPage /></PageLayout>} />
             <Route path="/how-it-works" element={<PageLayout><HowItWorksPage /></PageLayout>} />
             <Route path="/faq" element={<PageLayout><FAQPage /></PageLayout>} />
@@ -139,6 +189,9 @@ function AppContent() {
             } />
             <Route path={`${ADMIN_ROUTE}/orders`} element={
               <PageLayout><AdminRoute><AdminOrdersPage /></AdminRoute></PageLayout>
+            } />
+            <Route path={`${ADMIN_ROUTE}/friday-drops`} element={
+              <PageLayout><AdminRoute><AdminFridayDropsPage /></AdminRoute></PageLayout>
             } />
             <Route path={`${ADMIN_ROUTE}/users`} element={
               <PageLayout><AdminRoute><AdminUsersPage /></AdminRoute></PageLayout>

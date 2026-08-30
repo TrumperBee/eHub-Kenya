@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, List, ShoppingBag, Wallet, User, Plus, Star } from 'lucide-react';
+import { LayoutDashboard, List, ShoppingBag, Wallet, User, Plus, Star, Flame } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import OverviewTab from './tabs/OverviewTab';
 import ListingsTab from './tabs/ListingsTab';
 import OrdersTab from './tabs/OrdersTab';
 import EarningsTab from './tabs/EarningsTab';
 import ProfileTab from './tabs/ProfileTab';
+import FridayDropsTab from './tabs/FridayDropsTab';
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'listings', label: 'My Listings', icon: List },
   { id: 'orders', label: 'Orders', icon: ShoppingBag },
   { id: 'earnings', label: 'Earnings', icon: Wallet },
+  { id: 'fridayDrops', label: 'Friday Drops', icon: Flame },
   { id: 'profile', label: 'Profile', icon: User },
 ];
 
@@ -21,6 +23,7 @@ const MOBILE_NAV = [
   { id: 'listings', label: 'Listings', icon: List },
   { id: 'orders', label: 'Orders', icon: ShoppingBag },
   { id: 'earnings', label: 'Earnings', icon: Wallet },
+  { id: 'fridayDrops', label: 'Drops', icon: Flame },
   { id: 'profile', label: 'Profile', icon: User },
 ];
 
@@ -90,6 +93,7 @@ export default function TransferRoomPage() {
           {activeTab === 'listings' && <ListingsTab profile={userProfile} user={currentUser} onTabChange={setActiveTab} />}
           {activeTab === 'orders' && <OrdersTab profile={userProfile} user={currentUser} onTabChange={setActiveTab} />}
           {activeTab === 'earnings' && <EarningsTab profile={userProfile} user={currentUser} onTabChange={setActiveTab} />}
+          {activeTab === 'fridayDrops' && <FridayDropsTab profile={userProfile} user={currentUser} onTabChange={setActiveTab} />}
           {activeTab === 'profile' && <ProfileTab profile={userProfile} user={currentUser} onTabChange={setActiveTab} />}
         </main>
       </div>

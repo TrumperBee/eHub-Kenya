@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import HeroSection from '../../components/home/HeroSection';
 import StatsBar from '../../components/home/StatsBar';
+import FridayDropsTeaser from '../../components/home/FridayDropsTeaser';
 import FeaturedListings from '../../components/home/FeaturedListings';
 import HowItWorksSection from '../../components/home/HowItWorksSection';
 import TrustBadges from '../../components/home/TrustBadges';
@@ -16,6 +17,8 @@ export default function HomePage() {
       <HeroSection />
 
       <StatsBar />
+
+      <FridayDropsTeaser />
 
       <section className="relative h-[200px] overflow-hidden flex items-center justify-center">
         <div
