@@ -154,7 +154,7 @@ export default function ListingsTab({ profile, user, onTabChange }) {
                 )}
                 <div className="min-w-0">
                   <p className="text-sm font-bold truncate" style={{ color: '#111' }}>{listing.title}</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#6B7280' }}>{listing.tier} — {listing.platform} — {formatKES(listing.price)}</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#6B7280' }}>{listing.tier}, {listing.platform}, {formatKES(listing.price)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -208,10 +208,10 @@ export default function ListingsTab({ profile, user, onTabChange }) {
         <h3 className="font-heading text-sm font-bold uppercase mb-3" style={{ color: '#003BFF' }}><MapPin size={14} className="inline" /> LISTING TIPS</h3>
         <ul className="space-y-1.5 text-sm" style={{ color: '#374151' }}>
           <li> Active listings appear on the Browse page and are visible to all buyers.</li>
-          <li> Paused listings are hidden from buyers but not deleted — useful if you need a break.</li>
+          <li> Paused listings are hidden from buyers but not deleted. Useful if you need a break.</li>
           <li> Once an account is sold, the listing is automatically marked as Sold.</li>
           <li> You can only delete listings that have no ongoing orders.</li>
-          <li> Add up to 5 photos — listings with photos sell 3× faster.</li>
+          <li> Add up to 5 photos. Listings with photos sell 3x faster.</li>
         </ul>
       </div>
 

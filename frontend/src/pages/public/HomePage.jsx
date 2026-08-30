@@ -11,7 +11,7 @@ export default function HomePage() {
     <div className="animate-page-in">
       <div className="w-full bg-[#FFF100] py-2 px-4 text-center">
         <p className="font-heading font-bold text-[#111111] text-xs uppercase tracking-widest">
-          Kenya's First Dedicated eFootball Account Marketplace — Buy & Sell Safely with M-Pesa
+          Kenya's First Dedicated eFootball Account Marketplace - Buy & Sell Safely with M-Pesa
         </p>
       </div>
       <HeroSection />

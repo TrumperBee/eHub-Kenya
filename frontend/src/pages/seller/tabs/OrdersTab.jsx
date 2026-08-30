@@ -165,7 +165,7 @@ export default function OrdersTab({ profile, user, onTabChange }) {
               <li>Go to Konami's website or the eFootball app settings.</li>
               <li>Change the email linked to your Konami account to the buyer's email.</li>
               <li>Tell the buyer to log in and change the password immediately.</li>
-              <li>Wait for the buyer to confirm receipt — your payment will be released.</li>
+              <li>Wait for the buyer to confirm receipt. Your payment will then be released.</li>
             </ol>
             <p className="mt-1 font-semibold" style={{ color: '#C8102E' }}><AlertTriangle size={14} className="inline" /> Important: Never ask buyers to pay outside this platform. Escrow protects both of you.</p>
           </div>

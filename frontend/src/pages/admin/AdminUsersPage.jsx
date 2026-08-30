@@ -37,7 +37,7 @@ export default function AdminUsersPage() {
             <tbody className="divide-y divide-konami-mid-gray">
               {users.map((user) => (
                 <tr key={user.uid} className="hover:bg-konami-light-gray transition-colors">
-                  <td className="py-3 text-sm text-konami-text">{user.displayName || '—'}</td>
+                  <td className="py-3 text-sm text-konami-text">{user.displayName || '-'}</td>
                   <td className="py-3 text-sm text-konami-text-dim">{user.email}</td>
                   <td className="py-3">
                     <span className={`text-xs ${user.role === 'seller' ? 'text-green-500' : 'text-konami-text-dim'}`}>

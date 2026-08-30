@@ -54,10 +54,10 @@ export default function ListingDetailPage() {
       setLoading(false);
       if (listingData) {
         incrementViewCount(id);
-        document.title = `${listingData.title} — eFootball Hub Kenya`;
+        document.title = `${listingData.title} - eFootball Hub Kenya`;
       }
     });
-    return () => { document.title = 'eFootball Hub Kenya — Buy & Sell eFootball Accounts with M-Pesa'; };
+    return () => { document.title = 'eFootball Hub Kenya - Buy & Sell eFootball Accounts with M-Pesa'; };
   }, [id]);
 
   if (loading) return <div className="pt-[68px]"><LoadingSpinner fullScreen /></div>;
@@ -284,7 +284,7 @@ export default function ListingDetailPage() {
                         <span className="text-white/70 text-xs">
                           {listing.sellerRating > 0 ? listing.sellerRating.toFixed(1) : 'New Seller'}
                         </span>
-                        <span className="text-white/40 text-xs">·</span>
+                        <span className="w-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.4)' }} />
                         <span className="text-white/70 text-xs">{listing.sellerTotalSales || 0} sales</span>
                       </div>
                     </div>
@@ -298,7 +298,7 @@ export default function ListingDetailPage() {
                 {isSold ? (
                   <div className="space-y-3">
                     <div className="rounded-xl p-4 text-center" style={{ background: 'rgba(200,16,46,0.2)' }}>
-                      <p className="text-sm font-heading font-bold" style={{ color: '#C8102E' }}>SOLD — Not available</p>
+                      <p className="text-sm font-heading font-bold" style={{ color: '#C8102E' }}>SOLD - Not available</p>
                     </div>
                     <Link to="/browse" className="btn-secondary w-full text-center text-sm block !border-white/40 !text-white/80">
                       Browse Other Accounts
@@ -317,7 +317,7 @@ export default function ListingDetailPage() {
                   </Link>
                 ) : (
                   <button onClick={() => setShowBuyModal(true)} className="btn-primary w-full text-lg py-4 mb-4">
-                    Buy Now — {formatKES(listing.price)}
+                    Buy Now - {formatKES(listing.price)}
                   </button>
                 )}
 

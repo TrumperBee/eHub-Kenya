@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getBuyerOrders } from '../../services/ordersService';
 import { ORDER_STATUS } from '../../utils/constants';
@@ -78,7 +78,7 @@ export default function MyOrdersPage() {
                       {order.listingTitle || 'Unnamed Listing'}
                     </p>
                     <p className="text-xs text-konami-text-muted mt-0.5">
-                      {order.sellerDisplayName || 'Unknown Seller'} · {formatDate(order.createdAt)}
+                      {order.sellerDisplayName || 'Unknown Seller'} - {formatDate(order.createdAt)}
                     </p>
                   </div>
                   <div className="text-right shrink-0">
@@ -87,7 +87,7 @@ export default function MyOrdersPage() {
                       {statusConfig.label || order.status}
                     </span>
                   </div>
-                  <span className="text-xs text-konami-text-muted hover:text-konami-blue ml-2">View →</span>
+                  <span className="text-xs text-konami-text-muted hover:text-konami-blue ml-2">View <ArrowRight size={12} className="inline" /></span>
                 </Link>
               );
             })}

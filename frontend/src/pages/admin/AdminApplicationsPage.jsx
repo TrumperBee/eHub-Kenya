@@ -95,11 +95,11 @@ export default function AdminApplicationsPage() {
             <tbody className="divide-y divide-konami-mid-gray">
               {filtered.map((app) => (
                 <tr key={app.id} className="hover:bg-konami-light-gray transition-colors">
-                  <td className="py-3 text-sm text-konami-text">{app.displayName || '—'}</td>
+                  <td className="py-3 text-sm text-konami-text">{app.displayName || '-'}</td>
                   <td className="py-3 text-sm text-konami-text-dim">{app.email}</td>
-                  <td className="py-3 text-sm text-konami-text">{app.desiredSellerName || '—'}</td>
-                  <td className="py-3 text-sm text-konami-text-dim max-w-[200px] truncate">{app.bio || '—'}</td>
-                  <td className="py-3 text-sm text-konami-text-dim">{app.whatsappNumber || '—'}</td>
+                  <td className="py-3 text-sm text-konami-text">{app.desiredSellerName || '-'}</td>
+                  <td className="py-3 text-sm text-konami-text-dim max-w-[200px] truncate">{app.bio || '-'}</td>
+                  <td className="py-3 text-sm text-konami-text-dim">{app.whatsappNumber || '-'}</td>
                   <td className="py-3 text-sm text-konami-text-dim">{formatDate(app.submittedAt)}</td>
                   <td className="py-3">
                     <span className={`text-xs flex items-center gap-1 ${
@@ -141,7 +141,7 @@ export default function AdminApplicationsPage() {
                     ) : app.status === 'rejected' && app.rejectionReason ? (
                       <span className="text-xs text-konami-text-muted">Reason: {app.rejectionReason}</span>
                     ) : (
-                      <span className="text-xs text-konami-text-muted">—</span>
+                      <span className="text-xs text-konami-text-muted">-</span>
                     )}
                   </td>
                 </tr>

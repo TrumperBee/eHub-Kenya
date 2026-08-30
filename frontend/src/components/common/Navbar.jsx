@@ -133,6 +133,17 @@ export default function Navbar() {
               {link.path !== '/friday-drops' && link.label}
             </Link>
           ))}
+          {currentUser && (
+            <Link
+              to="/saved"
+              className="font-heading text-[13px] font-bold uppercase tracking-[0.1em] transition-colors duration-200"
+              style={{
+                color: location.pathname === '/saved' ? '#FFF100' : '#FFFFFF',
+              }}
+            >
+              Favourites
+            </Link>
+          )}
           <span className="text-white/30 text-xs">|</span>
         </div>
 

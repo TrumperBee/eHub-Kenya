@@ -189,7 +189,7 @@ export default function CommentItem({
                   <p className="break-words whitespace-pre-wrap leading-relaxed">{renderContent(comment.content, isOwn ? '#FFF100' : '#003BFF')}</p>
                   <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : 'justify-between'}`}>
                     <span className="text-[10px]" style={{ color: isOwn ? 'rgba(255,255,255,0.65)' : '#9CA3AF' }}>
-                      {formatRelativeTime(comment.createdAt)}{comment.edited ? ' · edited' : ''}
+                      {formatRelativeTime(comment.createdAt)}{comment.edited ? ' (edited)' : ''}
                     </span>
 
                     {isOwn && (

@@ -9,9 +9,9 @@ import toast from 'react-hot-toast';
 
 const TIER_OPTIONS = ['bronze', 'silver', 'gold', 'legendary'];
 const TIER_STRENGTH_DESC = {
-  bronze: 'Squad Strength: 3100 – 3179',
-  silver: 'Squad Strength: 3180 – 3199',
-  gold: 'Squad Strength: 3200 – 3249',
+  bronze: 'Squad Strength: 3100 - 3179',
+  silver: 'Squad Strength: 3180 - 3199',
+  gold: 'Squad Strength: 3200 - 3249',
   legendary: 'Squad Strength: 3250 and above',
 };
 
@@ -167,7 +167,7 @@ export default function CreateListingPage() {
                 </div>
                 {errors.tier && <p className="text-xs mt-1" style={{ color: '#C8102E' }}>{errors.tier}</p>}
                 <p className="text-xs italic mt-2" style={{ color: '#6B7280' }}>
-                  Select the tier that matches your squad's overall strength rating. You can find your squad strength in eFootball → Squad → Overall.
+                  Select the tier that matches your squad's overall strength rating. You can find your squad strength in eFootball &gt; Squad &gt; Overall.
                 </p>
               </div>
 
@@ -221,7 +221,7 @@ export default function CreateListingPage() {
             >
               <Upload size={32} className="mx-auto mb-2" style={{ color: '#003BFF' }} />
               <p className="text-sm font-medium" style={{ color: '#003BFF' }}>Drag photos here</p>
-              <p className="text-xs mt-1" style={{ color: '#6B7280' }}>JPEG, PNG, WebP — Max 5MB each</p>
+              <p className="text-xs mt-1" style={{ color: '#6B7280' }}>JPEG, PNG, WebP. Max 5MB each</p>
               <input ref={fileInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={handleFileSelect} className="hidden" />
             </div>
 

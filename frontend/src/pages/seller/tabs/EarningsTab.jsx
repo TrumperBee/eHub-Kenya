@@ -140,7 +140,7 @@ export default function EarningsTab({ profile, user, onTabChange }) {
             <li>If there is a dispute, funds remain frozen until the admin resolves it.</li>
           </ol>
           <p className="mt-2">
-            Your registered M-Pesa number: <strong>{profile?.phoneNumber || 'Not set — update in Profile'}</strong>
+            Your registered M-Pesa number: <strong>{profile?.phoneNumber || 'Not set. Update in Profile'}</strong>
           </p>
           <p className="text-xs" style={{ color: '#6B7280' }}>If your number is wrong, update it in your Profile tab before your next sale.</p>
         </div>
@@ -151,7 +151,7 @@ export default function EarningsTab({ profile, user, onTabChange }) {
           <span className="text-5xl block mb-4"><Wallet size={48} /></span>
           <h3 className="font-heading text-xl font-extrabold mb-2" style={{ color: '#003BFF' }}>NO EARNINGS YET</h3>
           <p className="text-sm max-w-md mx-auto mb-6" style={{ color: '#6B7280' }}>
-            Complete your first sale to see your earnings here. Create a listing and wait for buyers — it's that simple.
+            Complete your first sale to see your earnings here. Create a listing and wait for buyers. It's that simple.
           </p>
           <button onClick={() => navigate('/transfer-room/new')} className="btn-primary text-sm" style={{ background: '#FFF100', color: '#111' }}>
             CREATE A LISTING

@@ -6,7 +6,7 @@ import { getPendingApplications } from '../../services/usersService';
 import { ORDER_STATUS } from '../../utils/constants';
 import { formatKES, formatDate } from '../../utils/formatters';
 import { Link } from 'react-router-dom';
-import { Users, ShoppingBag, FileText, DollarSign, Clock, AlertTriangle } from 'lucide-react';
+import { Users, ShoppingBag, FileText, DollarSign, Clock, AlertTriangle, ArrowRight } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState({
@@ -105,7 +105,7 @@ export default function AdminDashboardPage() {
                   return (
                     <div key={order.id} className="flex items-center justify-between py-2 border-b border-konami-mid-gray last:border-0">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-konami-text truncate">{order.listingTitle || '—'}</p>
+                        <p className="text-sm text-konami-text truncate">{order.listingTitle || '-'}</p>
                         <p className="text-xs text-konami-text-muted">{formatKES(order.amount)}</p>
                       </div>
                       <span className={`text-xs ${cfg.color || 'text-konami-text-dim'} shrink-0 ml-2`}>
@@ -127,7 +127,7 @@ export default function AdminDashboardPage() {
                 {recentApps.map((app) => (
                   <div key={app.id} className="flex items-center justify-between py-2 border-b border-konami-mid-gray last:border-0">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-konami-text truncate">{app.desiredSellerName || app.displayName || '—'}</p>
+                      <p className="text-sm text-konami-text truncate">{app.desiredSellerName || app.displayName || '-'}</p>
                       <p className="text-xs text-konami-text-muted">{app.email}</p>
                     </div>
                     <span className={`text-xs shrink-0 ml-2 ${
@@ -139,7 +139,7 @@ export default function AdminDashboardPage() {
                   </div>
                 ))}
                 <Link to={`/hub-command-af29x/applications`} className="block text-xs text-konami-blue hover:underline mt-2 text-center">
-                  View All Applications →
+                  View All Applications <ArrowRight size={12} className="inline" />
                 </Link>
               </div>
             )}

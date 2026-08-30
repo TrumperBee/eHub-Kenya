@@ -24,8 +24,8 @@ export default function AdminDisputesPage() {
       const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
       const withDetails = await Promise.all(orders.map(async (order) => {
-        let buyerName = order.buyerDisplayName || '—';
-        let sellerName = order.sellerDisplayName || '—';
+        let buyerName = order.buyerDisplayName || '-';
+        let sellerName = order.sellerDisplayName || '-';
         let buyerEmail = '';
         let sellerEmail = '';
 
@@ -135,7 +135,7 @@ export default function AdminDisputesPage() {
                 </div>
                 <div>
                   <p className="text-xs text-konami-text-muted mb-1">Listing</p>
-                  <p className="text-sm text-konami-text">{order.listingTitle || '—'}</p>
+                  <p className="text-sm text-konami-text">{order.listingTitle || '-'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-konami-text-muted mb-1">Amount</p>

@@ -1,5 +1,5 @@
 // IMPORTANT: Ensure Firestore has an index on users.username (ascending)
-// Firebase console → Firestore → Indexes → Single field → users → username
+// Firebase console > Firestore > Indexes > Single field > users > username
 
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../services/firebase';

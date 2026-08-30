@@ -4,7 +4,7 @@ import { House, Search, Bookmark, Package, User } from 'lucide-react';
 const NAV_ITEMS = [
   { path: '/',        label: 'Home',      icon: <House size={20} /> },
   { path: '/browse',  label: 'Browse',    icon: <Search size={20} /> },
-  { path: '/saved',   label: 'Saved',     icon: <Bookmark size={20} /> },
+  { path: '/saved',   label: 'Favourites', icon: <Bookmark size={20} /> },
   { path: '/orders',  label: 'Orders',    icon: <Package size={20} /> },
   { path: '/account', label: 'Profile',   icon: <User size={20} /> },
 ];

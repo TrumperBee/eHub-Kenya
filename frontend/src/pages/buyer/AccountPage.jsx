@@ -380,7 +380,7 @@ export default function AccountPage() {
                   <Camera size={14} className="inline mr-1" />
                   Change Photo
                 </button>
-                <p className="text-[11px] mt-0.5" style={{ color: '#9CA3AF' }}>JPG or PNG · Max 2MB</p>
+                <p className="text-[11px] mt-0.5" style={{ color: '#9CA3AF' }}>JPG or PNG - Max 2MB</p>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -527,7 +527,7 @@ export default function AccountPage() {
                     label: 'Seller Status',
                     value: userProfile?.sellerApproved ? 'Active Seller' : userProfile?.sellerApplicationPending ? 'Application Pending' : 'Not a Seller',
                     extra: !userProfile?.sellerApproved && !userProfile?.sellerApplicationPending ? (
-                      <Link to="/apply-seller" className="text-xs font-heading font-bold hover:underline" style={{ color: '#003BFF' }}>Apply Now →</Link>
+                      <Link to="/apply-seller" className="text-xs font-heading font-bold hover:underline" style={{ color: '#003BFF' }}>Apply Now</Link>
                     ) : null,
                   },
                 ].map((tile, i) => (

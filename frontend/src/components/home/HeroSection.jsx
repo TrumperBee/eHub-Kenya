@@ -65,7 +65,7 @@ export default function HeroSection() {
               <span className="font-heading text-[13px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 {item}
               </span>
-              {i < 2 && <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>·</span>}
+              {i < 2 && <span className="w-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.35)' }} />}
             </div>
           ))}
         </div>

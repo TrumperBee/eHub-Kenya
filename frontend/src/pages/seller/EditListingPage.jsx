@@ -9,9 +9,9 @@ import toast from 'react-hot-toast';
 
 const TIER_OPTIONS = ['bronze', 'silver', 'gold', 'legendary'];
 const TIER_STRENGTH_DESC = {
-  bronze: 'Squad Strength: 3100 – 3179',
-  silver: 'Squad Strength: 3180 – 3199',
-  gold: 'Squad Strength: 3200 – 3249',
+  bronze: 'Squad Strength: 3100 - 3179',
+  silver: 'Squad Strength: 3180 - 3199',
+  gold: 'Squad Strength: 3200 - 3249',
   legendary: 'Squad Strength: 3250 and above',
 };
 
@@ -170,7 +170,7 @@ export default function EditListingPage() {
                   form.status === 'active' ? 'bg-green-400/10 text-green-500' : 'bg-yellow-400/10 text-yellow-600'
                 }`}>
                   <PauseCircle size={14} />
-                  {form.status === 'active' ? 'Active — Click to Pause' : 'Paused — Click to Activate'}
+                  {form.status === 'active' ? 'Active: Click to Pause' : 'Paused: Click to Activate'}
                 </button>
               </div>
             </div>
@@ -198,7 +198,7 @@ export default function EditListingPage() {
                   ))}
                 </div>
                 <p className="text-xs italic mt-2" style={{ color: '#6B7280' }}>
-                  Select the tier that matches your squad's overall strength rating. You can find your squad strength in eFootball → Squad → Overall.
+                  Select the tier that matches your squad's overall strength rating. You can find your squad strength in eFootball &gt; Squad &gt; Overall.
                 </p>
               </div>
             </div>

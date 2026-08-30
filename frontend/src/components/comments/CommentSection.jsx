@@ -250,7 +250,7 @@ export default function CommentSection({ listingId, sellerId }) {
           <div className="min-w-0">
             <p className="font-heading font-bold text-white uppercase tracking-wide text-lg leading-none">Discussion</p>
             <p className="text-xs text-white/70 mt-0.5 truncate">
-              Public group · {display.length} message{display.length !== 1 ? 's' : ''}
+              Public group - {display.length} message{display.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
@@ -279,7 +279,7 @@ export default function CommentSection({ listingId, sellerId }) {
           <div className="text-center py-14">
             <MessageSquare size={40} className="text-gray-300 mx-auto mb-3" />
             <p className="text-gray-400 font-heading font-bold uppercase text-sm tracking-wide">No messages yet</p>
-            <p className="text-gray-400 text-sm mt-1">Start the conversation — ask a question or make an offer</p>
+            <p className="text-gray-400 text-sm mt-1">Start the conversation. Ask a question or make an offer</p>
           </div>
         ) : (
           <div>

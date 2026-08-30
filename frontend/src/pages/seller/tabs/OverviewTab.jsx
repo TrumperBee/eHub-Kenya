@@ -146,17 +146,17 @@ export default function OverviewTab({ profile, user, onTabChange }) {
         <div className="text-sm leading-relaxed space-y-2" style={{ color: '#374151' }}>
           <p>Follow these steps to make your first sale:</p>
           <ol className="list-decimal pl-5 space-y-1">
-            <li><strong>Create a listing</strong> — Go to "My Listings" <ArrowRight size={14} className="inline" /> New Listing. Add clear photos of your squad, list your star players, and set a fair price.</li>
-            <li><strong>Wait for a buyer</strong> — Once your listing is live, buyers can find it on the Browse page. You will receive a notification when someone pays.</li>
-            <li><strong>Complete the transfer</strong> — When you get an order, go to "Orders", open the chat, and ask the buyer for their email. Then change your Konami account email to theirs.</li>
-            <li><strong>Get paid</strong> — Once the buyer confirms they have the account, the escrow is released to your M-Pesa number automatically.</li>
+            <li><strong>Create a listing.</strong> Go to "My Listings" <ArrowRight size={14} className="inline" /> New Listing. Add clear photos of your squad, list your star players, and set a fair price.</li>
+            <li><strong>Wait for a buyer.</strong> Once your listing is live, buyers can find it on the Browse page. You will receive a notification when someone pays.</li>
+            <li><strong>Complete the transfer.</strong> When you get an order, go to "Orders", open the chat, and ask the buyer for their email. Then change your Konami account email to theirs.</li>
+            <li><strong>Get paid.</strong> Once the buyer confirms they have the account, the escrow is released to your M-Pesa number automatically.</li>
           </ol>
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid #FFF100' }}>
             <p className="font-semibold mb-1">Tips for faster sales:</p>
             <ul className="list-disc pl-5 space-y-0.5">
               <li>Upload clear, bright screenshots of your squad</li>
               <li>List all your 5-star and Legendary players by name</li>
-              <li>Price competitively — check what similar accounts sell for</li>
+              <li>Price competitively. Check what similar accounts sell for</li>
               <li>Respond to buyers quickly once an order comes in</li>
             </ul>
           </div>

@@ -50,7 +50,7 @@ export default function AdminFridayDropsPage() {
     setActionId(dropId);
     try {
       await approveDrop(dropId);
-      toast.success('Drop approved — will go live Friday 12:00 EAT');
+      toast.success('Drop approved. It will go live Friday 12:00 EAT');
     } catch {
       toast.error('Failed to approve drop');
     } finally {
@@ -159,7 +159,7 @@ export default function AdminFridayDropsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 text-sm text-konami-text-dim">{drop.sellerName || '—'}</td>
+                    <td className="py-3 text-sm text-konami-text-dim">{drop.sellerName || '-'}</td>
                     <td className="py-3 text-sm">
                       <span className="line-through text-konami-text-dim mr-2">{formatKES(drop.regularPrice)}</span>
                       <span className="font-bold" style={{ color: '#C8102E' }}>{formatKES(drop.dropPrice)}</span>
@@ -206,11 +206,11 @@ export default function AdminFridayDropsPage() {
                           )}
                         </div>
                       ) : drop.status === 'rejected' ? (
-                        <span className="text-xs text-konami-text-muted">{drop.rejectionReason || '—'}</span>
+                        <span className="text-xs text-konami-text-muted">{drop.rejectionReason || '-'}</span>
                       ) : drop.views > 0 ? (
                         <span className="text-xs text-konami-text-muted flex items-center gap-1"><Eye size={12} /> {drop.views}</span>
                       ) : (
-                        <span className="text-xs text-konami-text-muted">—</span>
+                        <span className="text-xs text-konami-text-muted">-</span>
                       )}
                     </td>
                   </tr>

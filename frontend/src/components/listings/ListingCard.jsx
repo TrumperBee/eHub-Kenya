@@ -39,7 +39,7 @@ export default function ListingCard({ listing }) {
     }
     try {
       const nowSaved = await toggleSaveListing(currentUser.uid, listing);
-      toast.success(nowSaved ? 'Saved to your list' : 'Removed from saved');
+      toast.success(nowSaved ? 'Saved to Favourites' : 'Removed from Favourites');
     } catch (err) {
       toast.error('Failed to save listing');
     }

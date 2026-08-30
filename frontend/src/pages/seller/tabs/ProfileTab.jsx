@@ -159,7 +159,7 @@ export default function ProfileTab({ profile, user, onTabChange }) {
               className="input-field"
               placeholder="e.g. 0712345678"
             />
-            <p className="text-xs mt-1" style={{ color: '#6B7280' }}>Optional — some buyers prefer WhatsApp for updates. This is only shared after they place an order.</p>
+            <p className="text-xs mt-1" style={{ color: '#6B7280' }}>Optional. Some buyers prefer WhatsApp for updates. This is only shared after they place an order.</p>
           </div>
 
           <div>
@@ -172,7 +172,7 @@ export default function ProfileTab({ profile, user, onTabChange }) {
               placeholder="e.g. 0712345678"
             />
             <p className="text-xs mt-1" style={{ color: '#C8102E' }}>
-              <AlertTriangle size={14} className="inline" /> This is the number that receives your sale payments. Double-check it is correct — wrong number means lost earnings.
+              <AlertTriangle size={14} className="inline" /> This is the number that receives your sale payments. Double-check it is correct. A wrong number means lost earnings.
             </p>
           </div>
         </div>

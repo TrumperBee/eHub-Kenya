@@ -47,7 +47,7 @@ export default function CountdownTimer({ compact = false, onLive }) {
         <span className="live-dot" />
         <Flame size={16} style={{ color: '#C8102E' }} />
         <span className="font-heading text-sm font-extrabold uppercase tracking-widest" style={{ color: '#C8102E' }}>
-          Live Now — Deals are dropping!
+          Live Now - Deals are dropping!
         </span>
       </div>
     );

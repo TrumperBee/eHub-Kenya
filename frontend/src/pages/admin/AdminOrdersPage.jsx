@@ -82,14 +82,14 @@ export default function AdminOrdersPage() {
                   <React.Fragment key={order.id}>
                     <tr className="hover:bg-konami-light-gray transition-colors">
                       <td className="py-3 text-sm font-mono text-konami-text-dim">{order.id?.slice(0, 8)}...</td>
-                      <td className="py-3 text-sm text-konami-text">{order.buyerDisplayName || '—'}</td>
-                      <td className="py-3 text-sm text-konami-text">{order.sellerDisplayName || '—'}</td>
-                      <td className="py-3 text-sm text-konami-text-dim max-w-[150px] truncate">{order.listingTitle || '—'}</td>
+                      <td className="py-3 text-sm text-konami-text">{order.buyerDisplayName || '-'}</td>
+                      <td className="py-3 text-sm text-konami-text">{order.sellerDisplayName || '-'}</td>
+                      <td className="py-3 text-sm text-konami-text-dim max-w-[150px] truncate">{order.listingTitle || '-'}</td>
                       <td className="py-3 text-sm font-semibold text-konami-text">{formatKES(order.amount)}</td>
                       <td className="py-3">
                         <span className={`text-xs ${cfg.color || 'text-konami-text-dim'}`}>{cfg.label || order.status}</span>
                       </td>
-                      <td className="py-3 text-sm text-konami-text-dim">{order.escrowStatus || '—'}</td>
+                      <td className="py-3 text-sm text-konami-text-dim">{order.escrowStatus || '-'}</td>
                       <td className="py-3 text-sm text-konami-text-dim">{formatDate(order.createdAt)}</td>
                       <td className="py-3">
                         <div className="flex gap-1">
@@ -113,9 +113,9 @@ export default function AdminOrdersPage() {
                       <tr key={`${order.id}-expanded`}>
                         <td colSpan={9} className="px-4 py-3 bg-gray-50">
                           <div className="text-xs text-konami-text-dim space-y-1">
-                            <p><span className="text-konami-text-muted">Receipt:</span> {order.mpesaReceiptNumber || '—'}</p>
+                            <p><span className="text-konami-text-muted">Receipt:</span> {order.mpesaReceiptNumber || '-'}</p>
                             {order.disputeReason && <p><span className="text-konami-text-muted">Dispute Reason:</span> {order.disputeReason}</p>}
-                            <p><span className="text-konami-text-muted">Payment Phone:</span> {order.paymentPhone || '—'}</p>
+                            <p><span className="text-konami-text-muted">Payment Phone:</span> {order.paymentPhone || '-'}</p>
                           </div>
                         </td>
                       </tr>

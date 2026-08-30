@@ -145,7 +145,7 @@ export default function SellerPublicProfilePage() {
                     ({totalReviews} {totalReviews === 1 ? 'review' : 'reviews'})
                   </span>
                 </div>
-                <span className="text-white/30">·</span>
+                <span className="w-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.35)' }} />
                 <span className="text-white/60 text-sm">
                   Member since {formatDate(seller.createdAt)}
                 </span>

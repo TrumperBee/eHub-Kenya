@@ -87,9 +87,9 @@ export default function AdminListingsPage() {
             <tbody className="divide-y divide-konami-mid-gray">
               {filtered.map((listing) => (
                 <tr key={listing.id} className="hover:bg-konami-light-gray transition-colors">
-                  <td className="py-3 text-sm text-konami-text max-w-[200px] truncate">{listing.title || '—'}</td>
+                  <td className="py-3 text-sm text-konami-text max-w-[200px] truncate">{listing.title || '-'}</td>
                   <td className="py-3 text-sm" style={{ color: TIERS[listing.tier]?.color || '#6B7280' }}>{TIERS[listing.tier]?.label || listing.tier}</td>
-                  <td className="py-3 text-sm text-konami-text-dim">{listing.sellerDisplayName || '—'}</td>
+                  <td className="py-3 text-sm text-konami-text-dim">{listing.sellerDisplayName || '-'}</td>
                   <td className="py-3 text-sm font-semibold text-konami-text">{formatKES(listing.price)}</td>
                   <td className="py-3">
                     <span className={`text-xs ${

@@ -79,7 +79,7 @@ export const uploadListingImages = async (files) => {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       const reason = err.error?.message || `HTTP ${res.status}`;
-      throw new Error(`Image upload failed: ${reason}. Make sure the Cloudinary upload preset "${UPLOAD_PRESET}" is set to "Unsigned" in Cloudinary Settings → Upload → Upload presets.`);
+      throw new Error(`Image upload failed: ${reason}. Make sure the Cloudinary upload preset "${UPLOAD_PRESET}" is set to "Unsigned" in Cloudinary Settings > Upload > Upload presets.`);
     }
 
     const data = await res.json();

@@ -58,10 +58,10 @@ export default function AdminSellersPage() {
             <tbody className="divide-y divide-konami-mid-gray">
               {sellers.map((seller) => (
                 <tr key={seller.uid} className="hover:bg-konami-light-gray transition-colors">
-                  <td className="py-3 text-sm text-konami-text">{seller.displayName || '—'}</td>
+                  <td className="py-3 text-sm text-konami-text">{seller.displayName || '-'}</td>
                   <td className="py-3 text-sm text-konami-text-dim">{seller.email}</td>
-                  <td className="py-3 text-sm text-konami-text">{seller.sellerDisplayName || '—'}</td>
-                  <td className="py-3 text-sm text-konami-gold">{seller.sellerRating ? <><Star size={12} className="inline" /> {seller.sellerRating}</> : '—'}</td>
+                  <td className="py-3 text-sm text-konami-text">{seller.sellerDisplayName || '-'}</td>
+                  <td className="py-3 text-sm text-konami-gold">{seller.sellerRating ? <><Star size={12} className="inline" /> {seller.sellerRating}</> : '-'}</td>
                   <td className="py-3 text-sm text-konami-text">{seller.totalSales || 0}</td>
                   <td className="py-3 text-sm text-konami-text-dim">{formatDate(seller.createdAt)}</td>
                   <td className="py-3">

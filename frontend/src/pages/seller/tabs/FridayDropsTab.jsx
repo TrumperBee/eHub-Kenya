@@ -251,9 +251,9 @@ export default function FridayDropsTab({ profile, user }) {
               onChange={(e) => setSelectedListingId(e.target.value)}
               className="w-full bg-[#F5F5F5] border border-[#E0E0E0] text-[#111] rounded-xl px-4 py-3 mb-4 text-sm"
             >
-              <option value="">— Choose an active listing —</option>
+              <option value="">Choose an active listing</option>
               {listings.map((l) => (
-                <option key={l.id} value={l.id}>{l.title} — {formatKES(l.price)}</option>
+                <option key={l.id} value={l.id}>{l.title} ({formatKES(l.price)})</option>
               ))}
             </select>
 
@@ -261,7 +261,7 @@ export default function FridayDropsTab({ profile, user }) {
               <div className="mb-4 p-3 rounded-xl" style={{ background: '#F5F5F5' }}>
                 <p className="text-sm font-bold" style={{ color: '#111' }}>{selectedListing.title}</p>
                 <p className="text-xs mt-1" style={{ color: '#6B7280' }}>
-                  {selectedListing.tier} — {selectedListing.platform} — Regular {formatKES(selectedListing.price)}
+                  {selectedListing.tier}, {selectedListing.platform}, Regular {formatKES(selectedListing.price)}
                 </p>
               </div>
             )}

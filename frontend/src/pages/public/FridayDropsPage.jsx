@@ -82,7 +82,7 @@ export default function FridayDropsPage() {
               <Flame size={40} className="mx-auto mb-4" style={{ color: '#C8102E' }} />
               <h3 className="font-heading text-xl font-extrabold mb-2" style={{ color: '#003BFF' }}>NO DROPS THIS FRIDAY YET</h3>
               <p className="text-sm max-w-md mx-auto" style={{ color: '#6B7280' }}>
-                Sellers are submitting their best deals. Check back at 12:00 EAT on Friday — or browse the full marketplace now.
+                Sellers are submitting their best deals. Check back at 12:00 EAT on Friday, or browse the full marketplace now.
               </p>
             </div>
           ) : (
