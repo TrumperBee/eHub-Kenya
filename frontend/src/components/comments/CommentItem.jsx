@@ -1,9 +1,31 @@
 import { useState } from 'react';
-import { Heart, CornerDownRight, X, Pen } from 'lucide-react';
+import { Heart, CornerDownRight, X, Pen, AlertTriangle } from 'lucide-react';
 import { formatRelativeTime } from '../../utils/formatters';
 import { toggleLike, deleteComment, editComment } from '../../services/commentsService';
 import CommentInput from './CommentInput';
 import toast from 'react-hot-toast';
+
+const ConfirmModal = ({ message, onConfirm, onCancel }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl animate-fade-in-up">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+          <AlertTriangle size={20} className="text-red-500" />
+        </div>
+        <h3 className="font-heading font-bold text-gray-900">Confirm Delete</h3>
+      </div>
+      <p className="text-gray-600 text-sm mb-4">{message}</p>
+      <div className="flex gap-3 justify-end">
+        <button onClick={onCancel} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium text-sm">
+          Cancel
+        </button>
+        <button onClick={onConfirm} className="px-4 py-2 bg-red-500 text-white rounded-lg font-medium text-sm hover:bg-red-600 transition-colors">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+);
 
 const renderContent = (text) => {
   const parts = text.split(/(@\w+)/g);
@@ -15,9 +37,10 @@ const renderContent = (text) => {
   });
 };
 
-export default function CommentItem({ comment, listingId, currentUser, onReply }) {
+function CommentItem({ comment, listingId, currentUser, onReply }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const isOwn = currentUser?.uid === comment.authorId;
   const isLiked = currentUser && comment.likedBy?.includes(currentUser.uid);
 
@@ -34,7 +57,11 @@ export default function CommentItem({ comment, listingId, currentUser, onReply }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Delete this comment?')) return;
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setShowDeleteModal(false);
     try {
       await deleteComment(listingId, comment.id);
       toast.success('Comment deleted');
@@ -158,3 +185,13 @@ export default function CommentItem({ comment, listingId, currentUser, onReply }
     </div>
   );
 }
+
+{showDeleteModal && (
+  <ConfirmModal
+    message="Are you sure you want to delete this comment?"
+    onConfirm={handleConfirmDelete}
+    onCancel={() => setShowDeleteModal(false)}
+  />
+)}
+
+export default CommentItem;

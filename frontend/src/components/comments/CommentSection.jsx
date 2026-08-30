@@ -11,7 +11,7 @@ import {
 } from '../../services/commentsService';
 import CommentInput from './CommentInput';
 import CommentItem from './CommentItem';
-import { MessageSquare, CornerDownRight, X } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function CommentSection({ listingId, sellerId }) {
@@ -111,31 +111,16 @@ export default function CommentSection({ listingId, sellerId }) {
 
       {/* Post a comment input */}
       <div className="mb-6">
-        {currentUser
-          ? <>
-              {replyingTo && (
-                <div className="flex items-center gap-2 bg-blue-50 border border-blue-100
-                                rounded-xl px-3 py-2 mb-2">
-                  <CornerDownRight size={14} className="text-[#003BFF]" />
-                  <span className="text-sm text-[#003BFF]">
-                    Replying to <strong>@{replyingTo.authorUsername}</strong>
-                  </span>
-                  <button onClick={() => setReplyingTo(null)}
-                          className="ml-auto text-gray-400 hover:text-gray-600">
-                    <X size={14} />
-                  </button>
-                </div>
-              )}
-              <CommentInput
-                onSubmit={handlePost}
-                placeholder={replyingTo
-                  ? `Reply to @${replyingTo.authorUsername}...`
-                  : "Ask a question, make an offer, or leave a comment..."}
-                replyingTo={replyingTo}
-              />
-            </>
+{currentUser
+          ? <CommentInput
+              onSubmit={handlePost}
+              placeholder={replyingTo
+                ? `Reply to @${replyingTo.authorUsername}...`
+                : "Ask a question, make an offer, or leave a comment..."}
+              replyingTo={replyingTo}
+            />
           : <div className="flex items-center gap-3 bg-gray-50 border border-gray-200
-                            rounded-xl p-4">
+                          rounded-xl p-4">
               <MessageSquare size={20} className="text-gray-400" />
               <p className="text-gray-500 text-sm flex-1">
                 <Link to="/login" className="text-[#003BFF] font-semibold hover:underline">

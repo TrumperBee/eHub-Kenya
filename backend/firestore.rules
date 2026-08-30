@@ -20,6 +20,12 @@ service cloud.firestore {
         allow create: if isLoggedIn();
         allow update, delete: if false;
       }
+
+      match /savedListings/{listingId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
     }
 
     match /listings/{listingId} {
