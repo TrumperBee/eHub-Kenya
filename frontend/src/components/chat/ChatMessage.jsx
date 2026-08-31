@@ -1,10 +1,13 @@
 import { formatRelativeTime } from '../../utils/formatters';
 
 export default function ChatMessage({ message, isOwnMessage }) {
-  if (message.messageType === 'system' || message.senderRole === 'system') {
+  const isSystem = message.messageType === 'system' || message.senderRole === 'system' || message.type === 'system';
+  const content = message.content || message.text || '';
+
+  if (isSystem) {
     return (
       <div className="flex justify-center py-2">
-        <p className="text-xs text-konami-text-muted italic text-center max-w-[80%]">{message.content}</p>
+        <p className="text-xs text-konami-text-muted italic text-center max-w-[80%]">{content}</p>
       </div>
     );
   }
@@ -21,7 +24,7 @@ export default function ChatMessage({ message, isOwnMessage }) {
             {message.senderDisplayName || 'User'}
           </p>
         )}
-        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
+        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{content}</p>
         <p className={`text-[10px] mt-1 text-right ${isOwnMessage ? 'text-white/60' : 'text-konami-text-muted'}`}>
           {formatRelativeTime(message.createdAt)}
         </p>

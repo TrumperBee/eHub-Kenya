@@ -53,7 +53,11 @@ async function release(req, res) {
 
     const messagesRef = orderRef.collection('messages');
     await messagesRef.add({
-      type: 'system',
+      senderId: 'system',
+      senderDisplayName: 'System',
+      senderRole: 'system',
+      messageType: 'system',
+      content: 'Buyer has confirmed receipt. Transaction complete. Escrow released.',
       text: 'Buyer has confirmed receipt. Transaction complete. Escrow released.',
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
@@ -95,7 +99,11 @@ async function dispute(req, res) {
 
     const messagesRef = orderRef.collection('messages');
     await messagesRef.add({
-      type: 'system',
+      senderId: 'system',
+      senderDisplayName: 'System',
+      senderRole: 'system',
+      messageType: 'system',
+      content: `Buyer has raised a dispute: ${reason}. Admin has been notified. Escrow is frozen.`,
       text: `Buyer has raised a dispute: ${reason}. Admin has been notified. Escrow is frozen.`,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
