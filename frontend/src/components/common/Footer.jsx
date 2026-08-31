@@ -55,7 +55,7 @@ export default function Footer() {
       </div>
       <div className="bg-[#001450] py-4">
         <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-          &copy; 2024 eFootball Hub Kenya. Not affiliated with Konami Digital Entertainment.
+          &copy; 2026 eFootball Hub Kenya. Not affiliated with Konami Digital Entertainment.
         </p>
       </div>
     </footer>
