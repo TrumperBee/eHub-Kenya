@@ -85,7 +85,8 @@ export default function ListingsTab({ profile, user, onTabChange }) {
       setDeleteId(null);
       fetchData();
     } catch (err) {
-      toast.error('Failed to remove listing');
+      toast.error(err?.message || 'Failed to remove listing');
+      setDeleteId(null);
     } finally {
       setDeleting(false);
     }

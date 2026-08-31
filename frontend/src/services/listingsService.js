@@ -1,6 +1,7 @@
 import { db } from './firebase';
 import { collection, query, where, orderBy, limit, startAfter, getDocs, getDoc, doc, addDoc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 import { incrementListingCount, decrementListingCount } from './statsService';
+import { countOngoingOrders } from './listingDeleteGuard';
 
 const listingsRef = collection(db, 'listings');
 const PAGE_SIZE = 50;
@@ -94,7 +95,19 @@ export const updateListing = async (id, data) => {
   return updateDoc(doc(db, 'listings', id), { ...data, updatedAt: serverTimestamp() });
 };
 
+export const getListingOngoingOrderCount = async (listingId) => {
+  const q = query(collection(db, 'orders'), where('listingId', '==', listingId));
+  const snapshot = await getDocs(q);
+  return countOngoingOrders(snapshot.docs.map((d) => d.data().status));
+};
+
 export const deleteListingSoft = async (id) => {
+  const ongoing = await getListingOngoingOrderCount(id);
+  if (ongoing > 0) {
+    throw new Error(
+      `This listing has ${ongoing} ongoing order${ongoing > 1 ? 's' : ''}. You can only delete listings with no ongoing orders. Wait for the order(s) to complete before deleting.`
+    );
+  }
   await updateDoc(doc(db, 'listings', id), { status: 'removed', updatedAt: serverTimestamp() });
   decrementListingCount();
 };
