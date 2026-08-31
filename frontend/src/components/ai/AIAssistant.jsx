@@ -5,7 +5,7 @@ import { sendMessageToAI } from '../../services/aiService';
 
 const WELCOME_MESSAGE = {
   role: 'assistant',
-  content: "Hey! I'm EHub AI \uD83D\uDC4B I'm here to help you navigate eFootball Hub Kenya. Ask me anything \u2014 how to buy, how to sell, pricing advice, or anything about eFootball!",
+  content: "Hey! I'm EHub AI. I'm here to help you navigate eFootball Hub Kenya. Ask me anything - how to buy, how to sell, pricing advice, or anything about eFootball!",
 };
 
 const QUICK_SUGGESTIONS = [
@@ -36,7 +36,6 @@ export default function AIAssistant() {
 
   const hideOnPaths = ['/login', '/register', '/setup-username'];
   const isAdminPath = location.pathname.startsWith('/hub-command-af29x');
-  if (hideOnPaths.includes(location.pathname) || isAdminPath) return null;
 
   useEffect(() => {
     const saved = localStorage.getItem('ehub_ai_position');
@@ -169,6 +168,8 @@ export default function AIAssistant() {
   };
 
   const panelPos = isOpen ? chatPanelStyle() : {};
+
+  if (hideOnPaths.includes(location.pathname) || isAdminPath) return null;
 
   return (
     <>
