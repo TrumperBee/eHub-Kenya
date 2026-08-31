@@ -70,6 +70,12 @@ export const getSellerDropForListing = async (sellerId, listingId) => {
   return mapSnap(snap);
 };
 
+export const getDropsForListing = async (listingId) => {
+  const q = query(dropsRef, where('listingId', '==', listingId));
+  const snap = await getDocs(q);
+  return mapSnap(snap);
+};
+
 export const setDropStatus = async (dropId, data) => {
   return updateDoc(doc(db, 'fridayDrops', dropId), {
     ...data,

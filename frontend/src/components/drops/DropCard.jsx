@@ -2,6 +2,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Star, CircleDollarSign, BarChart3, ArrowRight, Flame, ExternalLink, Tag, Smartphone } from 'lucide-react';
 import { PLATFORMS } from '../../utils/constants';
 import { formatKES } from '../../utils/formatters';
+import { classifyDrop, formatFridayLabel } from '../../utils/fridayUtils';
 import TierBadge from '../listings/TierBadge';
 import PlayerBadge from '../listings/PlayerBadge';
 
@@ -11,19 +12,23 @@ export default function DropCard({ drop, onView }) {
   const platformLabel = PLATFORMS[drop.platform]?.label || drop.platform || 'eFootball';
   const photoUrl = drop.photo;
   const discount = drop.discountPercent || 0;
+  const state = classifyDrop(drop);
+  const isLive = state === 'live';
 
   const handleOpen = () => {
+    if (!isLive) return;
     if (onView) onView(drop);
     navigate(`/listing/${drop.listingId}`);
   };
 
   return (
     <div
-      onClick={handleOpen}
-      className="group cursor-pointer rounded-2xl overflow-hidden transition-all duration-250 bg-white"
+      onClick={isLive ? handleOpen : undefined}
+      className="group rounded-2xl overflow-hidden transition-all duration-250 bg-white"
       style={{
         border: '1px solid #E0E0E0',
         boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+        cursor: isLive ? 'pointer' : 'default',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-4px)';
@@ -140,10 +145,18 @@ export default function DropCard({ drop, onView }) {
           </div>
           <button
             onClick={handleOpen}
+            disabled={!isLive}
             className="font-heading text-[13px] font-bold uppercase tracking-wide px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95"
-            style={{ background: '#003BFF', color: '#FFFFFF' }}
+            style={{
+              background: isLive ? '#003BFF' : 'rgba(0,30,122,0.1)',
+              color: isLive ? '#FFFFFF' : '#1E3A8A',
+            }}
           >
-            Grab Deal <ArrowRight size={14} className="inline" />
+            {isLive ? (
+              <>Grab Deal <ArrowRight size={14} className="inline" /></>
+            ) : (
+              <>Live {formatFridayLabel(drop.fridayDateISO)}</>
+            )}
           </button>
         </div>
       </div>

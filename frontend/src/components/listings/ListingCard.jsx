@@ -1,8 +1,10 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Smartphone, Star, CircleDollarSign, BarChart3, ArrowRight, Circle, ExternalLink, Bookmark } from 'lucide-react';
+import { useFridayDrop } from '../../context/FridayDropContext';
+import { Smartphone, Star, CircleDollarSign, BarChart3, ArrowRight, Circle, ExternalLink, Bookmark, Flame } from 'lucide-react';
 import { TIERS, PLATFORMS } from '../../utils/constants';
 import { formatKES } from '../../utils/formatters';
+import { formatFridayLabel } from '../../utils/fridayUtils';
 import TierBadge from './TierBadge';
 import PlayerBadge from './PlayerBadge';
 import { toggleSaveListing } from '../../services/savedListingsService';
@@ -25,6 +27,12 @@ export default function ListingCard({ listing }) {
 
   const photoUrl = listing.photos?.[0];
   const isSold = listing.status === 'sold';
+
+  const { getDropForListing } = useFridayDrop();
+  const fridayDrop = getDropForListing(listing.id) || null;
+  const dropLive = fridayDrop?.state === 'live';
+
+  const displayPrice = fridayDrop ? fridayDrop.dropPrice : listing.price;
 
   const handleClick = () => {
     navigate(`/listing/${listing.id}`);
@@ -103,6 +111,14 @@ export default function ListingCard({ listing }) {
 
           <div className="absolute top-3 left-3">
             <TierBadge tier={tier} />
+            {fridayDrop && (
+              <span
+                className="inline-flex items-center gap-1 mt-2 text-[10px] font-heading font-bold uppercase tracking-wide px-2 py-1 rounded-full"
+                style={{ background: '#C8102E', color: '#FFF100', border: '1px solid rgba(255,241,0,0.5)' }}
+              >
+                <Flame size={11} /> {dropLive ? 'Drop Live' : 'Friday Drop'}
+              </span>
+            )}
           </div>
           <div className="absolute top-3 right-3 bg-konami-blue text-white rounded-full px-3 py-1 text-xs font-heading font-bold uppercase tracking-wide">
             <Smartphone size={14} /> {platformLabel}
@@ -170,14 +186,31 @@ export default function ListingCard({ listing }) {
           </div>
 
           <div className="flex items-center justify-between pt-3" style={{ borderTop: '1px solid #E0E0E0' }}>
-            <span className="font-heading text-2xl font-extrabold" style={{ color: '#003BFF' }}>
-              {formatKES(listing.price || 0)}
+            <span>
+              {fridayDrop && (
+                <span className="block text-[11px] font-heading font-bold uppercase tracking-wide mb-0.5" style={{ color: '#C8102E' }}>
+                  <Flame size={11} className="inline -mt-0.5" /> Friday Drop
+                </span>
+              )}
+              <span className="font-heading text-2xl font-extrabold" style={{ color: '#003BFF' }}>
+                {formatKES(displayPrice || 0)}
+              </span>
+              {fridayDrop && fridayDrop.dropPrice !== listing.price && (
+                <span className="block text-xs mt-0.5" style={{ color: '#9CA3AF', textDecoration: 'line-through' }}>
+                  was {formatKES(listing.price || 0)}
+                </span>
+              )}
+              {fridayDrop && !dropLive && (
+                <span className="block text-[11px] mt-0.5" style={{ color: '#6B7280' }}>
+                  Live {formatFridayLabel(fridayDrop.fridayDateISO)}
+                </span>
+              )}
             </span>
             <button
               onClick={(e) => { e.stopPropagation(); handleClick(); }}
               className="btn-primary !py-2 !px-4 text-[13px]"
             >
-              VIEW DEAL <ArrowRight size={14} />
+              {dropLive ? `Grab Deal` : `VIEW DEAL`} <ArrowRight size={14} />
             </button>
           </div>
         </div>

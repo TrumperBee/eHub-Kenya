@@ -10,9 +10,10 @@ import TierBadge from '../listings/TierBadge';
 import MpesaPopup from './MpesaPopup';
 import PaymentStatus from './PaymentStatus';
 
-export default function BuyNowModal({ listing, onClose }) {
+export default function BuyNowModal({ listing, onClose, price }) {
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
+  const amount = price ?? listing.price;
   const [step, setStep] = useState('confirm');
   const [orderId, setOrderId] = useState(null);
   const [checkoutRequestId, setCheckoutRequestId] = useState(null);
@@ -36,7 +37,7 @@ export default function BuyNowModal({ listing, onClose }) {
         buyerDisplayName: userProfile?.displayName || currentUser.displayName || 'Buyer',
         sellerId: listing.sellerId,
         sellerDisplayName: listing.sellerDisplayName || 'Seller',
-        amount: listing.price,
+        amount,
         status: 'pending_payment',
         escrowStatus: 'none',
         tier: listing.tier,
@@ -45,7 +46,7 @@ export default function BuyNowModal({ listing, onClose }) {
 
       const result = await initiatePayment({
         phone,
-        amount: listing.price,
+        amount,
         orderId: newOrderId,
         listingId: listing.id,
         listingTitle: listing.title,
@@ -123,7 +124,7 @@ export default function BuyNowModal({ listing, onClose }) {
 
             <div className="p-3 rounded-xl" style={{ background: '#003BFF' }}>
               <p className="text-xs text-white/60 mb-1">Total</p>
-              <p className="font-heading text-2xl font-extrabold" style={{ color: '#FFF100' }}>{formatKES(listing.price)}</p>
+              <p className="font-heading text-2xl font-extrabold" style={{ color: '#FFF100' }}>{formatKES(amount)}</p>
             </div>
 
             <div className="space-y-2 p-3 rounded-xl" style={{ background: '#F5F5F5' }}>
@@ -150,7 +151,7 @@ export default function BuyNowModal({ listing, onClose }) {
               </div>
             )}
 
-            <MpesaPopup amount={listing.price} onSubmit={handleProceed} loading={loading} />
+            <MpesaPopup amount={amount} onSubmit={handleProceed} loading={loading} />
 
             <button onClick={handleCancel} className="w-full py-2.5 text-sm font-medium transition-colors" style={{ color: '#6B7280' }}>
               Cancel

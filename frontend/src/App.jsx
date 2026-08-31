@@ -4,6 +4,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { FridayDropProvider } from './context/FridayDropContext';
 import { ADMIN_ROUTE } from './utils/constants';
 import { useAuth } from './context/AuthContext';
 import { seedStatsIfMissing } from './services/statsService';
@@ -212,7 +213,9 @@ function App() {
   return (
     <AuthProvider>
       <NotificationProvider>
-        <AppContent />
+        <FridayDropProvider>
+          <AppContent />
+        </FridayDropProvider>
       </NotificationProvider>
     </AuthProvider>
   );

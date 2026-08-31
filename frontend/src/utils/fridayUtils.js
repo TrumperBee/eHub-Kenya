@@ -89,6 +89,38 @@ export function calcDiscount(regularPrice, dropPrice) {
   return Math.round(((r - d) / r) * 100);
 }
 
+// Drop lifecycle: a drop's fridayDateISO is an EAT calendar date (YYYY-MM-DD). It goes
+// live at 12:00 EAT (= 09:00 UTC) that day and stays live for that week (until just before
+// the next Friday's 12:00 EAT), at which point it is treated as expired.
+
+export function getDropGoLiveMs(fridayDateISO) {
+  const [y, m, d] = String(fridayDateISO).split('-').map(Number);
+  return Date.UTC(y, m - 1, d, 9, 0, 0, 0); // EAT 12:00
+}
+
+export function getDropWindowEndMs(fridayDateISO) {
+  // Live for this entire week, up to just before the next Friday 12:00 EAT.
+  return getDropGoLiveMs(fridayDateISO) + (7 * 24 * 60 * 60 * 1000) - 1;
+}
+
+export function classifyDrop(drop, now = new Date()) {
+  if (!drop || !drop.fridayDateISO) return 'expired';
+  if (drop.status === 'expired') return 'expired';
+  if (drop.status !== 'approved') return 'expired'; // pending/rejected are not purchasable
+  const nowMs = now.getTime();
+  if (nowMs < getDropGoLiveMs(drop.fridayDateISO)) return 'upcoming';
+  if (nowMs > getDropWindowEndMs(drop.fridayDateISO)) return 'expired';
+  return 'live';
+}
+
+export function isDropRecordLive(drop, now = new Date()) {
+  return classifyDrop(drop, now) === 'live';
+}
+
+export function isDropRecordUpcoming(drop, now = new Date()) {
+  return classifyDrop(drop, now) === 'upcoming';
+}
+
 const FRIDAY_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export function formatFridayLabel(isoDate) {

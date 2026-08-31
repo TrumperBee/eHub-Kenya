@@ -4,8 +4,10 @@ import { collection, query, orderBy, where, getDocs, getCountFromServer } from '
 import { db } from '../../services/firebase';
 import { getListingById, incrementViewCount } from '../../services/listingsService';
 import { useAuth } from '../../context/AuthContext';
+import { useFridayDrop } from '../../context/FridayDropContext';
 import { TIERS, PLATFORMS } from '../../utils/constants';
 import { formatKES } from '../../utils/formatters';
+import { formatFridayLabel } from '../../utils/fridayUtils';
 import TierBadge from '../../components/listings/TierBadge';
 import PlayerBadge from '../../components/listings/PlayerBadge';
 import ReviewCard from '../../components/reviews/ReviewCard';
@@ -14,7 +16,7 @@ import BuyNowModal from '../../components/checkout/BuyNowModal';
 import SaveButton from '../../components/listings/SaveButton';
 import CommentSection from '../../components/comments/CommentSection';
 import { toggleSaveListing, subscribeSavedListingIds } from '../../services/savedListingsService';
-import { ChevronDown, ChevronUp, Shield, Star, Circle, ChevronRight, Bookmark } from 'lucide-react';
+import { ChevronDown, ChevronUp, Shield, Star, Circle, ChevronRight, Bookmark, Flame } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const statRows = [
@@ -100,6 +102,13 @@ export default function ListingDetailPage() {
   const isOwner = currentUser && listing.sellerId === currentUser.uid;
   const photos = listing.photos || [];
   const isSold = listing.status === 'sold';
+
+  const { getDropForListing } = useFridayDrop();
+  const fridayDrop = getDropForListing(listing.id) || null;
+  const dropLive = fridayDrop?.state === 'live';
+  const dropUpcoming = fridayDrop?.state === 'upcoming';
+  const effectivePrice = dropLive && fridayDrop ? fridayDrop.dropPrice : listing.price;
+  const dropGoLiveLabel = fridayDrop ? `${formatFridayLabel(fridayDrop.fridayDateISO)} at 12:00 EAT` : '';
 
   const howItWorksSteps = [
     'Find your desired account and click "Buy Now"',
@@ -255,9 +264,22 @@ export default function ListingDetailPage() {
               <div className="rounded-2xl p-6 card-blue">
                 <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>Price</p>
                 <div className="flex items-center justify-between mb-4">
-                  <p className="font-heading text-4xl font-extrabold" style={{ color: '#FFF100' }}>
-                    {formatKES(listing.price)}
-                  </p>
+                  <div>
+                    {dropLive && fridayDrop ? (
+                      <>
+                        <p className="font-heading text-4xl font-extrabold" style={{ color: '#FFF100' }}>
+                          {formatKES(fridayDrop.dropPrice)}
+                        </p>
+                        <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'line-through' }}>
+                          Was {formatKES(fridayDrop.regularPrice)}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="font-heading text-4xl font-extrabold" style={{ color: '#FFF100' }}>
+                        {formatKES(listing.price)}
+                      </p>
+                    )}
+                  </div>
                   <SaveButton
                     listing={listing}
                     isSaved={isSaved}
@@ -269,6 +291,31 @@ export default function ListingDetailPage() {
                   ? <p className="text-white/50 text-xs text-center">Saved to your account</p>
                   : <p className="text-white/50 text-xs text-center">Save for later</p>
                 }
+
+                {fridayDrop && (
+                  <div
+                    className="mb-4 p-3 rounded-xl flex items-start gap-2"
+                    style={{
+                      background: dropLive ? 'rgba(200,16,46,0.18)' : 'rgba(255,241,0,0.15)',
+                      border: `1px solid ${dropLive ? '#C8102E' : 'rgba(255,241,0,0.6)'}`,
+                    }}
+                  >
+                    <span className="mt-0.5 shrink-0" style={{ color: dropLive ? '#C8102E' : '#FFF100' }}>
+                      <Flame size={16} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-heading text-xs font-extrabold uppercase tracking-wide" style={{ color: '#FFFFFF' }}>
+                        Friday Drop {dropLive ? 'LIVE' : 'UPCOMING'}
+                      </p>
+                      <p className="text-[11px] mt-0.5 leading-snug" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                        {dropLive
+                          ? `${formatKES(fridayDrop.dropPrice)} now, was ${formatKES(fridayDrop.regularPrice)}`
+                          : `Drops ${dropGoLiveLabel}. Pricing shown then.`}
+                        {dropLive ? '' : ` Drop price: ${formatKES(fridayDrop.dropPrice)} (was ${formatKES(fridayDrop.regularPrice)}).`}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center gap-2 mb-4 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
                   <Link
@@ -327,9 +374,17 @@ export default function ListingDetailPage() {
                   <Link to="/login" className="btn-primary w-full text-lg py-4 mb-4 block text-center">
                     Login to Buy
                   </Link>
+                ) : dropUpcoming ? (
+                  <button
+                    disabled
+                    className="btn-primary w-full text-lg py-4 mb-4 opacity-70 cursor-not-allowed"
+                    title={`Available from ${dropGoLiveLabel}`}
+                  >
+                    Live Friday - {formatKES(effectivePrice)}
+                  </button>
                 ) : (
                   <button onClick={() => setShowBuyModal(true)} className="btn-primary w-full text-lg py-4 mb-4">
-                    Buy Now - {formatKES(listing.price)}
+                    Buy Now - {formatKES(effectivePrice)}
                   </button>
                 )}
 
@@ -370,7 +425,7 @@ export default function ListingDetailPage() {
       </div>
 
       {showBuyModal && (
-        <BuyNowModal listing={listing} onClose={() => setShowBuyModal(false)} />
+        <BuyNowModal listing={listing} price={effectivePrice} onClose={() => setShowBuyModal(false)} />
       )}
     </div>
   );
