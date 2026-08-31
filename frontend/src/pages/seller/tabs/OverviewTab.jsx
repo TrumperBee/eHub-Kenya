@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, AlertTriangle, ArrowRight, Clipboard, CheckCircle, Clock, Wallet, Lightbulb } from 'lucide-react';
+import { Plus, AlertTriangle, ArrowRight, Clipboard, CheckCircle, Clock, Wallet, Lightbulb, Flame, BadgePercent } from 'lucide-react';
 import { getSellerListings } from '../../../services/listingsService';
 import { getSellerOrders } from '../../../services/ordersService';
 import { formatKES, formatDate } from '../../../utils/formatters';
@@ -99,6 +99,30 @@ export default function OverviewTab({ profile, user, onTabChange }) {
         </button>
       </div>
 
+      <button
+        onClick={() => onTabChange('fridayDrops')}
+        className="w-full rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 text-left transition-transform hover:scale-[1.01]"
+        style={{ background: 'linear-gradient(135deg, #001E7A 0%, #003BFF 100%)', border: '1px solid #FFF100' }}
+      >
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0" style={{ background: '#FFF100', color: '#111' }}>
+          <Flame size={26} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-heading text-base font-extrabold uppercase" style={{ color: '#FFF100' }}>Sell more with Friday Drops</p>
+          <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.85)' }}>
+            Put one of your active listings on a special discounted drop that goes live marketplace-wide every Friday 12:00 EAT. Approved by our team before it publishes.
+          </p>
+        </div>
+        <div className="shrink-0 flex items-center gap-2">
+          <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: '#FFF100', color: '#111' }}>
+            <BadgePercent size={13} className="inline" /> Up to 50% off
+          </span>
+          <span className="font-heading text-sm font-bold uppercase flex items-center gap-1" style={{ color: '#FFFFFF' }}>
+            Open <ArrowRight size={16} />
+          </span>
+        </div>
+      </button>
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl shadow-card p-4 relative overflow-hidden">
           <div style={{ height: 4, background: '#003BFF', position: 'absolute', top: 0, left: 0, right: 0 }} />
@@ -149,7 +173,7 @@ export default function OverviewTab({ profile, user, onTabChange }) {
             <li><strong>Create a listing.</strong> Go to "My Listings" <ArrowRight size={14} className="inline" /> New Listing. Add clear photos of your squad, list your star players, and set a fair price.</li>
             <li><strong>Wait for a buyer.</strong> Once your listing is live, buyers can find it on the Browse page. You will receive a notification when someone pays.</li>
             <li><strong>Complete the transfer.</strong> When you get an order, go to "Orders", open the chat, and ask the buyer for their email. Then change your Konami account email to theirs.</li>
-            <li><strong>Get paid.</strong> Once the buyer confirms they have the account, the escrow is released to your M-Pesa number automatically.</li>
+            <li><strong>Get paid.</strong> Once you confirm the transfer and the buyer confirms receipt, the admin will release your payment to your M-Pesa number.</li>
           </ol>
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid #FFF100' }}>
             <p className="font-semibold mb-1">Tips for faster sales:</p>

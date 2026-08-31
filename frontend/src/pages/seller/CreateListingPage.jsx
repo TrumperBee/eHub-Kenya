@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, X, Plus } from 'lucide-react';
+import { Upload, X, Plus, Flame } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { createListing } from '../../services/listingsService';
+import { submitDrop } from '../../services/fridayDropsService';
 import { uploadListingImages } from '../../services/paymentService';
 import TierBadge from '../../components/listings/TierBadge';
 import toast from 'react-hot-toast';
@@ -33,6 +34,8 @@ export default function CreateListingPage() {
     photos: [],
     description: '',
     price: '',
+    submitAsDrop: false,
+    dropPrice: '',
   });
 
   const update = (field) => (e) => setForm(p => ({ ...p, [field]: e.target.value }));
@@ -82,6 +85,17 @@ export default function CreateListingPage() {
     if (form.description.length > 1000) errs.description = 'Description max 1000 characters';
     const price = Number(form.price);
     if (!price || price < 100) errs.price = 'Price must be at least KES 100';
+
+    if (form.submitAsDrop) {
+      const dropPrice = Number(form.dropPrice);
+      if (!dropPrice || dropPrice <= 0) {
+        errs.dropPrice = 'Enter a drop price';
+      } else if (dropPrice >= price) {
+        errs.dropPrice = 'Drop price must be lower than the regular price';
+      } else if (((price - dropPrice) / price) * 100 < 5) {
+        errs.dropPrice = 'Drop must be at least 5% off to go live';
+      }
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -108,7 +122,7 @@ export default function CreateListingPage() {
     }
 
     try {
-      await createListing({
+      const listingRef = await createListing({
         sellerId: userProfile.uid,
         sellerDisplayName: userProfile.sellerDisplayName || userProfile.displayName,
         sellerPhotoURL: userProfile.photoURL || null,
@@ -122,7 +136,30 @@ export default function CreateListingPage() {
         gp: Number(form.gp) || 0,
         featuredPlayers: form.featuredPlayers,
       });
-      toast.success('Listing published successfully!');
+
+      if (form.submitAsDrop) {
+        await submitDrop({
+          listingId: listingRef.id,
+          sellerId: userProfile.uid,
+          sellerName: userProfile.sellerDisplayName || userProfile.displayName || 'Unknown Seller',
+          sellerPhotoURL: userProfile.photoURL || null,
+          sellerRating: userProfile.sellerRating || 0,
+          title: form.title,
+          photo: photoUrls[0] || null,
+          tier: form.tier,
+          platform: form.platform || 'android',
+          regularPrice: Number(form.price),
+          dropPrice: Number(form.dropPrice),
+          featuredPlayers: form.featuredPlayers,
+          goldCoins: Number(form.goldCoins) || 0,
+          gp: Number(form.gp) || 0,
+        });
+        toast.success(form.dropPrice
+          ? 'Listing published and Friday Drop submitted for review!'
+          : 'Listing published successfully!');
+      } else {
+        toast.success('Listing published successfully!');
+      }
       navigate('/transfer-room');
     } catch (err) {
       toast.error(err.message || 'Failed to create listing');
@@ -269,6 +306,44 @@ Guarantee: This account's email has never been changed before. I guarantee deliv
               <label className="block text-sm font-heading font-bold uppercase tracking-wider mb-1.5" style={{ color: '#111111' }}>Price (KES)</label>
               <input type="number" value={form.price} onChange={update('price')} className="input-field max-w-xs" min="100" placeholder="e.g. 5000" />
               {errors.price && <p className="text-xs mt-1" style={{ color: '#C8102E' }}>{errors.price}</p>}
+            </div>
+          </div>
+
+          <div className="card p-6">
+            <div style={{ height: 4, background: '#FFF100' }} />
+            <div className="pt-5 space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2">
+                  <Flame size={20} style={{ color: '#C8102E', marginTop: 2 }} />
+                  <div>
+                    <h2 className="font-heading text-base font-bold uppercase" style={{ color: '#003BFF' }}>Friday Drop</h2>
+                    <p className="text-xs mt-1" style={{ color: '#6B7280' }}>
+                      List this account as a discounted Friday Drop deal. Once approved by our team, it goes live across the marketplace on Friday 12:00 EAT.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setForm(p => ({ ...p, submitAsDrop: !p.submitAsDrop, dropPrice: p.submitAsDrop ? '' : p.dropPrice }))}
+                  className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${form.submitAsDrop ? 'bg-[#003BFF]' : 'bg-gray-300'}`}
+                  aria-pressed={form.submitAsDrop}
+                >
+                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.submitAsDrop ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                </button>
+              </div>
+
+              {form.submitAsDrop && (
+                <div className="rounded-xl p-4" style={{ background: '#FFF9E6', border: '1px solid #FFF100' }}>
+                  <div>
+                    <label className="block text-sm font-heading font-bold uppercase tracking-wider mb-1.5" style={{ color: '#111111' }}>Drop Price (KES)</label>
+                    <input type="number" value={form.dropPrice} onChange={update('dropPrice')} className="input-field max-w-xs" min="0" placeholder="e.g. 4000" />
+                    {errors.dropPrice && <p className="text-xs mt-1" style={{ color: '#C8102E' }}>{errors.dropPrice}</p>}
+                  </div>
+                  <p className="text-xs mt-2" style={{ color: '#6B7280' }}>
+                    Must be at least 5% below your regular price. Buyers will see the original price struck through next to your discounted drop price.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

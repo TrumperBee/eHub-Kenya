@@ -147,11 +147,29 @@ export default function FridayDropsTab({ profile, user }) {
         </button>
       </div>
 
-      <div className="rounded-2xl p-5 flex flex-col items-center gap-4" style={{ background: '#001E7A', border: '1px solid #003BFF' }}>
-        <p className="text-center font-heading text-sm font-bold uppercase tracking-widest" style={{ color: '#FFF100' }}>
-          Next drop window countdown
-        </p>
-        <CountdownTimer compact />
+      <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(135deg, #001E7A 0%, #003BFF 100%)', border: '1px solid #FFF100' }}>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: '#FFF100', color: '#111' }}>
+            <Flame size={24} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-heading text-base font-extrabold uppercase" style={{ color: '#FFFFFF' }}>How Friday Drops Work</h3>
+            <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.85)' }}>
+              Set a discounted price on an active account and submit it as a Friday Drop. Our team reviews every submission, then approved drops
+              go live marketplace-wide on Friday 12:00 EAT for that week only. No extra fees, and buyers only ever pay your drop price at checkout.
+            </p>
+            <ul className="mt-3 grid sm:grid-cols-2 gap-x-6 gap-y-1 text-xs" style={{ color: 'rgba(255,255,255,0.85)' }}>
+              <li className="flex items-center gap-1.5"><span style={{ color: '#FFF100' }}>1.</span> Submit an active listing at 5%+ off</li>
+              <li className="flex items-center gap-1.5"><span style={{ color: '#FFF100' }}>2.</span> Our team approves it</li>
+              <li className="flex items-center gap-1.5"><span style={{ color: '#FFF100' }}>3.</span> Goes live Friday in the marketplace</li>
+              <li className="flex items-center gap-1.5"><span style={{ color: '#FFF100' }}>4.</span> Sells at your drop price, protected by eHub</li>
+            </ul>
+          </div>
+          <div className="shrink-0 text-center sm:text-right sm:border-l sm:border-white/20 sm:pl-5">
+            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#FFF100' }}>Next drop window</p>
+            <CountdownTimer compact />
+          </div>
+        </div>
       </div>
 
       {loading ? (
@@ -233,6 +251,11 @@ export default function FridayDropsTab({ profile, user }) {
           <li> Drops are reviewed and approved before going live on Friday 12:00 EAT.</li>
           <li> Drops can be edited only while still pending approval.</li>
         </ul>
+        <p className="text-xs mt-3 pt-3" style={{ color: '#6B7280', borderTop: '1px solid #E5E7EB' }}>
+          Tip: You can also submit a Friday Drop for a brand-new account directly in the{' '}
+          <span className="font-semibold" style={{ color: '#003BFF' }}>New Listing</span> flow — toggle
+          "Friday Drop" and set a drop price while publishing.
+        </p>
       </div>
 
       {showModal && (

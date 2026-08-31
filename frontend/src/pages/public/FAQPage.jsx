@@ -17,7 +17,7 @@ const categories = [
     questions: [
       { q: 'How do I become a seller?', a: 'Submit a seller application from your dashboard. Our team will review and approve your application within 24-48 hours.' },
       { q: 'How do I list an account?', a: 'Once approved, access the Transfer Room and click "Create Listing". Fill in the account details, add photos, and set your price.' },
-      { q: 'When do I get paid?', a: 'Funds are released to your M-Pesa once the buyer confirms receipt. Transfers are processed within 24 hours of confirmation.' },
+      { q: 'When do I get paid?', a: 'Once the buyer confirms receipt, the admin processes and sends your payout to your M-Pesa number manually. Payouts are typically processed within 24-48 hours of confirmation.' },
       { q: 'What if a buyer disputes?', a: 'If a buyer raises a dispute, our team reviews the evidence from both sides. Funds are held until the dispute is resolved.' },
       { q: 'Can I remove my listing?', a: 'Yes. You can pause or remove your listing anytime from the Transfer Room.' },
     ],

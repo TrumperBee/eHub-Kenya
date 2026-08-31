@@ -353,6 +353,7 @@ export default function Navbar() {
             <DrawerNavItem icon={<Store size={18} />} label="Transfer Room" href="/transfer-room" />
             <DrawerNavItem icon={<Plus size={18} />} label="New Listing" href="/transfer-room/new" />
             <DrawerNavItem icon={<BarChart3 size={18} />} label="My Earnings" href="/transfer-room/earnings" />
+            <DrawerNavItem icon={<Flame size={18} />} label="Friday Drops" href="/transfer-room?tab=fridayDrops" />
           </>
         )}
 

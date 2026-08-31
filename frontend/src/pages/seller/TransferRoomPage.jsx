@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { LayoutDashboard, List, ShoppingBag, Wallet, User, Plus, Star, Flame } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import OverviewTab from './tabs/OverviewTab';
@@ -29,7 +29,10 @@ const MOBILE_NAV = [
 
 export default function TransferRoomPage() {
   const { userProfile, currentUser } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const isValidTab = NAV_ITEMS.some((t) => t.id === requestedTab);
+  const [activeTab, setActiveTab] = useState(isValidTab ? requestedTab : 'overview');
 
   return (
     <div className="pt-[68px] min-h-screen" style={{ background: '#F5F5F5' }}>
