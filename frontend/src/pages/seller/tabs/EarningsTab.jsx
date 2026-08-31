@@ -92,8 +92,8 @@ export default function EarningsTab({ profile, user, onTabChange }) {
           <div style={{ height: 4, background: '#003BFF', position: 'absolute', top: 0, left: 0, right: 0 }} />
           <p className="font-heading text-3xl font-extrabold mb-1" style={{ color: '#003BFF' }}>{formatKES(totalEarned)}</p>
           <p className="text-sm font-medium" style={{ color: '#111' }}>Total Earned</p>
-          <div className="flex items-center gap-1 mt-1">
-            <TrendingUp size={12} style={{ color: '#22C55E' }} />
+          <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 mt-1 leading-snug">
+            <TrendingUp size={12} className="shrink-0" style={{ color: '#22C55E' }} />
             <span className="text-xs" style={{ color: '#6B7280' }}>All time</span>
           </div>
         </div>
@@ -102,8 +102,8 @@ export default function EarningsTab({ profile, user, onTabChange }) {
           <div style={{ height: 4, background: '#003BFF', position: 'absolute', top: 0, left: 0, right: 0 }} />
           <p className="font-heading text-3xl font-extrabold mb-1" style={{ color: '#003BFF' }}>{formatKES(thisMonthEarned)}</p>
           <p className="text-sm font-medium" style={{ color: '#111' }}>Earned This Month</p>
-          <div className="flex items-center gap-1 mt-1">
-            <Wallet size={12} style={{ color: '#003BFF' }} />
+          <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 mt-1 leading-snug">
+            <Wallet size={12} className="shrink-0" style={{ color: '#003BFF' }} />
             <span className="text-xs" style={{ color: '#6B7280' }}>{now.toLocaleString('default', { month: 'long' })}</span>
           </div>
         </div>
@@ -112,8 +112,8 @@ export default function EarningsTab({ profile, user, onTabChange }) {
           <div style={{ height: 4, background: '#003BFF', position: 'absolute', top: 0, left: 0, right: 0 }} />
           <p className="font-heading text-3xl font-extrabold mb-1" style={{ color: '#D97706' }}>{formatKES(pendingEscrow)}</p>
           <p className="text-sm font-medium" style={{ color: '#111' }}>Pending Escrow</p>
-          <div className="flex items-center gap-1 mt-1">
-            <Clock size={12} style={{ color: '#D97706' }} />
+          <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 mt-1 leading-snug">
+            <Clock size={12} className="shrink-0" style={{ color: '#D97706' }} />
             <span className="text-xs" style={{ color: '#6B7280' }}>Awaiting buyer confirmation</span>
           </div>
         </div>
@@ -122,8 +122,8 @@ export default function EarningsTab({ profile, user, onTabChange }) {
           <div style={{ height: 4, background: '#003BFF', position: 'absolute', top: 0, left: 0, right: 0 }} />
           <p className="font-heading text-3xl font-extrabold mb-1" style={{ color: '#6B7280' }}>{formatKES(totalFees)}</p>
           <p className="text-sm font-medium" style={{ color: '#111' }}>Platform Fees Paid</p>
-          <div className="flex items-center gap-1 mt-1">
-            <Percent size={12} style={{ color: '#6B7280' }} />
+          <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 mt-1 leading-snug">
+            <Percent size={12} className="shrink-0" style={{ color: '#6B7280' }} />
             <span className="text-xs" style={{ color: '#6B7280' }}>0.5% per sale, max KES 200</span>
           </div>
         </div>

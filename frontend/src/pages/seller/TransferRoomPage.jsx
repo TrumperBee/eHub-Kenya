@@ -73,23 +73,26 @@ export default function TransferRoomPage() {
         </aside>
 
         <main className="flex-1 p-4 md:p-6 max-w-5xl">
-          <div className="md:hidden flex gap-1 mb-4 rounded-xl p-1 overflow-x-auto" style={{ background: '#E0E0E0' }}>
-            {MOBILE_NAV.map((tab) => {
-              const isActive = tab.id === activeTab;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-heading font-bold uppercase whitespace-nowrap transition-colors min-h-[40px]"
-                  style={{
-                    background: isActive ? '#003BFF' : 'transparent',
-                    color: isActive ? '#FFFFFF' : '#6B7280',
-                  }}
-                >
-                  <tab.icon size={14} /> {tab.label}
-                </button>
-              );
-            })}
+          <div className="md:hidden relative mb-4">
+            <div className="flex gap-1 rounded-xl p-1 overflow-x-auto no-scrollbar relative" style={{ background: '#E0E0E0' }}>
+              {MOBILE_NAV.map((tab) => {
+                const isActive = tab.id === activeTab;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className="flex items-center gap-1 px-2.5 py-2 rounded-lg text-xs font-heading font-bold uppercase whitespace-nowrap shrink-0 transition-colors min-h-[40px]"
+                    style={{
+                      background: isActive ? '#003BFF' : 'transparent',
+                      color: isActive ? '#FFFFFF' : '#6B7280',
+                    }}
+                  >
+                    <tab.icon size={14} /> {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-8 rounded-r-xl" style={{ background: 'linear-gradient(to left, #F5F5F5, rgba(245,245,245,0))' }} />
           </div>
 
           {activeTab === 'overview' && <OverviewTab profile={userProfile} user={currentUser} onTabChange={setActiveTab} />}

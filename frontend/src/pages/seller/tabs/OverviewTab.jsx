@@ -153,7 +153,11 @@ export default function OverviewTab({ profile, user, onTabChange }) {
         </div>
         <div className="bg-white rounded-2xl shadow-card p-4 relative overflow-hidden">
           <div style={{ height: 4, background: '#003BFF', position: 'absolute', top: 0, left: 0, right: 0 }} />
-          <p className="font-heading text-4xl font-extrabold mb-1" style={{ color: '#003BFF' }}>{formatKES(totalEarned)}</p>
+          <p
+            className="font-heading text-2xl sm:text-3xl md:text-4xl font-extrabold mb-1 truncate leading-tight"
+            style={{ color: '#003BFF' }}
+            title={formatKES(totalEarned)}
+          >{formatKES(totalEarned)}</p>
           <p className="text-sm font-semibold" style={{ color: '#111' }}>Total Earned</p>
           <div className="flex items-center gap-1 mt-1">
             <span className="text-lg"><Wallet size={20} /></span>

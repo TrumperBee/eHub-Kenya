@@ -203,8 +203,8 @@ export default function FridayDropsTab({ profile, user }) {
               {filtered.map((drop) => {
                 const badge = STATUS_BADGE[drop.status] || STATUS_BADGE.expired;
                 return (
-                  <div key={drop.id} className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div key={drop.id} className="bg-white rounded-xl shadow-sm p-4">
+                    <div className="flex items-start gap-3">
                       {drop.photo ? (
                         <img src={drop.photo} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />
                       ) : (
@@ -212,15 +212,21 @@ export default function FridayDropsTab({ profile, user }) {
                           <Package size={20} />
                         </div>
                       )}
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold truncate" style={{ color: '#111' }}>{drop.title}</p>
-                        <p className="text-xs mt-0.5" style={{ color: '#6B7280' }}>
-                          <span className="line-through mr-2">{formatKES(drop.regularPrice)}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-bold truncate min-w-0" style={{ color: '#111' }}>{drop.title}</p>
+                          <span className="text-xs font-bold px-2.5 py-1 rounded-full shrink-0" style={{ background: badge.bg, color: badge.color }}>
+                            {badge.label}
+                          </span>
+                        </div>
+                        <p className="text-xs mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 leading-snug" style={{ color: '#6B7280' }}>
+                          <span className="line-through">{formatKES(drop.regularPrice)}</span>
                           <span style={{ color: '#C8102E', fontWeight: 700 }}>{formatKES(drop.dropPrice)}</span>
-                          <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: '#FEE2E2', color: '#B91C1C' }}>
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: '#FEE2E2', color: '#B91C1C' }}>
                             <Tag size={10} /> -{drop.discountPercent}%
                           </span>
                         </p>
+                        <p className="text-[11px] mt-1.5" style={{ color: '#9CA3AF' }}>{drop.fridayDateISO}</p>
                         {drop.status === 'rejected' && drop.rejectionReason && (
                           <button
                             onClick={() => setViewRejection(drop)}
@@ -231,12 +237,6 @@ export default function FridayDropsTab({ profile, user }) {
                           </button>
                         )}
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-[11px]" style={{ color: '#9CA3AF' }}>{drop.fridayDateISO}</span>
-                      <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: badge.bg, color: badge.color }}>
-                        {badge.label}
-                      </span>
                     </div>
                   </div>
                 );
