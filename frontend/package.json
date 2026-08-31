@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "test": "node --test src/services/listingDeleteGuard.test.js",
+    "test": "node --test src/services/listingDeleteGuard.test.js src/services/fridayDropGuard.test.js",
     "preview": "vite preview"
   },
   "dependencies": {

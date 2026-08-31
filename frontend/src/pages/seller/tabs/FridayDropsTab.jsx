@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Flame, AlertTriangle, Package, Tag, CalendarDays } from 'lucide-react';
+import { Plus, Flame, AlertTriangle, Package, Tag, CalendarDays, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { subscribeToSellerDrops, submitDrop, getSellerDropForListing } from '../../../services/fridayDropsService';
+import { validateDropPrice } from '../../../services/fridayDropGuard';
 import { getSellerListings } from '../../../services/listingsService';
 import { formatKES } from '../../../utils/formatters';
 import { calcDiscount, getCurrentDropWeek, formatFridayLabel } from '../../../utils/fridayUtils';
@@ -36,6 +37,7 @@ export default function FridayDropsTab({ profile, user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [viewRejection, setViewRejection] = useState(null);
   const [selectedListingId, setSelectedListingId] = useState('');
   const [dropPrice, setDropPrice] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -87,18 +89,15 @@ export default function FridayDropsTab({ profile, user }) {
       return;
     }
     const price = Number(dropPrice) || 0;
-    if (price <= 0 || price >= selectedListing.price) {
-      toast.error('Drop price must be lower than the listing price');
+    const dropError = validateDropPrice(selectedListing.price, dropPrice);
+    if (dropError) {
+      toast.error(dropError);
       return;
     }
     const existing = await getSellerDropForListing(profile.uid, selectedListing.id);
     const alreadyThisWeek = existing.some((d) => d.year === week.year && Number(d.weekNum) === week.weekNum && (d.status === 'pending' || d.status === 'approved'));
     if (alreadyThisWeek) {
       toast.error('This account already has a drop for this Friday');
-      return;
-    }
-    if (discount < 5) {
-      toast.error('Drop must be at least 5% off to go live');
       return;
     }
 
@@ -222,6 +221,15 @@ export default function FridayDropsTab({ profile, user }) {
                             <Tag size={10} /> -{drop.discountPercent}%
                           </span>
                         </p>
+                        {drop.status === 'rejected' && drop.rejectionReason && (
+                          <button
+                            onClick={() => setViewRejection(drop)}
+                            className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold rounded-lg px-2.5 py-1.5 min-h-[32px]"
+                            style={{ background: '#FEF2F2', color: '#B91C1C', border: '1px solid #FECACA' }}
+                          >
+                            <AlertTriangle size={13} /> View rejection reason
+                          </button>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
@@ -229,9 +237,6 @@ export default function FridayDropsTab({ profile, user }) {
                       <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: badge.bg, color: badge.color }}>
                         {badge.label}
                       </span>
-                      {drop.status === 'rejected' && drop.rejectionReason && (
-                        <span className="text-[11px] hidden md:inline" style={{ color: '#6B7280' }} title={drop.rejectionReason}>Why?</span>
-                      )}
                     </div>
                   </div>
                 );
@@ -330,6 +335,44 @@ export default function FridayDropsTab({ profile, user }) {
                 {submitting ? 'Submitting...' : 'Submit for Review'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {viewRejection && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setViewRejection(null)}>
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#FEE2E2', color: '#B91C1C' }}>
+                  <AlertTriangle size={20} />
+                </div>
+                <h3 className="font-heading text-lg font-bold" style={{ color: '#111' }}>Drop Rejected</h3>
+              </div>
+              <button onClick={() => setViewRejection(null)} className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg transition-colors" style={{ color: '#6B7280' }} aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-sm font-semibold truncate mt-2" style={{ color: '#111' }}>{viewRejection.title}</p>
+            <p className="text-xs mt-0.5" style={{ color: '#6B7280' }}>
+              <span className="line-through mr-2">{formatKES(viewRejection.regularPrice)}</span>
+              <span style={{ color: '#C8102E', fontWeight: 700 }}>{formatKES(viewRejection.dropPrice)}</span>
+              <span className="ml-2 text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: '#FEE2E2', color: '#B91C1C' }}>-{viewRejection.discountPercent}%</span>
+            </p>
+
+            <div className="mt-4 p-4 rounded-xl" style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}>
+              <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: '#B91C1C' }}>Why it was rejected</p>
+              <p className="text-sm leading-relaxed" style={{ color: '#374151' }}>{viewRejection.rejectionReason}</p>
+            </div>
+
+            <button
+              onClick={() => setViewRejection(null)}
+              className="mt-5 w-full py-2.5 rounded-lg text-sm font-semibold transition-colors"
+              style={{ background: '#003BFF', color: '#FFFFFF' }}
+            >
+              Got it
+            </button>
           </div>
         </div>
       )}

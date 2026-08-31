@@ -32,7 +32,7 @@ export default function HeroSection() {
 
         <div className="inline-flex items-center gap-2 rounded-full px-5 py-2 mb-6" style={{ background: 'rgba(255,241,0,0.1)', border: '1px solid rgba(255,241,0,0.4)' }}>
           <span className="font-heading font-bold text-[#FFF100] text-xs uppercase tracking-widest">
-            Kenya's #1 eFootball Marketplace
+            Kenya's Trusted eFootball Marketplace
           </span>
         </div>
 

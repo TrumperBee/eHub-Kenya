@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, where, getDocs, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { getListingById, incrementViewCount } from '../../services/listingsService';
 import { useAuth } from '../../context/AuthContext';
@@ -32,6 +32,7 @@ export default function ListingDetailPage() {
   const [selectedPhoto, setSelectedPhoto] = useState(0);
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [sellerSales, setSellerSales] = useState(0);
 
   // Subscribe to saved listings
   useEffect(() => {
@@ -55,6 +56,17 @@ export default function ListingDetailPage() {
       if (listingData) {
         incrementViewCount(id);
         document.title = `${listingData.title} - eFootball Hub Kenya`;
+        if (listingData.sellerId) {
+          getDocs(query(
+            collection(db, 'orders'),
+            where('sellerId', '==', listingData.sellerId)
+          ))
+            .then((snap) => {
+              const completed = snap.docs.filter((d) => d.data().status === 'completed').length;
+              setSellerSales(completed || 0);
+            })
+            .catch(() => {});
+        }
       }
     });
     return () => { document.title = 'eFootball Hub Kenya - Buy & Sell eFootball Accounts with M-Pesa'; };
@@ -285,7 +297,7 @@ export default function ListingDetailPage() {
                           {listing.sellerRating > 0 ? listing.sellerRating.toFixed(1) : 'New Seller'}
                         </span>
                         <span className="w-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.4)' }} />
-                        <span className="text-white/70 text-xs">{listing.sellerTotalSales || 0} sales</span>
+                        <span className="text-white/70 text-xs">{sellerSales} sale{sellerSales === 1 ? '' : 's'}</span>
                       </div>
                     </div>
                     <ChevronRight size={16} className="text-white/50 group-hover:text-white transition-colors" />

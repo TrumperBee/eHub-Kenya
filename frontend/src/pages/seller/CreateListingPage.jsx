@@ -4,6 +4,7 @@ import { Upload, X, Plus, Flame } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { createListing } from '../../services/listingsService';
 import { submitDrop } from '../../services/fridayDropsService';
+import { validateDropPrice } from '../../services/fridayDropGuard';
 import { uploadListingImages } from '../../services/paymentService';
 import TierBadge from '../../components/listings/TierBadge';
 import toast from 'react-hot-toast';
@@ -87,14 +88,8 @@ export default function CreateListingPage() {
     if (!price || price < 100) errs.price = 'Price must be at least KES 100';
 
     if (form.submitAsDrop) {
-      const dropPrice = Number(form.dropPrice);
-      if (!dropPrice || dropPrice <= 0) {
-        errs.dropPrice = 'Enter a drop price';
-      } else if (dropPrice >= price) {
-        errs.dropPrice = 'Drop price must be lower than the regular price';
-      } else if (((price - dropPrice) / price) * 100 < 5) {
-        errs.dropPrice = 'Drop must be at least 5% off to go live';
-      }
+      const dropError = validateDropPrice(price, form.dropPrice);
+      if (dropError) errs.dropPrice = dropError;
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
