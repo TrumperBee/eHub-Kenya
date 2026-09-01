@@ -4,10 +4,12 @@ import { Upload, X, Plus, AlertTriangle, PauseCircle, Trash2 } from 'lucide-reac
 import { useAuth } from '../../context/AuthContext';
 import { getListingById, updateListing } from '../../services/listingsService';
 import { uploadListingImages } from '../../services/paymentService';
+import { PLATFORMS } from '../../utils/constants';
 import TierBadge from '../../components/listings/TierBadge';
 import toast from 'react-hot-toast';
 
 const TIER_OPTIONS = ['bronze', 'silver', 'gold', 'legendary'];
+const PLATFORM_OPTIONS = Object.keys(PLATFORMS);
 const TIER_STRENGTH_DESC = {
   bronze: 'Squad Strength: 3100 - 3179',
   silver: 'Squad Strength: 3180 - 3199',
@@ -29,7 +31,7 @@ export default function EditListingPage() {
   const [newPhotos, setNewPhotos] = useState([]);
 
   const [form, setForm] = useState({
-    title: '', tier: '',
+    title: '', tier: '', platform: 'android',
     goldCoins: '', gp: '',
     featuredPlayers: [], existingPhotos: [],
     description: '', price: '', status: 'active',
@@ -43,6 +45,7 @@ export default function EditListingPage() {
       setForm({
         title: listing.title || '',
         tier: listing.tier || '',
+        platform: listing.platform || 'android',
         goldCoins: listing.goldCoins?.toString() || '',
         gp: listing.gp?.toString() || '',
         featuredPlayers: listing.featuredPlayers || [],
@@ -119,6 +122,7 @@ export default function EditListingPage() {
         title: form.title,
         description: form.description,
         tier: form.tier,
+        platform: form.platform || 'android',
         price: Number(form.price),
         photos: photoUrls,
         goldCoins: Number(form.goldCoins) || 0,
@@ -199,6 +203,24 @@ export default function EditListingPage() {
                 </div>
                 <p className="text-xs italic mt-2" style={{ color: '#6B7280' }}>
                   Select the tier that matches your squad's overall strength rating. You can find your squad strength in eFootball &gt; Squad &gt; Overall.
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm text-konami-text-muted mb-2">Platform</label>
+                <div className="flex gap-2">
+                  {PLATFORM_OPTIONS.map((p) => (
+                    <button key={p} type="button" onClick={() => setForm(f => ({ ...f, platform: p }))}
+                      className={`flex-1 p-3 rounded-lg border-2 text-center transition-all ${
+                        form.platform === p ? 'border-konami-blue bg-konami-blue/10' : 'border-konami-mid-gray hover:border-konami-blue/50'
+                      }`}>
+                      <p className="text-sm font-heading font-bold uppercase" style={{ color: form.platform === p ? '#003BFF' : '#111111' }}>
+                        {PLATFORMS[p].label}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs italic mt-2" style={{ color: '#6B7280' }}>
+                  Which platform is this account on? Apple sign-in accounts are iOS-only and cannot be played on Android.
                 </p>
               </div>
             </div>

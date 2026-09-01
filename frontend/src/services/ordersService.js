@@ -1,7 +1,10 @@
 import { db } from './firebase';
 import { collection, query, where, orderBy, getDocs, getDoc, doc, addDoc, updateDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { resolveOrderPlatform } from '../utils/orderPlatform';
 
 const ordersRef = collection(db, 'orders');
+
+export { resolveOrderPlatform };
 
 export const createOrder = async (data) => {
   return addDoc(ordersRef, { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });

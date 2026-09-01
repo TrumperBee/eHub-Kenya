@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Circle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { createOrder } from '../../services/ordersService';
+import { createOrder, resolveOrderPlatform } from '../../services/ordersService';
 import { formatKES } from '../../utils/formatters';
 import { TIERS } from '../../utils/constants';
 import { generateOrderId, initiatePayment, pollPaymentStatus } from '../../services/paymentService';
@@ -10,10 +10,11 @@ import TierBadge from '../listings/TierBadge';
 import MpesaPopup from './MpesaPopup';
 import PaymentStatus from './PaymentStatus';
 
-export default function BuyNowModal({ listing, onClose, price }) {
+export default function BuyNowModal({ listing, onClose, price, platform }) {
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
   const amount = price ?? listing.price;
+  const orderPlatform = resolveOrderPlatform({ dropPlatform: platform ?? undefined, listingPlatform: listing.platform });
   const [step, setStep] = useState('confirm');
   const [orderId, setOrderId] = useState(null);
   const [checkoutRequestId, setCheckoutRequestId] = useState(null);
@@ -41,7 +42,7 @@ export default function BuyNowModal({ listing, onClose, price }) {
         status: 'pending_payment',
         escrowStatus: 'none',
         tier: listing.tier,
-        platform: listing.platform,
+        platform: orderPlatform,
       });
 
       const result = await initiatePayment({

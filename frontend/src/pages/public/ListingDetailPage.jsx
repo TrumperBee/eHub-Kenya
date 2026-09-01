@@ -425,7 +425,7 @@ export default function ListingDetailPage() {
       </div>
 
       {showBuyModal && (
-        <BuyNowModal listing={listing} price={effectivePrice} onClose={() => setShowBuyModal(false)} />
+        <BuyNowModal listing={listing} price={effectivePrice} platform={dropLive ? fridayDrop?.platform : undefined} onClose={() => setShowBuyModal(false)} />
       )}
     </div>
   );

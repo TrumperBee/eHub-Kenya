@@ -81,6 +81,7 @@ export const getSellerListings = async (sellerId) => {
 export const createListing = async (data) => {
   const ref = await addDoc(listingsRef, {
     ...data,
+    platform: data.platform || 'android',
     status: 'active',
     viewCount: 0,
     featured: false,

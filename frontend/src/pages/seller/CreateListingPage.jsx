@@ -6,10 +6,12 @@ import { createListing } from '../../services/listingsService';
 import { submitDrop } from '../../services/fridayDropsService';
 import { validateDropPrice } from '../../services/fridayDropGuard';
 import { uploadListingImages } from '../../services/paymentService';
+import { PLATFORMS } from '../../utils/constants';
 import TierBadge from '../../components/listings/TierBadge';
 import toast from 'react-hot-toast';
 
 const TIER_OPTIONS = ['bronze', 'silver', 'gold', 'legendary'];
+const PLATFORM_OPTIONS = Object.keys(PLATFORMS);
 const TIER_STRENGTH_DESC = {
   bronze: 'Squad Strength: 3100 - 3179',
   silver: 'Squad Strength: 3180 - 3199',
@@ -29,6 +31,7 @@ export default function CreateListingPage() {
   const [form, setForm] = useState({
     title: '',
     tier: '',
+    platform: 'android',
     goldCoins: '',
     gp: '',
     featuredPlayers: [],
@@ -125,6 +128,7 @@ export default function CreateListingPage() {
         title: form.title,
         description: form.description,
         tier: form.tier,
+        platform: form.platform || 'android',
         price: Number(form.price),
         photos: photoUrls,
         goldCoins: Number(form.goldCoins) || 0,
@@ -200,6 +204,29 @@ export default function CreateListingPage() {
                 {errors.tier && <p className="text-xs mt-1" style={{ color: '#C8102E' }}>{errors.tier}</p>}
                 <p className="text-xs italic mt-2" style={{ color: '#6B7280' }}>
                   Select the tier that matches your squad's overall strength rating. You can find your squad strength in eFootball &gt; Squad &gt; Overall.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-heading font-bold uppercase tracking-wider mb-2" style={{ color: '#111111' }}>Platform</label>
+                <div className="flex gap-2">
+                  {PLATFORM_OPTIONS.map((p) => (
+                    <button key={p} type="button" onClick={() => setForm(f => ({ ...f, platform: p }))}
+                      className="flex-1 p-3 rounded-xl border-2 text-center transition-all min-h-[48px]"
+                      style={{
+                        borderColor: form.platform === p ? '#003BFF' : '#E0E0E0',
+                        background: form.platform === p ? 'rgba(0,59,255,0.05)' : '#FFFFFF',
+                        boxShadow: form.platform === p ? '0 0 0 1px #003BFF' : 'none',
+                      }}
+                    >
+                      <p className="text-sm font-heading font-bold uppercase" style={{ color: form.platform === p ? '#003BFF' : '#111111' }}>
+                        {PLATFORMS[p].label}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs italic mt-2" style={{ color: '#6B7280' }}>
+                  Which platform is this account on? Apple sign-in accounts are iOS-only and cannot be played on Android.
                 </p>
               </div>
 
