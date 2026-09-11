@@ -329,6 +329,9 @@ Guarantee: This account's email has never been changed before. I guarantee deliv
               <input type="number" value={form.price} onChange={update('price')} className="input-field max-w-xs" min="100" placeholder="e.g. 5000" />
               {errors.price && <p className="text-xs mt-1" style={{ color: '#C8102E' }}>{errors.price}</p>}
             </div>
+            <p className="text-xs mt-3 p-3 rounded-xl" style={{ background: '#E8EDFF', color: '#374151', border: '1px solid #C7D2FE' }}>
+              Popular accounts sell fast. List at a fair price and set a <strong>guarantee</strong> above to build buyer trust.
+            </p>
           </div>
 
           <div className="card p-6">

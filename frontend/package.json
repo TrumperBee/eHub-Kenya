@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "test": "node --test src/services/listingDeleteGuard.test.js src/services/fridayDropGuard.test.js src/services/disputeResolver.test.js src/utils/orderAccess.test.js src/utils/fridayUtils.test.js",
+    "test": "node --test src/services/listingDeleteGuard.test.js src/services/fridayDropGuard.test.js src/services/disputeResolver.test.js src/utils/orderAccess.test.js src/utils/orderPlatform.test.js src/utils/fridayUtils.test.js src/utils/orderGuide.test.js",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -497,6 +497,18 @@ export default function AdminDisputesPage() {
         <p className="text-sm text-konami-text-dim leading-relaxed">
           Open and under-review disputes are streamed live — they appear here the moment a buyer raises them. Review the order chat below, then choose a resolution. Funds are only ever moved after you complete the corresponding <strong>manual payment action</strong> shown at confirmation — there is no automated payout or reversal in this system.
         </p>
+        <div className="mt-3 grid sm:grid-cols-3 gap-3">
+          {[
+            ['1', 'Read the chat', 'The chat inside the order is the evidence record — buyer, seller, and admin messages all count.'],
+            ['2', 'Judge the facts', 'Full refund to the buyer, or release to the seller. There is no partial split in this system.'],
+            ['3', 'Complete the action', 'Confirm the resolution — then do the manual payout or reversal action shown.'],
+          ].map(([n, t, d]) => (
+            <div key={n} className="rounded-xl p-3 flex gap-2.5" style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid #D3DDFF' }}>
+              <span className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-xs font-bold" style={{ background: '#003BFF', color: '#FFF100' }}>{n}</span>
+              <p className="text-xs text-konami-text-dim leading-relaxed"><strong className="text-konami-text">{t}:</strong> {d}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {error && (

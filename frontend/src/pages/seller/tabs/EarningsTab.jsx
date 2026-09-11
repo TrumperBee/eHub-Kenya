@@ -136,7 +136,7 @@ export default function EarningsTab({ profile, user, onTabChange }) {
           <p>Payments are processed through Paystack and held by eHub until an order completes:</p>
           <ol className="list-decimal pl-4 space-y-0.5">
             <li>When a buyer pays, the funds are held securely while the order is in progress.</li>
-            <li>Once you transfer the account and the buyer confirms receipt, the admin processes and sends your payout manually (typically within 24-48 hours after confirmation).</li>
+            <li>Once you transfer the account and the buyer confirms delivery, the admin processes and sends your payout manually (typically within 24-48 hours after confirmation).</li>
             <li>The platform service fee (0.5%, max KES 200) is applied when your payout is processed.</li>
             <li>If there is a dispute, the funds stay held until the admin resolves it.</li>
           </ol>
@@ -172,6 +172,7 @@ export default function EarningsTab({ profile, user, onTabChange }) {
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#6B7280' }}>Sale Price</th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#6B7280' }}>Fee Deducted</th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#6B7280' }}>Net Received</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#6B7280' }}>Payout Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -185,6 +186,11 @@ export default function EarningsTab({ profile, user, onTabChange }) {
                       <td className="px-5 py-3 text-sm font-semibold" style={{ color: '#111' }}>{formatKES(order.amount)}</td>
                       <td className="px-5 py-3 text-sm" style={{ color: '#6B7280' }}>{formatKES(fee)}</td>
                       <td className="px-5 py-3 text-sm font-semibold" style={{ color: '#22C55E' }}>{formatKES(net)}</td>
+                      <td className="px-5 py-3">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: '#FEF3C7', color: '#B45309' }}>
+                          <Clock size={11} /> Pending admin payout
+                        </span>
+                      </td>
                     </tr>
                   );
                 })}

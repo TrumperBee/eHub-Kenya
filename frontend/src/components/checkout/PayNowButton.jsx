@@ -33,7 +33,7 @@ export default function PayNowButton({ listing, effectivePrice }) {
     }
 
     if (!available) {
-      toast.error('This listing is no longer available');
+      toast.error('This account is no longer available');
       return;
     }
 
@@ -93,6 +93,15 @@ export default function PayNowButton({ listing, effectivePrice }) {
           <ShieldCheck size={16} style={{ color: '#FFF100' }} />
           <p className="text-white/60 text-xs">Secure payment powered by Paystack</p>
         </div>
+      </div>
+
+      <div className="rounded-2xl p-4 mb-4 space-y-1.5" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)' }}>
+        <p className="font-heading text-[11px] font-bold uppercase tracking-widest" style={{ color: '#FFF100' }}>What happens after you pay</p>
+        <ol className="text-xs space-y-1" style={{ color: 'rgba(255,255,255,0.85)' }}>
+          <li><span className="font-bold" style={{ color: '#FFF100' }}>1.</span> Payment is confirmed and held safely.</li>
+          <li><span className="font-bold" style={{ color: '#FFF100' }}>2.</span> The seller sends you the account details inside your order.</li>
+          <li><span className="font-bold" style={{ color: '#FFF100' }}>3.</span> You log in, verify, then confirm delivery to finish.</li>
+        </ol>
       </div>
 
       <button

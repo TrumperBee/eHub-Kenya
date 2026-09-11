@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, AlertTriangle, ChevronUp, ChevronDown, Store, Upload, MessageSquare } from 'lucide-react';
+import { ShoppingBag, AlertTriangle, ChevronUp, ChevronDown, Store, Upload, MessageSquare, ArrowRight } from 'lucide-react';
 import { getSellerOrders } from '../../../services/ordersService';
 import { ORDER_STATUS } from '../../../utils/constants';
 import { formatKES, formatDate } from '../../../utils/formatters';
@@ -116,7 +116,14 @@ export default function OrdersTab({ profile, user, onTabChange }) {
   const filtered = orders.filter((o) => FILTER_MATCH[activeFilter](o.status));
   const statusCounts = {};
   orders.forEach(o => { statusCounts[o.status] = (statusCounts[o.status] || 0) + 1; });
-  const actionCount = orders.filter((o) => ACTIONS_REQUIRED_STATUSES.includes(o.status)).length;
+  const actionOrders = orders.filter((o) => ACTIONS_REQUIRED_STATUSES.includes(o.status));
+  const actionCount = actionOrders.length;
+  const hasCompletedOrder = orders.some((o) => o.status === 'completed');
+  const firstActionOrder = actionOrders.slice().sort((a, b) => {
+    const at = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt || 0).getTime();
+    const bt = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt || 0).getTime();
+    return at - bt;
+  })[0];
 
   const hasOldPending = orders.some(o => {
     if (!ACTIONS_REQUIRED_STATUSES.includes(o.status)) return false;
@@ -137,6 +144,31 @@ export default function OrdersTab({ profile, user, onTabChange }) {
           {orders.length} order{orders.length !== 1 ? 's' : ''} total
         </span>
       </div>
+
+      {!hasCompletedOrder && actionCount > 0 && firstActionOrder && (
+        <div className="rounded-2xl p-5 mb-4" style={{ background: 'linear-gradient(135deg, #001E7A 0%, #003BFF 100%)', border: '1px solid #FFF100' }}>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 text-xl" style={{ background: '#FFF100' }}>
+              🎯
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-heading text-base font-extrabold uppercase" style={{ color: '#FFF100' }}>Your First Paid Order</p>
+              <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                A buyer has paid for your account. Do this now:
+              </p>
+              <ol className="mt-2 grid sm:grid-cols-2 gap-x-6 gap-y-1 text-xs" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                <li><span style={{ color: '#FFF100', fontWeight: 700 }}>1.</span> Open this order.</li>
+                <li><span style={{ color: '#FFF100', fontWeight: 700 }}>2.</span> Submit the account email.</li>
+                <li><span style={{ color: '#FFF100', fontWeight: 700 }}>3.</span> Submit the account password.</li>
+                <li><span style={{ color: '#FFF100', fontWeight: 700 }}>4.</span> Wait for the buyer to verify it.</li>
+              </ol>
+            </div>
+            <Link to={`/orders/${firstActionOrder.id}`} className="btn-primary shrink-0 text-sm" style={{ background: '#FFF100', color: '#111' }}>
+              Open Order <ArrowRight size={14} className="inline" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {hasOldPending && (
         <div className="rounded-xl p-4 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" style={{ background: '#FEF2F2', border: '1px solid #C8102E', borderLeft: '4px solid #C8102E' }}>

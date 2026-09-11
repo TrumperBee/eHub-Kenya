@@ -11,12 +11,15 @@ import { canViewOrder } from '../../utils/orderAccess';
 import { releaseEscrow, submitDelivery } from '../../services/paymentService';
 import { subscribeToDeliveries } from '../../services/ordersService';
 import { buyerCanConfirm, buyerCanDispute, sellerCanDeliver } from '../../utils/orderMachine';
+import { buyerGuide, sellerGuide } from '../../utils/orderGuide';
+import OrderStatePanel from '../../components/orders/OrderStatePanel';
+import ContextHint from '../../components/common/ContextHint';
 import ChatWindow from '../../components/chat/ChatWindow';
 import ReviewForm from '../../components/reviews/ReviewForm';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import {
   Shield, MessageSquare, CheckCircle, Mail, KeyRound, Eye, EyeOff,
-  Send, Upload, Clock, AlertTriangle, Lock, ShoppingBag,
+  Send, Upload, AlertTriangle, Lock, ShoppingBag,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -122,7 +125,7 @@ function CredentialsList({ deliveries, isSeller }) {
       {!isSeller && (
         <p className="text-xs text-konami-text-muted flex items-start gap-1.5">
           <AlertTriangle size={13} className="shrink-0 mt-0.5" />
-          Change the password as soon as you log in. Login details are only visible here and in the private order chat.
+          Change the password as soon as you log in. Login details are stored privately on this order — never in the public chat or reviews.
         </p>
       )}
     </div>
@@ -343,9 +346,9 @@ export default function OrderDetailPage() {
           <div className="bg-green-500 text-white rounded-xl p-4 mb-6 flex items-center gap-3">
             <CheckCircle size={20} className="shrink-0" />
             <div>
-              <p className="font-heading font-bold text-sm uppercase">Payment Successful!</p>
+              <p className="font-heading font-bold text-sm uppercase">You're almost done.</p>
               <p className="text-white/80 text-xs">
-                The seller has been notified to submit your eFootball account login details here. Confirm delivery once you can log in.
+                Your payment is confirmed. The seller has been notified and will submit the account details here.
               </p>
             </div>
           </div>
@@ -439,200 +442,163 @@ export default function OrderDetailPage() {
               )}
             </div>
 
-            <div className="space-y-2">
-              {canSubmitDelivery && order.status === 'awaiting_seller_delivery' && (
-                <div className="card p-4 space-y-3" style={{ borderColor: '#C8102E', borderWidth: 1 }}>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full inline-block animate-pulse shrink-0" style={{ background: '#C8102E' }} />
-                    <p className="text-sm font-bold uppercase" style={{ color: '#C8102E' }}>Buyer Paid - Action Required</p>
-                  </div>
-                  <p className="text-xs text-konami-text-dim">
-                    The buyer paid and is waiting. Submit their eFootball account login details below.
-                  </p>
-                  <SellerDeliveryForm order={order} />
-                </div>
-              )}
+            <div className="space-y-3">
+              {isBuyer ? (
+                <OrderStatePanel guide={buyerGuide(order)}>
+                  {order.status === 'credentials_submitted' && deliveries.length > 0 && (
+                    <CredentialsList deliveries={deliveries} isSeller={false} />
+                  )}
 
-              {canSubmitDelivery && order.status === 'credentials_submitted' && (
-                <div className="card p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle size={16} className="text-green-500 shrink-0" />
-                    <p className="text-sm font-bold text-green-600 uppercase">Account Details Sent</p>
-                  </div>
-                  <p className="text-xs text-konami-text-dim">
-                    The buyer received the login details and is verifying. You can resubmit corrected details if needed.
-                  </p>
-                  <details className="mt-3">
-                    <summary className="text-xs font-semibold text-konami-blue cursor-pointer">
-                      Resubmit account details
-                    </summary>
-                    <div className="mt-3">
-                      <SellerDeliveryForm order={order} />
-                    </div>
-                  </details>
-                </div>
-              )}
-
-              {isBuyer && order.status === 'awaiting_seller_delivery' && (
-                <div className="card p-4 space-y-3" style={{ borderColor: '#D97706', borderWidth: 1 }}>
-                  <div className="flex items-center gap-2">
-                    <Clock size={16} className="text-yellow-600 shrink-0" />
-                    <p className="text-sm font-bold uppercase" style={{ color: '#D97706' }}>Waiting for Seller</p>
-                  </div>
-                  <p className="text-xs text-konami-text-dim">
-                    Your payment is confirmed and held in escrow. The seller has been notified and will submit your eFootball account login details here shortly.
-                  </p>
-                </div>
-              )}
-
-              {isBuyer && order.status === 'credentials_submitted' && (
-                <div className="card p-4 space-y-3" style={{ borderColor: '#003BFF', borderWidth: 1 }}>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={16} className="text-konami-blue shrink-0" />
-                    <p className="text-sm font-bold uppercase text-konami-blue">Account Details Received</p>
-                  </div>
-                  <CredentialsList deliveries={deliveries} isSeller={false} />
-                </div>
-              )}
-
-              {isSeller && order.status === 'disputed' && (
-                <div className="card p-4 space-y-3" style={{ borderColor: '#C8102E', borderWidth: 1 }}>
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle size={16} className="text-konami-red shrink-0" />
-                    <p className="text-sm font-bold uppercase" style={{ color: '#C8102E' }}>Dispute Raised</p>
-                  </div>
-                  <p className="text-xs text-konami-text-dim">
-                    A buyer has raised a dispute on this order. Your payout is currently on hold while the case is reviewed by eHub support.
-                  </p>
-                  {order.disputeReason && (
-                    <div className="p-3 bg-red-50 rounded-xl">
-                      <p className="text-xs font-semibold mb-1" style={{ color: '#C8102E' }}>Reason</p>
-                      <p className="text-xs text-konami-text-dim italic">"{order.disputeReason}"</p>
+                  {order.status === 'disputed' && order.disputeReason && (
+                    <div className="p-3 rounded-xl" style={{ background: '#FEE2E2', border: '1px solid #FECACA' }}>
+                      <p className="text-xs font-semibold mb-1" style={{ color: '#B91C1C' }}>Your reason</p>
+                      <p className="text-xs italic" style={{ color: '#374151' }}>"{order.disputeReason}"</p>
                     </div>
                   )}
-                  <p className="text-xs text-konami-text-dim">
-                    Keep communicating in the chat below — it is used as evidence during review.
-                  </p>
-                </div>
-              )}
 
-              {isBuyer && order.status === 'disputed' && (
-                <div className="card p-4 space-y-3" style={{ borderColor: '#C8102E', borderWidth: 1 }}>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={16} className="text-konami-red shrink-0" />
-                    <p className="text-sm font-bold uppercase" style={{ color: '#C8102E' }}>Dispute Raised ✅</p>
-                  </div>
-                  <p className="text-xs text-konami-text-dim">
-                    Your dispute has been submitted to eHub support. Your payment remains on hold while the case is reviewed.
-                  </p>
-                  <p className="text-xs text-konami-text-dim break-all">
-                    Order ID: <span className="font-mono">{id}</span>
-                  </p>
-                  {order.disputeReason && (
-                    <div className="p-3 bg-red-50 rounded-xl">
-                      <p className="text-xs font-semibold mb-1" style={{ color: '#C8102E' }}>Your reason</p>
-                      <p className="text-xs text-konami-text-dim italic">"{order.disputeReason}"</p>
+                  {order.status === 'pending_payment' && order.listingId && (
+                    <Link to={`/listing/${order.listingId}`} className="btn-primary w-full text-sm py-3 flex items-center justify-center gap-2">
+                      <ShoppingBag size={16} /> View Listing to Pay
+                    </Link>
+                  )}
+
+                  {showConfirm ? (
+                    <div className="bg-white rounded-xl p-4 space-y-3 border border-konami-mid-gray">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle size={16} className="text-konami-red shrink-0 mt-0.5" />
+                        <p className="text-sm text-konami-text-dim">
+                          Are you sure? This releases the payment to the seller and cannot be undone. Make sure you can log in to the account before confirming.
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={handleConfirmReceipt} disabled={actionLoading} className="btn-primary flex-1 text-sm py-2.5">
+                          {actionLoading ? 'Processing...' : 'Yes, Confirm Delivery'}
+                        </button>
+                        <button onClick={() => setShowConfirm(false)} className="btn-secondary text-sm py-2.5">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : showDisputeForm ? (
+                    <div className="bg-white rounded-xl p-4 space-y-3 border border-konami-mid-gray">
+                      <ContextHint tone="red" title="What to tell eHub">
+                        Describe the problem: what you expected, what happened instead, and any screenshot details. Clear context speeds up the review.
+                      </ContextHint>
+                      <textarea
+                        value={disputeReason}
+                        onChange={(e) => { setDisputeReason(e.target.value); setDisputeError(''); }}
+                        placeholder="Describe the issue (min 20 characters)..."
+                        className="w-full px-3 py-2 bg-konami-light-gray border border-konami-mid-gray rounded-xl text-konami-text text-sm outline-none focus:border-konami-blue transition-colors resize-none min-h-[80px]"
+                      />
+                      {disputeError && <p className="text-xs" style={{ color: '#C8102E' }}>{disputeError}</p>}
+                      <div className="flex gap-2">
+                        <button onClick={handleDispute} disabled={actionLoading} className="btn-primary flex-1 text-sm py-2.5 bg-konami-red hover:bg-konami-red-hover">
+                          {actionLoading ? 'Submitting...' : 'Submit Dispute'}
+                        </button>
+                        <button onClick={() => { setShowDisputeForm(false); setDisputeReason(''); setDisputeError(''); }} className="btn-secondary text-sm py-2.5">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {(canConfirmReceipt || canDispute) && (
+                        <div className="flex flex-col gap-2">
+                          {canConfirmReceipt && (
+                            <button onClick={() => setShowConfirm(true)} className="btn-primary w-full text-sm py-3 flex items-center justify-center gap-2">
+                              <Shield size={16} />
+                              Confirm Delivery
+                            </button>
+                          )}
+                          {canDispute && (
+                            <button onClick={() => setShowDisputeForm(true)} className="w-full text-sm py-3 rounded-xl border border-konami-red/30 text-konami-red hover:bg-konami-red/5 transition-colors flex items-center justify-center gap-2">
+                              <MessageSquare size={16} />
+                              Raise a Dispute
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {canReview && !showReviewForm && (
+                        <button onClick={() => setShowReviewForm(true)} className="btn-secondary w-full text-sm py-3">
+                          Leave a Review
+                        </button>
+                      )}
+
+                      {showReviewForm && (
+                        <div className="bg-white rounded-xl p-4 space-y-3 border border-konami-mid-gray">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-semibold text-konami-text">Leave a Review</h4>
+                            <button onClick={() => setShowReviewForm(false)} className="text-xs text-konami-text-muted hover:text-konami-text">Cancel</button>
+                          </div>
+                          <ReviewForm onSubmit={handleSubmitReview} loading={reviewLoading} />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {order.disputeResolution && (order.status === 'completed' || order.status === 'refunded') && (
+                    <div className="bg-white rounded-xl p-4 space-y-2 border" style={{ borderColor: order.status === 'refunded' ? '#C8102E' : '#16A34A' }}>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle size={16} className={`${order.status === 'refunded' ? 'text-konami-red' : 'text-green-600'} shrink-0`} />
+                        <p className={`text-sm font-bold uppercase ${order.status === 'refunded' ? '' : 'text-green-600'}`} style={order.status === 'refunded' ? { color: '#C8102E' } : {}}>
+                          Dispute Resolved — {order.status === 'refunded' ? 'Refunded to You' : 'Released to Seller'}
+                        </p>
+                      </div>
+                      <p className="text-xs text-konami-text-dim">
+                        {order.status === 'refunded'
+                          ? `The dispute was resolved in your favour. ${order.disputeResolvedAt || order.resolvedAt ? 'Resolved on ' + formatDate(order.disputeResolvedAt || order.resolvedAt) + '. ' : ''}Your refund is being processed back to your payment method.`
+                          : `The dispute was resolved in the seller's favour${order.disputeResolvedAt || order.resolvedAt ? ' on ' + formatDate(order.disputeResolvedAt || order.resolvedAt) : ''}. The order is complete.`}
+                      </p>
+                      <p className="text-xs text-konami-text-dim">
+                        Check your notifications and the chat below for the resolution details.
+                      </p>
                     </div>
                   )}
-                  <p className="text-xs text-konami-text-dim">
-                    You can continue checking this order for updates. eHub support will resolve the case.
-                  </p>
-                </div>
-              )}
+                </OrderStatePanel>
+              ) : (
+                <OrderStatePanel guide={sellerGuide(order)}>
+                  {canSubmitDelivery && order.status === 'awaiting_seller_delivery' && <SellerDeliveryForm order={order} />}
 
-              {isBuyer && order.disputeResolution && (order.status === 'completed' || order.status === 'refunded') && (
-                <div className={`card p-4 space-y-3`} style={{ borderColor: order.status === 'refunded' ? '#C8102E' : '#16A34A', borderWidth: 1 }}>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={16} className={`${order.status === 'refunded' ? 'text-konami-red' : 'text-green-600'} shrink-0`} />
-                    <p className={`text-sm font-bold uppercase ${order.status === 'refunded' ? '' : 'text-green-600'}`} style={order.status === 'refunded' ? { color: '#C8102E' } : {}}>
-                      Dispute Resolved — {order.status === 'refunded' ? 'Refunded to You' : 'Released to Seller'}
-                    </p>
-                  </div>
-                  <p className="text-xs text-konami-text-dim">
-                    {order.status === 'refunded'
-                      ? `The dispute was resolved in your favour. ${order.disputeResolvedAt || order.resolvedAt ? 'Resolved on ' + formatDate(order.disputeResolvedAt || order.resolvedAt) + '. ' : ''}Your refund is being processed back to your payment method.`
-                      : `The dispute was resolved in the seller's favour${order.disputeResolvedAt || order.resolvedAt ? ' on ' + formatDate(order.disputeResolvedAt || order.resolvedAt) : ''}. The order is complete.`}
-                  </p>
-                  <p className="text-xs text-konami-text-dim">
-                    Check your notifications and the chat below for the resolution details.
-                  </p>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                {canConfirmReceipt && (
-                  <>
-                    {showConfirm ? (
-                      <div className="card p-4 space-y-3">
-                        <div className="flex items-start gap-2">
-                          <AlertTriangle size={16} className="text-konami-red shrink-0 mt-0.5" />
-                          <p className="text-sm text-konami-text-dim">
-                            Are you sure? This releases the payment to the seller and cannot be undone. Make sure you can log in to the account before confirming.
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button onClick={handleConfirmReceipt} disabled={actionLoading} className="btn-primary flex-1 text-sm py-2.5">
-                            {actionLoading ? 'Processing...' : 'Yes, Confirm Delivery'}
-                          </button>
-                          <button onClick={() => setShowConfirm(false)} className="btn-secondary text-sm py-2.5">
-                            Cancel
-                          </button>
-                        </div>
+                  {canSubmitDelivery && order.status === 'credentials_submitted' && (
+                    <details className="group">
+                      <summary className="text-xs font-semibold text-konami-blue cursor-pointer">
+                        <CheckCircle size={13} className="inline mr-1 text-green-500" />
+                        Submitted — view or resubmit account details
+                      </summary>
+                      <div className="mt-3">
+                        <SellerDeliveryForm order={order} />
                       </div>
-                    ) : (
-                      <button onClick={() => setShowConfirm(true)} className="btn-primary w-full text-sm py-3 flex items-center justify-center gap-2">
-                        <Shield size={16} />
-                        Confirm Delivery
-                      </button>
-                    )}
-                  </>
-                )}
+                    </details>
+                  )}
 
-                {canDispute && (
-                  <>
-                    {showDisputeForm ? (
-                      <div className="card p-4 space-y-3">
-                        <textarea
-                          value={disputeReason}
-                          onChange={(e) => { setDisputeReason(e.target.value); setDisputeError(''); }}
-                          placeholder="Describe the issue (min 20 characters)..."
-                          className="w-full px-3 py-2 bg-konami-light-gray border border-konami-mid-gray rounded-xl text-konami-text text-sm outline-none focus:border-konami-blue transition-colors resize-none min-h-[80px]"
-                        />
-                        {disputeError && <p className="text-xs" style={{ color: '#C8102E' }}>{disputeError}</p>}
-                        <div className="flex gap-2">
-                          <button onClick={handleDispute} disabled={actionLoading} className="btn-primary flex-1 text-sm py-2.5 bg-konami-red hover:bg-konami-red-hover">
-                            {actionLoading ? 'Submitting...' : 'Submit Dispute'}
-                          </button>
-                          <button onClick={() => { setShowDisputeForm(false); setDisputeReason(''); setDisputeError(''); }} className="btn-secondary text-sm py-2.5">
-                            Cancel
-                          </button>
+                  {order.status === 'disputed' && (
+                    <>
+                      {order.disputeReason && (
+                        <div className="p-3 rounded-xl" style={{ background: '#FEE2E2', border: '1px solid #FECACA' }}>
+                          <p className="text-xs font-semibold mb-1" style={{ color: '#B91C1C' }}>Reason</p>
+                          <p className="text-xs italic" style={{ color: '#374151' }}>"{order.disputeReason}"</p>
                         </div>
-                      </div>
-                    ) : (
-                      <button onClick={() => setShowDisputeForm(true)} className="w-full text-sm py-3 rounded-xl border border-konami-red/30 text-konami-red hover:bg-konami-red/5 transition-colors flex items-center justify-center gap-2">
-                        <MessageSquare size={16} />
-                        Raise a Dispute
-                      </button>
-                    )}
-                  </>
-                )}
+                      )}
+                      <ContextHint tone="amber">
+                        Keep communicating in the chat below — it is used as evidence during review.
+                      </ContextHint>
+                    </>
+                  )}
 
-                {canReview && !showReviewForm && (
-                  <button onClick={() => setShowReviewForm(true)} className="btn-secondary w-full text-sm py-3">
-                    Leave a Review
-                  </button>
-                )}
+                  {canSubmitDelivery && order.status === 'awaiting_seller_delivery' && (
+                    <ContextHint tone="red">
+                      Only share login details inside this order. Never post them in public chats or messages.
+                    </ContextHint>
+                  )}
 
-                {showReviewForm && (
-                  <div className="card p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-semibold text-konami-text">Leave a Review</h4>
-                      <button onClick={() => setShowReviewForm(false)} className="text-xs text-konami-text-muted hover:text-konami-text">Cancel</button>
-                    </div>
-                    <ReviewForm onSubmit={handleSubmitReview} loading={reviewLoading} />
-                  </div>
-                )}
-              </div>
+                  {order.status === 'completed' && (
+                    <ContextHint>
+                      No further action from you — the admin sends your payout to your registered payout phone number.
+                    </ContextHint>
+                  )}
+                </OrderStatePanel>
+              )}
             </div>
           </div>
 

@@ -9,7 +9,7 @@ const steps = [
 ];
 
 const faqs = [
-  { q: 'Is my money safe?', a: 'Yes. Every payment is held in escrow until you confirm receipt. The seller only gets paid after you confirm you have received and verified the account.' },
+  { q: 'Is my money safe?', a: 'Yes. Every payment is held in escrow until you confirm delivery. The seller only gets paid after you confirm you have received and verified the account.' },
   { q: 'What if the seller doesn\'t deliver?', a: 'If the seller fails to deliver the account within 24 hours, you can raise a dispute. Our team will investigate and issue a full refund if the seller is at fault.' },
   { q: 'How long does transfer take?', a: 'Most sellers complete the transfer within 24 hours. The chat system allows you to communicate directly with the seller for real-time updates.' },
   { q: 'What payment methods are accepted?', a: 'Paystack powers all payments securely. Inside the Paystack checkout you can pay with mobile money, Visa/Mastercard, or bank transfer — you choose your method at the time of payment.' },

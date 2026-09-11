@@ -114,7 +114,7 @@ export default function ListingDetailPage() {
   const howItWorksSteps = [
     'Find your desired account and click "Buy Now"',
     'Pay securely via Paystack — mobile money, card, or bank transfer',
-    'Your payment is held in escrow until you confirm receipt',
+    'Your payment is held in escrow until you confirm delivery',
     'The seller submits the eFootball account login details in your order',
     'Confirm delivery to release funds to the seller',
   ];
@@ -418,7 +418,7 @@ export default function ListingDetailPage() {
                 <div className="rounded-xl p-3 flex items-start gap-2 mb-4" style={{ background: 'rgba(255,255,255,0.1)' }}>
                   <Shield size={16} className="text-white/70 mt-0.5 shrink-0" />
                   <p className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                    Payment held in escrow by Paystack until you confirm receipt
+                    Payment held in escrow until you confirm delivery
                   </p>
                 </div>
 

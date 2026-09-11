@@ -5,11 +5,11 @@ const categories = [
   {
     title: 'Buying',
     questions: [
-      { q: 'How do I buy an account?', a: 'Browse listings, click "Buy Now" on your preferred account, pay securely through the Paystack checkout (choose your method there — mobile money, card, or bank transfer), then chat with the seller to arrange your transfer.' },
-      { q: 'Is my payment secure?', a: 'Yes. Payments are processed by Paystack, Africa\'s leading payment platform, and held in escrow until you confirm receipt of the account.' },
+      { q: 'How do I buy an account?', a: 'Browse listings, click "Buy Now" on your preferred account, pay securely through the Paystack checkout (choose your method there — mobile money, card, or bank transfer), then the seller sends the account login details inside your order and you verify and confirm delivery.' },
+      { q: 'Is my payment secure?', a: 'Yes. Payments are processed by Paystack, Africa\'s leading payment platform, and held in escrow until you confirm delivery of the account.' },
       { q: 'What if I don\'t receive the account?', a: 'If the seller doesn\'t deliver within 24 hours, you can raise a dispute and our team will investigate.' },
       { q: 'Can I get a refund?', a: 'If the seller fails to deliver or the account doesn\'t match the listing description, you are eligible for a full refund.' },
-      { q: 'How do I confirm receipt?', a: 'Once you receive the account credentials and verify they work, go to your order and click "Confirm Receipt" to release funds to the seller.' },
+      { q: 'How do I confirm delivery?', a: 'Once you receive the account credentials and verify they work, go to your order and click "Confirm Delivery" to release the funds to the seller.' },
     ],
   },
   {
@@ -17,7 +17,7 @@ const categories = [
     questions: [
       { q: 'How do I become a seller?', a: 'Submit a seller application from your dashboard. Our team will review and approve your application within 24-48 hours.' },
       { q: 'How do I list an account?', a: 'Once approved, access the Transfer Room and click "Create Listing". Fill in the account details, add photos, and set your price.' },
-      { q: 'When do I get paid?', a: 'Once the buyer confirms receipt, the payment is released from escrow and sent to your registered payout account. Sellers are contacted directly during onboarding for payout setup.' },
+      { q: 'When do I get paid?', a: 'Once the buyer confirms delivery, the order completes and our admin processes your payout to the payout phone number on your profile (typically within 24–48 hours).' },
       { q: 'What if a buyer disputes?', a: 'If a buyer raises a dispute, our team reviews the evidence from both sides. Funds are held until the dispute is resolved.' },
       { q: 'Can I remove my listing?', a: 'Yes. You can pause or remove your listing anytime from the Transfer Room.' },
     ],
@@ -26,7 +26,7 @@ const categories = [
     title: 'Payments',
     questions: [
       { q: 'What payment methods are accepted?', a: 'Paystack handles all payment methods securely — mobile money, Visa/Mastercard cards, and bank transfers. You choose your method inside the Paystack checkout at the time of payment.' },
-      { q: 'How does the escrow system work?', a: 'When you pay, funds are held securely in escrow. They are only released to the seller once you confirm receipt of the account.' },
+      { q: 'How does the escrow system work?', a: 'When you pay, funds are held securely in escrow. They are only released to the seller once you confirm delivery of the account.' },
       { q: 'How long does payment take?', a: 'Mobile money and card payments via Paystack are confirmed within seconds. Bank transfer approval times vary slightly.' },
       { q: 'What if my payment fails?', a: 'If a payment fails or is cancelled, no money is taken. You can simply try again from the listing page. If you were charged but the order did not update, contact support.' },
       { q: 'Are there any hidden fees?', a: 'No hidden fees. The price you see is the price you pay. There are no extra charges on top of the listed price.' },

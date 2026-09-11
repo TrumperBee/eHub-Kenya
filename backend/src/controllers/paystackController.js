@@ -106,7 +106,7 @@ async function initializePayment(req, res) {
       const code = err.message;
       const statusMap = {
         LISTING_NOT_FOUND: [404, 'Listing not found'],
-        LISTING_UNAVAILABLE: [400, 'This listing is no longer available'],
+        LISTING_UNAVAILABLE: [400, 'This account is no longer available'],
         AMOUNT_MISMATCH: [400, 'Amount mismatch. Please refresh and try again.'],
         OWN_LISTING: [400, 'You cannot buy your own listing'],
       };

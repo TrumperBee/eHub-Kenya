@@ -25,10 +25,9 @@ The site works like Jumia but for eFootball accounts — many different sellers 
 6. Enter your payment details securely — Paystack handles the payment confirmation.
 7. Your payment is held in escrow — it does NOT go to the seller yet.
 8. Your order page opens with a private chat with the seller.
-9. Share your email with the seller in the chat.
-10. The seller changes their Konami account email to yours.
-11. Log in with your email, change the password immediately.
-12. Click "Mark Account as Received" — the seller gets paid. Done.
+9. The seller submits the eFootball account login details (email and password) securely inside your order.
+10. Log in with the account details to verify the account works.
+11. Once you're happy, click "Confirm Delivery" — the seller gets paid. Done.
 
 ---
 
@@ -81,7 +80,7 @@ Payments are processed by Paystack, Africa's leading payment platform.
 
 ## ESCROW SYSTEM
 
-Escrow means the buyer's payment is HELD by the platform until the buyer confirms receipt.
+Escrow means the buyer's payment is HELD by the platform until the buyer confirms delivery.
 - Your money is never sent directly to the seller. It is held by the platform.
 - If the seller delivers the account: buyer confirms, money released to seller.
 - If the seller disappears or doesn't deliver: buyer raises a dispute.

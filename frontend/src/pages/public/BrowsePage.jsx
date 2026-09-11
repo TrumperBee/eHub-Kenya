@@ -4,6 +4,7 @@ import { SlidersHorizontal, Loader } from 'lucide-react';
 import { useListings } from '../../hooks/useListings';
 import ListingGrid from '../../components/listings/ListingGrid';
 import ListingFilters, { MobileFilterDrawer } from '../../components/listings/ListingFilters';
+import ContextHint from '../../components/common/ContextHint';
 
 export default function BrowsePage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -78,6 +79,14 @@ export default function BrowsePage() {
                 Filters
               </button>
             </div>
+
+            <ContextHint className="mb-4" title="How buying works">
+              <ol className="list-decimal list-inside space-y-0.5">
+                <li><strong>Choose</strong> an account that fits your game.</li>
+                <li><strong>Pay</strong> securely with M-Pesa, card, or bank.</li>
+                <li><strong>Confirm</strong> delivery once you can log in.</li>
+              </ol>
+            </ContextHint>
 
             {error && (
               <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">

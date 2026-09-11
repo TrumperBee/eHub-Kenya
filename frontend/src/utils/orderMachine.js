@@ -13,9 +13,10 @@ export const isPaidStatus = (status) => PAID_AND_PENDING_STATUSES.includes(statu
 
 export const isTerminalStatus = (status) => TERMINAL_STATUSES.includes(status);
 
-// Seller can submit account credentials while the order is paid but not yet delivered.
+// Seller can submit account credentials while the order is paid but not yet delivered,
+// including re-submitting corrected details after the first submission (backend allows it).
 export const sellerCanDeliver = (status) =>
-  ['payment_confirmed', 'in_transfer', 'awaiting_seller_delivery'].includes(status);
+  ['payment_confirmed', 'in_transfer', 'awaiting_seller_delivery', 'credentials_submitted'].includes(status);
 
 // Buyer can confirm delivery once credentials are submitted (or on legacy paid states).
 export const buyerCanConfirm = (status) =>
