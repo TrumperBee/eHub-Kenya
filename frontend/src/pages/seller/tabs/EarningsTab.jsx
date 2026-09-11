@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wallet, TrendingUp, Clock, Percent, AlertTriangle, CreditCard } from 'lucide-react';
 import { getSellerOrders } from '../../../services/ordersService';
+import { PAID_AND_PENDING_STATUSES } from '../../../utils/orderMachine';
 import { formatKES, formatDate } from '../../../utils/formatters';
 
 function calcFee(amount) {
@@ -65,7 +66,7 @@ export default function EarningsTab({ profile, user, onTabChange }) {
   }, [fetchData]);
 
   const completedOrders = orders.filter(o => o.status === 'completed');
-  const pendingEscrowOrders = orders.filter(o => ['payment_confirmed', 'in_transfer'].includes(o.status));
+  const pendingEscrowOrders = orders.filter(o => PAID_AND_PENDING_STATUSES.includes(o.status));
 
   const totalEarned = completedOrders.reduce((sum, o) => sum + (o.amount || 0), 0);
   const pendingEscrow = pendingEscrowOrders.reduce((sum, o) => sum + (o.amount || 0), 0);

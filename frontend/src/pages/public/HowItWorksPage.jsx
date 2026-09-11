@@ -4,7 +4,7 @@ const steps = [
   { icon: Search, title: 'Browse Accounts', desc: 'Find the account that matches your budget and squad goals. Filter by tier, price, and more on the Browse page.' },
   { icon: ShoppingBag, title: 'Click Buy Now', desc: 'Select your perfect account and click Buy Now. Your order is created instantly.' },
   { icon: CreditCard, title: 'Pay Securely', desc: 'Checkout is handled securely by Paystack, Africa\'s leading payment platform. Choose your payment method inside the Paystack checkout — your payment is held in escrow until you confirm delivery.' },
-  { icon: MessageSquare, title: 'Receive Your Account', desc: 'The seller transfers the Konami account email to yours. Chat with them directly in your order to coordinate the transfer.' },
+  { icon: MessageSquare, title: 'Receive Your Account', desc: 'The seller submits the account login details privately inside your order. No passwords are ever shared in chat.' },
   { icon: CheckCircle, title: 'Confirm & Done', desc: 'Mark the account as received — payment is released to the seller. Transaction complete.' },
 ];
 

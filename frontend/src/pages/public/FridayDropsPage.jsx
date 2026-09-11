@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Flame, ShieldCheck, BadgePercent, Users, CalendarDays, Zap } from 'lucide-react';
 import { subscribeToActiveDrops, incrementDropViews } from '../../services/fridayDropsService';
+import { getListingById } from '../../services/listingsService';
 import { getCurrentDropWeek, formatFridayLabel } from '../../utils/fridayUtils';
 import { useAuth } from '../../context/AuthContext';
 import DropCard from '../../components/drops/DropCard';
 import CountdownTimer from '../../components/drops/CountdownTimer';
+
+const AVAILABLE_STATUSES = ['active'];
 
 export default function FridayDropsPage() {
   const { currentUser } = useAuth();
@@ -16,8 +19,24 @@ export default function FridayDropsPage() {
   useEffect(() => {
     const unsub = subscribeToActiveDrops(
       (items) => {
-        setDrops(items);
-        setLoading(false);
+        // Enrich with live listing status so drops for reserved/sold accounts disappear.
+        Promise.all(
+          items.map(async (drop) => {
+            let listed = true;
+            if (drop.listingId) {
+              try {
+                const listing = await getListingById(drop.listingId);
+                if (listing && !AVAILABLE_STATUSES.includes(listing.status)) listed = false;
+              } catch {
+                // keep the drop
+              }
+            }
+            return { ...drop, __listed: listed };
+          })
+        ).then((enriched) => {
+          setDrops(enriched.filter((d) => d.__listed).map(({ __listed, ...d }) => d));
+          setLoading(false);
+        });
       },
       () => setLoading(false)
     );

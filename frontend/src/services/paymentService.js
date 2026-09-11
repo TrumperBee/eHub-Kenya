@@ -15,11 +15,31 @@ export const initializePaystackPayment = async ({ listingId, amount }) => {
   return data;
 };
 
+export const cancelPayment = async (orderId) => {
+  const idToken = await auth.currentUser.getIdToken();
+  const { data } = await api.post(
+    '/api/payment/cancel',
+    { orderId },
+    { headers: { Authorization: `Bearer ${idToken}` } }
+  );
+  return data;
+};
+
 export const releaseEscrow = async (orderId) => {
   const idToken = await auth.currentUser.getIdToken();
   const { data } = await api.post(
     '/api/escrow/release',
     { orderId },
+    { headers: { Authorization: `Bearer ${idToken}` } }
+  );
+  return data;
+};
+
+export const submitDelivery = async (orderId, { accountEmail, accountPassword }) => {
+  const idToken = await auth.currentUser.getIdToken();
+  const { data } = await api.post(
+    '/api/escrow/delivery',
+    { orderId, accountEmail, accountPassword },
     { headers: { Authorization: `Bearer ${idToken}` } }
   );
   return data;

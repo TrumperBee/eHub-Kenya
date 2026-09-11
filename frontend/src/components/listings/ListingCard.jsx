@@ -27,6 +27,8 @@ export default function ListingCard({ listing }) {
 
   const photoUrl = listing.photos?.[0];
   const isSold = listing.status === 'sold';
+  const isReserved = listing.status === 'reserved';
+  const isUnavailable = isSold || isReserved;
 
   const { getDropForListing } = useFridayDrop();
   const fridayDrop = getDropForListing(listing.id) || null;
@@ -101,10 +103,10 @@ export default function ListingCard({ listing }) {
               </button>
             </div>
 
-            {isSold && (
+            {isUnavailable && (
             <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(200,16,46,0.8)' }}>
               <span className="font-heading text-[28px] font-extrabold text-white uppercase tracking-widest">
-                SOLD
+                {isSold ? 'SOLD' : 'RESERVED'}
               </span>
             </div>
           )}

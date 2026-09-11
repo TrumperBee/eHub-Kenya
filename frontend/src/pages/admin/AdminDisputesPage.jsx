@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { collection, query, where, orderBy, getDocs, getDoc, doc, updateDoc, onSnapshot, increment, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, getDoc, doc, updateDoc, onSnapshot, increment, serverTimestamp, addDoc, deleteField } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import toast from 'react-hot-toast';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -100,6 +100,23 @@ export default function AdminDisputesPage() {
     setPendingResolution({ order, resolution, plan });
   };
 
+  const notifyParty = async (userId, order, title, message) => {
+    if (!userId) return;
+    try {
+      await addDoc(collection(db, 'notifications'), {
+        userId,
+        title,
+        message,
+        type: 'dispute',
+        orderId: order.id,
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.warn('Notification error:', err);
+    }
+  };
+
   const confirmResolution = async () => {
     if (!pendingResolution) return;
     const { order, resolution, plan } = pendingResolution;
@@ -108,11 +125,34 @@ export default function AdminDisputesPage() {
       await updateDoc(doc(db, 'orders', order.id), plan.orderPatch);
       if (resolution === 'release') {
         if (order.listingId) {
-          await updateDoc(doc(db, 'listings', order.listingId), { status: 'sold', updatedAt: serverTimestamp() }).catch(() => {});
+          await updateDoc(doc(db, 'listings', order.listingId), {
+            status: 'sold',
+            reservedById: deleteField(),
+            reservedAt: deleteField(),
+            updatedAt: serverTimestamp(),
+          }).catch(() => {});
         }
         if (order.sellerId) {
           await updateDoc(doc(db, 'users', order.sellerId), { totalSales: increment(1) }).catch(() => {});
         }
+        await notifyParty(order.sellerId, order, 'Escrow Released',
+          `Escrow for "${order.listingTitle || 'your listing'}" (${formatKES(order.amount)}) was released to you. Complete the payout to your registered payout phone.`);
+        await notifyParty(order.buyerId, order, 'Order Completed',
+          `Your order "${order.listingTitle || ''}" was completed. The account has been released to the seller. Your payout email may have received the credentials already.`);
+      } else {
+        if (order.listingId) {
+          await updateDoc(doc(db, 'listings', order.listingId), {
+            status: 'active',
+            reservedById: deleteField(),
+            reservedAt: deleteField(),
+            soldAt: deleteField(),
+            updatedAt: serverTimestamp(),
+          }).catch(() => {});
+        }
+        await notifyParty(order.buyerId, order, 'Refund Issued',
+          `Your refund of ${formatKES(order.amount)} for "${order.listingTitle || 'your order'}" has been approved. It will be sent back to your payment method.`);
+        await notifyParty(order.sellerId, order, 'Order Refunded',
+          `The order "${order.listingTitle || ''}" was refunded to the buyer. Your listing is now live again.`);
       }
       await sendSystemMessage(order.id, plan.systemMessage);
       toast.success(plan.manualAction.title + ' pending.');

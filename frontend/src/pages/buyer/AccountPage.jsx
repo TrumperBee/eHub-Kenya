@@ -273,7 +273,7 @@ export default function AccountPage() {
 
   const filteredOrders = orders.filter(o => {
     if (orderFilter === 'all') return true;
-    if (orderFilter === 'active') return ['pending_payment', 'payment_confirmed', 'in_transfer'].includes(o.status);
+    if (orderFilter === 'active') return ['pending_payment', 'payment_confirmed', 'awaiting_seller_delivery', 'in_transfer', 'credentials_submitted'].includes(o.status);
     if (orderFilter === 'completed') return o.status === 'completed';
     if (orderFilter === 'disputed') return o.status === 'disputed';
     return true;

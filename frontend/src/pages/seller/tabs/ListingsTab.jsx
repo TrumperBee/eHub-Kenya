@@ -111,6 +111,7 @@ export default function ListingsTab({ profile, user, onTabChange }) {
         {[
           { id: 'all', label: 'All' },
           { id: 'active', label: 'Active' },
+          { id: 'reserved', label: 'Reserved' },
           { id: 'paused', label: 'Paused' },
           { id: 'sold', label: 'Sold' },
         ].map(filter => (
@@ -161,11 +162,13 @@ export default function ListingsTab({ profile, user, onTabChange }) {
               <div className="flex items-center gap-2 shrink-0">
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
                   listing.status === 'active' ? 'bg-green-100 text-green-700' :
+                  listing.status === 'reserved' ? 'bg-orange-100 text-orange-700' :
                   listing.status === 'paused' ? 'bg-gray-100 text-gray-500' :
                   listing.status === 'sold' ? 'bg-blue-100 text-blue-700' :
                   'bg-gray-100 text-gray-400'
                 }`}>
                   {listing.status === 'active' ? 'LIVE' :
+                   listing.status === 'reserved' ? 'RESERVED' :
                    listing.status === 'paused' ? 'PAUSED' :
                    listing.status === 'sold' ? 'SOLD' : listing.status}
                 </span>
@@ -179,7 +182,7 @@ export default function ListingsTab({ profile, user, onTabChange }) {
                 >
                   <Edit3 size={12} className="inline mr-1" /> Edit
                 </button>
-                {listing.status !== 'sold' && (
+                {listing.status !== 'sold' && listing.status !== 'reserved' && (
                   <button
                     onClick={() => handleTogglePause(listing)}
                     className="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors min-h-[32px]"
@@ -189,7 +192,7 @@ export default function ListingsTab({ profile, user, onTabChange }) {
                     {listing.status === 'active' ? 'Pause' : 'Resume'}
                   </button>
                 )}
-                {listing.status !== 'sold' && (
+                {listing.status !== 'sold' && listing.status !== 'reserved' && (
                   <button
                     onClick={() => setDeleteId(listing.id)}
                     className="p-1.5 rounded-lg transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center"
@@ -209,6 +212,7 @@ export default function ListingsTab({ profile, user, onTabChange }) {
         <h3 className="font-heading text-sm font-bold uppercase mb-3" style={{ color: '#003BFF' }}><MapPin size={14} className="inline" /> LISTING TIPS</h3>
         <ul className="space-y-1.5 text-sm" style={{ color: '#374151' }}>
           <li> Active listings appear on the Browse page and are visible to all buyers.</li>
+          <li> Reserved listings are locked while a buyer is paying for or receiving the account. They unlock automatically if the buyer cancels.</li>
           <li> Paused listings are hidden from buyers but not deleted. Useful if you need a break.</li>
           <li> Once an account is sold, the listing is automatically marked as Sold.</li>
           <li> You can only delete listings that have no ongoing orders.</li>

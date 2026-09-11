@@ -4,6 +4,7 @@ import { ShoppingBag, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getBuyerOrders } from '../../services/ordersService';
 import { ORDER_STATUS } from '../../utils/constants';
+import { PAID_AND_PENDING_STATUSES } from '../../utils/orderMachine';
 import { formatKES, formatDate } from '../../utils/formatters';
 
 const FILTER_TABS = [
@@ -12,7 +13,7 @@ const FILTER_TABS = [
   { key: 'completed', label: 'Completed' },
 ];
 
-const ACTIVE_STATUSES = ['pending_payment', 'payment_confirmed', 'in_transfer', 'disputed'];
+const ACTIVE_STATUSES = ['pending_payment', ...PAID_AND_PENDING_STATUSES, 'disputed'];
 
 export default function MyOrdersPage() {
   const { userProfile } = useAuth();

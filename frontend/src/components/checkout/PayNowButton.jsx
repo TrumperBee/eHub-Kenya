@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { usePaystackPayment } from 'react-paystack';
 import { useAuth } from '../../context/AuthContext';
-import { initializePaystackPayment } from '../../services/paymentService';
+import { initializePaystackPayment, cancelPayment } from '../../services/paymentService';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Loader, ShieldCheck } from 'lucide-react';
 import { formatKES } from '../../utils/formatters';
@@ -13,6 +13,7 @@ export default function PayNowButton({ listing, effectivePrice }) {
   const [loading, setLoading] = useState(false);
 
   const amount = effectivePrice ?? listing.price;
+  const available = listing.status === 'active';
 
   const initializePayment = usePaystackPayment({
     publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
@@ -31,33 +32,46 @@ export default function PayNowButton({ listing, effectivePrice }) {
       return;
     }
 
+    if (!available) {
+      toast.error('This listing is no longer available');
+      return;
+    }
+
     setLoading(true);
+    let orderId = null;
     try {
-      const { reference, orderId } = await initializePaystackPayment({
+      const result = await initializePaystackPayment({
         listingId: listing.id,
         amount,
       });
+      orderId = result.orderId;
 
       initializePayment({
         config: {
-          reference,
+          reference: result.reference,
           email: currentUser.email,
           amount: amount * 100,
           label: listing.title,
-          metadata: { orderId, listingId: listing.id },
+          metadata: { orderId: result.orderId, listingId: listing.id },
         },
         onSuccess: () => {
           toast.success('Payment successful! Opening your order...');
-          navigate(`/orders/${orderId}?payment=success`);
+          navigate(`/orders/${result.orderId}?payment=success`);
           setLoading(false);
         },
         onClose: () => {
           toast('Payment cancelled');
+          if (result.orderId) {
+            cancelPayment(result.orderId).catch(() => {});
+          }
           setLoading(false);
         },
       });
     } catch (err) {
       console.error(err);
+      if (orderId) {
+        cancelPayment(orderId).catch(() => {});
+      }
       toast.error(err?.response?.data?.error || 'Payment failed. Please try again.');
       setLoading(false);
     }
@@ -83,7 +97,7 @@ export default function PayNowButton({ listing, effectivePrice }) {
 
       <button
         onClick={handlePayNow}
-        disabled={loading || listing.status === 'sold'}
+        disabled={loading || !available}
         className="w-full flex items-center justify-center gap-3
                    bg-konami-yellow hover:bg-yellow-300 active:scale-[0.98]
                    text-konami-text font-heading font-bold uppercase tracking-wide

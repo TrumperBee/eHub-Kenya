@@ -48,9 +48,9 @@ To sell on eFootball Hub Kenya:
    - Write a description — include what makes the account special
    - Set your price in KES
 7. Your listing goes live on the Browse page immediately.
-8. When a buyer pays, you receive a notification and a chat opens.
-9. Ask the buyer for their email, change your Konami account email to theirs.
-10. Once the buyer confirms receipt, your payment is released.
+8. When a buyer pays, you receive a notification and an order opens.
+9. Go to your order and submit the buyer's eFootball account login details (email and password) securely inside the order. The buyer receives them immediately.
+10. Once the buyer confirms the account details, your payment is released.
 
 ---
 
@@ -95,17 +95,18 @@ This system means: sellers cannot run away with money, and buyers cannot claim n
 
 ## THE ACCOUNT TRANSFER PROCESS
 
-When a Konami account is sold, the seller transfers ownership by changing the email linked to the Konami account:
-1. Seller goes to eFootball app → Settings → Account → Linked email
-2. Seller changes the email from their own to the buyer's email
-3. Buyer then logs in using their email (Konami sends a verification)
-4. Buyer changes the password immediately after logging in
+When a Konami account is sold, the seller delivers ownership through the order's private credential submission:
+1. Seller goes to My Orders in the Transfer Room, opens the paid order, and taps "Submit Account Details".
+2. Seller enters the account email and password. This is stored privately inside the order — never shared in the public chat.
+3. The buyer receives the account details and logs in to verify the account.
+4. The buyer changes the password immediately after logging in.
+5. The buyer confirms delivery to release escrow.
 
 Important notes:
-- The buyer must use the email they share in the order chat
-- If the account is linked to Google or Apple, the process may differ slightly
-- Always change the password immediately after receiving the account
-- Do not share the email in the public review section — only in the private order chat
+- Account credentials are only visible to the buyer, seller, and admin inside that order — never in public sections.
+- Some accounts may be linked to Google or Apple instead of an email; in that case the seller should deliver any login credentials that work from the app login screen.
+- Always change the password immediately after receiving the account.
+- Never share login credentials in the public review section — only through the private order delivery form.
 
 ---
 

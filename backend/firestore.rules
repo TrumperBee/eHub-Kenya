@@ -69,6 +69,14 @@ service cloud.firestore {
            isAdmin());
         allow create: if isLoggedIn();
       }
+
+      match /delivery/{deliveryId} {
+        allow read: if isLoggedIn() &&
+          (get(/databases/$(database)/documents/orders/$(orderId)).data.buyerId == request.auth.uid ||
+           get(/databases/$(database)/documents/orders/$(orderId)).data.sellerId == request.auth.uid ||
+           isAdmin());
+        allow create, update, delete: if false;
+      }
     }
 
     match /sellerApplications/{userId} {

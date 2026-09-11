@@ -7,13 +7,17 @@ import { ORDER_STATUS } from '../../utils/constants';
 function getStatusMessage(status) {
   switch (status) {
     case 'payment_confirmed':
-      return 'Payment received. Seller: share your buyer\'s email. Buyer: share your email in chat.';
+    case 'awaiting_seller_delivery':
+      return 'Payment received. Seller: submit the eFootball account login details from the order page. Buyer: the seller will submit them here shortly.';
+    case 'credentials_submitted':
     case 'in_transfer':
-      return 'Transfer in progress. Buyer: wait for seller to change the email, then confirm.';
+      return 'Account details submitted. Buyer: verify the login, change the password, then confirm delivery.';
     case 'completed':
       return 'This order is complete. Thank you!';
     case 'disputed':
       return 'Dispute raised. Admin will review and resolve.';
+    case 'pending_payment':
+      return 'Payment pending. This order opens once payment is confirmed.';
     default:
       return '';
   }
@@ -28,7 +32,7 @@ export default function ChatWindow({ orderId, order, currentUserId }) {
   }, [messages]);
 
   const statusConfig = ORDER_STATUS[order?.status];
-  const isDisabled = order?.status === 'completed' || order?.status === 'disputed' || order?.status === 'cancelled';
+  const isDisabled = order?.status === 'completed' || order?.status === 'disputed' || order?.status === 'cancelled' || order?.status === 'refunded';
   const statusMsg = order ? getStatusMessage(order.status) : '';
 
   return (

@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getSavedListings } from '../../services/savedListingsService';
+import { getListingById } from '../../services/listingsService';
 import ListingCard from '../../components/listings/ListingCard';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { Bookmark, Package } from 'lucide-react';
+
+const AVAILABLE_STATUSES = ['active'];
 
 export default function SavedListingsPage() {
   const { currentUser } = useAuth();
@@ -15,8 +18,31 @@ export default function SavedListingsPage() {
     if (!currentUser) return;
     setLoading(true);
     const unsubscribe = getSavedListings(currentUser.uid, (listings) => {
-      setSavedListings(listings);
-      setLoading(false);
+      // Enrich with live status so reserved/sold/paused accounts drop out of Favourites.
+      Promise.all(
+        listings
+          .filter((s) => s.listingSnapshot)
+          .map(async (saved) => {
+            let listing = {
+              ...(saved.listingSnapshot || {}),
+              id: saved.listingId,
+              photos: saved.listingSnapshot?.photos || [],
+              status: 'active',
+              tier: saved.listingSnapshot?.tier,
+              sellerDisplayName: saved.listingSnapshot?.sellerDisplayName,
+            };
+            try {
+              const live = await getListingById(saved.listingId);
+              if (live) listing = { ...listing, status: live.status || 'active' };
+            } catch {
+              // keep snapshot status
+            }
+            return listing;
+          })
+      ).then((listingDocs) => {
+        setSavedListings(listingDocs.filter((l) => AVAILABLE_STATUSES.includes(l.status)));
+        setLoading(false);
+      });
     });
     return unsubscribe;
   }, [currentUser]);
@@ -56,18 +82,9 @@ export default function SavedListingsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {savedListings.filter(s => s.listingSnapshot).map((saved) => {
-              const snapshot = saved.listingSnapshot || {};
-              const listing = {
-                ...snapshot,
-                id: saved.listingId,
-                photos: snapshot.photos || [],
-                status: 'active',
-                sellerDisplayName: snapshot.sellerDisplayName,
-                tier: snapshot.tier,
-              };
-              return <ListingCard key={saved.listingId} listing={listing} />;
-            })}
+            {savedListings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
           </div>
         )}
       </div>

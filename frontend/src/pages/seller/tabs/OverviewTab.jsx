@@ -3,12 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Plus, AlertTriangle, ArrowRight, Clipboard, CheckCircle, Clock, Wallet, Lightbulb, Flame, BadgePercent } from 'lucide-react';
 import { getSellerListings } from '../../../services/listingsService';
 import { getSellerOrders } from '../../../services/ordersService';
+import { PAID_AND_PENDING_STATUSES } from '../../../utils/orderMachine';
 import { formatKES, formatDate } from '../../../utils/formatters';
 
 const ORDER_STATUS_MAP = {
   pending_payment: 'Awaiting Payment',
   payment_confirmed: 'Payment Received',
+  awaiting_seller_delivery: 'Awaiting Seller Delivery',
   in_transfer: 'Account Transfer',
+  credentials_submitted: 'Account Details Submitted',
   completed: 'Completed',
   disputed: 'Disputed',
   refunded: 'Refunded',
@@ -80,7 +83,7 @@ export default function OverviewTab({ profile, user, onTabChange }) {
 
   const activeCount = listings.filter(l => l.status === 'active').length;
   const soldCount = listings.filter(l => l.status === 'sold').length;
-  const pendingOrders = orders.filter(o => ['payment_confirmed', 'in_transfer'].includes(o.status));
+  const pendingOrders = orders.filter(o => PAID_AND_PENDING_STATUSES.includes(o.status));
   const completedOrders = orders.filter(o => o.status === 'completed');
   const totalEarned = completedOrders.reduce((sum, o) => sum + (o.amount || 0), 0);
 
@@ -176,8 +179,8 @@ export default function OverviewTab({ profile, user, onTabChange }) {
           <ol className="list-decimal pl-5 space-y-1">
             <li><strong>Create a listing.</strong> Go to "My Listings" <ArrowRight size={14} className="inline" /> New Listing. Add clear photos of your squad, list your star players, and set a fair price.</li>
             <li><strong>Wait for a buyer.</strong> Once your listing is live, buyers can find it on the Browse page. You will receive a notification when someone pays.</li>
-            <li><strong>Complete the transfer.</strong> When you get an order, go to "Orders", open the chat, and ask the buyer for their email. Then change your Konami account email to theirs.</li>
-            <li><strong>Get paid.</strong> Once you confirm the transfer and the buyer confirms receipt, the admin will process your payout to your registered payout phone number.</li>
+            <li><strong>Complete the delivery.</strong> When you get an order, go to "My Orders", open the order, and submit the buyer's eFootball account login details using the delivery form. They are delivered privately inside the order.</li>
+            <li><strong>Get paid.</strong> Once the buyer verifies the account and confirms delivery, the admin will process your payout to your registered payout phone number.</li>
           </ol>
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid #FFF100' }}>
             <p className="font-semibold mb-1">Tips for faster sales:</p>
@@ -213,7 +216,9 @@ export default function OverviewTab({ profile, user, onTabChange }) {
                   const statusColors = {
                     pending_payment: 'text-yellow-500',
                     payment_confirmed: 'text-blue-500',
+                    awaiting_seller_delivery: 'text-yellow-600',
                     in_transfer: 'text-purple-500',
+                    credentials_submitted: 'text-purple-500',
                     completed: 'text-green-500',
                     disputed: 'text-red-500',
                     refunded: 'text-gray-400',

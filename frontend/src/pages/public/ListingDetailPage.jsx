@@ -101,6 +101,8 @@ export default function ListingDetailPage() {
   const isOwner = currentUser && listing.sellerId === currentUser.uid;
   const photos = listing.photos || [];
   const isSold = listing.status === 'sold';
+  const isReserved = listing.status === 'reserved';
+  const isUnavailable = isSold || isReserved;
 
   const { getDropForListing } = useFridayDrop();
   const fridayDrop = getDropForListing(listing.id) || null;
@@ -113,17 +115,17 @@ export default function ListingDetailPage() {
     'Find your desired account and click "Buy Now"',
     'Pay securely via Paystack — mobile money, card, or bank transfer',
     'Your payment is held in escrow until you confirm receipt',
-    'Chat with the seller to arrange account transfer',
-    'Confirm receipt to release funds to the seller',
+    'The seller submits the eFootball account login details in your order',
+    'Confirm delivery to release funds to the seller',
   ];
 
   return (
     <div className="pt-[68px] min-h-screen" style={{ background: '#F5F5F5' }}>
-      {isSold && (
+      {isUnavailable && (
         <div className="py-3" style={{ background: '#C8102E' }}>
           <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
             <p className="text-sm text-white font-heading font-bold uppercase tracking-wider">
-              THIS ACCOUNT HAS BEEN SOLD
+              {isSold ? 'THIS ACCOUNT HAS BEEN SOLD' : 'THIS ACCOUNT IS BEING DELIVERED TO ANOTHER BUYER'}
             </p>
             <Link to="/browse" className="btn-primary text-sm !py-1.5 !px-4">
               Browse Accounts
@@ -353,10 +355,12 @@ export default function ListingDetailPage() {
                   Tap to view seller profile and reviews
                 </p>
 
-                {isSold ? (
+                {isUnavailable ? (
                   <div className="space-y-3">
                     <div className="rounded-xl p-4 text-center" style={{ background: 'rgba(200,16,46,0.2)' }}>
-                      <p className="text-sm font-heading font-bold" style={{ color: '#C8102E' }}>SOLD - Not available</p>
+                      <p className="text-sm font-heading font-bold" style={{ color: '#C8102E' }}>
+                        {isSold ? 'SOLD - Not available' : 'RESERVED - Completing delivery'}
+                      </p>
                     </div>
                     <Link to="/browse" className="btn-secondary w-full text-center text-sm block !border-white/40 !text-white/80">
                       Browse Other Accounts
@@ -392,7 +396,7 @@ export default function ListingDetailPage() {
                   </div>
                 )}
 
-                {listing.status !== 'sold' && !isOwner && listing.sellerWhatsapp && (
+                {!isUnavailable && !isOwner && listing.sellerWhatsapp && (
                   <button
                     onClick={() => {
                       const phone = listing.sellerWhatsapp.replace(/\D/g, '').replace(/^0/, '254');

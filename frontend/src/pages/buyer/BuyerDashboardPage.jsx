@@ -5,6 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import { getBuyerOrders } from '../../services/ordersService';
 import { getSellerApplication } from '../../services/usersService';
 import { formatKES, formatDate } from '../../utils/formatters';
+import { PAID_AND_PENDING_STATUSES } from '../../utils/orderMachine';
+import { ORDER_STATUS } from '../../utils/constants';
 
 export default function BuyerDashboardPage() {
   const { currentUser, userProfile } = useAuth();
@@ -22,7 +24,7 @@ export default function BuyerDashboardPage() {
   }, [currentUser]);
 
   const inProgress = orders.filter((o) =>
-    ['pending_payment', 'payment_confirmed', 'in_transfer'].includes(o.status)
+    ['pending_payment', ...PAID_AND_PENDING_STATUSES].includes(o.status)
   );
 
   const completedCount = orders.filter((o) => o.status === 'completed').length;
@@ -107,10 +109,10 @@ export default function BuyerDashboardPage() {
                     <span className={`text-xs ${
                       order.status === 'completed' ? 'text-green-500' :
                       order.status === 'pending_payment' ? 'text-yellow-600' :
-                      order.status === 'in_transfer' ? 'text-purple-500' :
-                      order.status === 'disputed' ? 'text-konami-red' : 'text-konami-text-dim'
+                      order.status === 'disputed' ? 'text-konami-red' :
+                      (ORDER_STATUS[order.status]?.color || 'text-konami-text-dim')
                     }`}>
-                      {order.status.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                      {ORDER_STATUS[order.status]?.label || order.status.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
                     </span>
                   </div>
                 </Link>

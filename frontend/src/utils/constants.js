@@ -15,13 +15,15 @@ export const PLATFORMS = {
 };
 
 export const ORDER_STATUS = {
-  pending_payment:  { label: 'Awaiting Payment',  color: 'text-yellow-400' },
-  payment_confirmed:{ label: 'Payment Received',   color: 'text-blue-400'   },
-  in_transfer:      { label: 'Account Transfer',   color: 'text-purple-400'  },
-  completed:        { label: 'Completed',           color: 'text-green-400'  },
-  disputed:         { label: 'Disputed',            color: 'text-red-400'    },
-  refunded:         { label: 'Refunded',            color: 'text-gray-400'   },
-  cancelled:        { label: 'Cancelled',           color: 'text-gray-500'   },
+  pending_payment:         { label: 'Awaiting Payment',            color: 'text-yellow-400' },
+  payment_confirmed:       { label: 'Payment Received',             color: 'text-blue-400'   },
+  awaiting_seller_delivery:{ label: 'Awaiting Seller Delivery',     color: 'text-yellow-400' },
+  in_transfer:             { label: 'Account Transfer',             color: 'text-purple-400' },
+  credentials_submitted:   { label: 'Account Details Submitted',    color: 'text-purple-400' },
+  completed:               { label: 'Completed',                    color: 'text-green-400'  },
+  disputed:                { label: 'Disputed',                     color: 'text-red-400'    },
+  refunded:                { label: 'Refunded',                     color: 'text-gray-400'   },
+  cancelled:               { label: 'Cancelled',                    color: 'text-gray-500'   },
 };
 
 export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';

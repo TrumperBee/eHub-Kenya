@@ -1,17 +1,27 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, AlertTriangle, ChevronUp, ChevronDown, Store } from 'lucide-react';
+import { ShoppingBag, AlertTriangle, ChevronUp, ChevronDown, Store, Upload, MessageSquare } from 'lucide-react';
 import { getSellerOrders } from '../../../services/ordersService';
 import { ORDER_STATUS } from '../../../utils/constants';
 import { formatKES, formatDate } from '../../../utils/formatters';
 
 const STATUS_FILTERS = [
   { id: 'all', label: 'All' },
-  { id: 'payment_confirmed', label: 'Pending' },
-  { id: 'in_transfer', label: 'In Transfer' },
+  { id: 'pending', label: 'Pending Delivery' },
+  { id: 'submitted', label: 'Awaiting Confirmation' },
   { id: 'completed', label: 'Completed' },
   { id: 'disputed', label: 'Disputed' },
 ];
+
+const FILTER_MATCH = {
+  all: () => true,
+  pending: (s) => ['awaiting_seller_delivery', 'payment_confirmed'].includes(s),
+  submitted: (s) => ['credentials_submitted', 'in_transfer'].includes(s),
+  completed: (s) => s === 'completed',
+  disputed: (s) => s === 'disputed',
+};
+
+const ACTIONS_REQUIRED_STATUSES = ['awaiting_seller_delivery', 'payment_confirmed'];
 
 function OrdersSkeleton() {
   return (
@@ -65,8 +75,8 @@ function EmptyState({ filter, onTabChange }) {
     );
   }
   const messages = {
-    payment_confirmed: 'No pending orders. All caught up!',
-    in_transfer: 'No transfers in progress.',
+    pending: 'No orders awaiting delivery. All caught up!',
+    submitted: 'No orders awaiting buyer confirmation.',
     completed: 'No completed orders yet. Keep selling!',
     disputed: 'No disputes. Great work!',
   };
@@ -103,12 +113,13 @@ export default function OrdersTab({ profile, user, onTabChange }) {
     fetchData();
   }, [fetchData]);
 
-  const filtered = activeFilter === 'all' ? orders : orders.filter(o => o.status === activeFilter);
+  const filtered = orders.filter((o) => FILTER_MATCH[activeFilter](o.status));
   const statusCounts = {};
   orders.forEach(o => { statusCounts[o.status] = (statusCounts[o.status] || 0) + 1; });
+  const actionCount = orders.filter((o) => ACTIONS_REQUIRED_STATUSES.includes(o.status)).length;
 
   const hasOldPending = orders.some(o => {
-    if (o.status !== 'payment_confirmed') return false;
+    if (!ACTIONS_REQUIRED_STATUSES.includes(o.status)) return false;
     if (!o.createdAt) return false;
     const d = o.createdAt.toDate ? o.createdAt.toDate() : new Date(o.createdAt);
     const hoursOld = (Date.now() - d.getTime()) / 3600000;
@@ -133,15 +144,15 @@ export default function OrdersTab({ profile, user, onTabChange }) {
             <span className="text-lg shrink-0"><AlertTriangle size={20} /></span>
             <div>
               <p className="text-sm font-semibold" style={{ color: '#111' }}>
-                You have {orders.filter(o => o.status === 'payment_confirmed').length} order(s) waiting for your action.
+                You have {actionCount} order(s) waiting for your action.
               </p>
               <p className="text-xs mt-0.5" style={{ color: '#6B7280' }}>
-                Buyers have paid and are waiting for account transfer. Respond within 24 hours to avoid a dispute.
+                Buyers have paid and are waiting for you to submit the eFootball account details. Respond within 24 hours to avoid a dispute.
               </p>
             </div>
           </div>
           <button
-            onClick={() => setActiveFilter('payment_confirmed')}
+            onClick={() => setActiveFilter('pending')}
             className="px-4 py-2 rounded-lg text-xs font-bold text-white transition-colors shrink-0" style={{ background: '#C8102E' }}
           >
             VIEW PENDING ORDERS
@@ -158,23 +169,22 @@ export default function OrdersTab({ profile, user, onTabChange }) {
         </div>
         {guideOpen && (
           <div className="text-xs leading-relaxed space-y-1.5" style={{ color: '#374151' }}>
-            <p>When a buyer purchases your listing, an order is created here automatically. Follow these steps for every order:</p>
+            <p>When a buyer pays for your listing, the order is locked and appears here as "Pending Delivery". Follow these steps for every order:</p>
             <ol className="list-decimal pl-4 space-y-0.5">
-              <li><strong>Open the order</strong> and chat with the buyer.</li>
-              <li>Ask the buyer: "Please share your email address."</li>
-              <li>Go to Konami's website or the eFootball app settings.</li>
-              <li>Change the email linked to your Konami account to the buyer's email.</li>
-              <li>Tell the buyer to log in and change the password immediately.</li>
-              <li>Wait for the buyer to confirm receipt. The admin will then process and send your payout to your registered payout phone number.</li>
+              <li><strong>Open the order</strong> — you'll see the buyer's paid status and the account delivery form.</li>
+              <li><strong>Submit the eFootball account login details</strong> (email and password) using the form. They're delivered privately inside the order.</li>
+              <li><strong>Tell the buyer the details were submitted</strong> in the order chat.</li>
+              <li>The buyer logs in, changes the password, and confirms delivery.</li>
+              <li>Once confirmed, the admin processes and sends your payout to your registered payout phone number.</li>
             </ol>
-            <p className="mt-1 font-semibold" style={{ color: '#C8102E' }}><AlertTriangle size={14} className="inline" /> Important: Never ask buyers to pay outside this platform. Escrow protects both of you.</p>
+            <p className="mt-1 font-semibold" style={{ color: '#C8102E' }}><AlertTriangle size={14} className="inline" /> Important: Never ask buyers to pay outside this platform, and never share login details in public chats or messages. Escrow protects both of you.</p>
           </div>
         )}
       </div>
 
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
         {STATUS_FILTERS.map((f) => {
-          const count = f.id === 'all' ? orders.length : (statusCounts[f.id] || 0);
+          const count = f.id === 'all' ? orders.length : orders.filter((o) => FILTER_MATCH[f.id](o.status)).length;
           return (
             <button
               key={f.id}
@@ -212,36 +222,40 @@ export default function OrdersTab({ profile, user, onTabChange }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filtered.map((order) => (
-                  <tr key={order.id} className="hover:bg-blue-50 transition-colors">
-                    <td className="px-5 py-3 text-sm font-medium max-w-[200px] truncate" style={{ color: '#111' }}>{order.listingTitle || 'Untitled'}</td>
-                    <td className="px-5 py-3 text-sm" style={{ color: '#6B7280' }}>{order.buyerDisplayName || 'Anonymous'}</td>
-                    <td className="px-5 py-3 text-sm font-semibold" style={{ color: '#111' }}>{formatKES(order.amount)}</td>
-                    <td className="px-5 py-3">
-                      <span className={`text-xs font-medium ${ORDER_STATUS[order.status]?.color || 'text-gray-400'}`}>
-                        {ORDER_STATUS[order.status]?.label || order.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-sm" style={{ color: '#6B7280' }}>{formatDate(order.createdAt)}</td>
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-2">
-                        <Link
-                          to={`/orders/${order.id}`}
-                          className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                          style={{ background: '#EFF6FF', color: '#003BFF' }}
-                        >
-                          Open Chat
-                        </Link>
-                        {order.status === 'payment_confirmed' && (
-                          <span className="flex items-center gap-1 text-xs font-bold" style={{ color: '#D97706' }}>
-                            <span className="w-2 h-2 rounded-full inline-block animate-pulse" style={{ background: '#D97706' }} />
-                            ACTION NEEDED
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {filtered.map((order) => {
+                  const needsAction = ACTIONS_REQUIRED_STATUSES.includes(order.status);
+                  return (
+                    <tr key={order.id} className="hover:bg-blue-50 transition-colors">
+                      <td className="px-5 py-3 text-sm font-medium max-w-[200px] truncate" style={{ color: '#111' }}>{order.listingTitle || 'Untitled'}</td>
+                      <td className="px-5 py-3 text-sm" style={{ color: '#6B7280' }}>{order.buyerDisplayName || 'Anonymous'}</td>
+                      <td className="px-5 py-3 text-sm font-semibold" style={{ color: '#111' }}>{formatKES(order.amount)}</td>
+                      <td className="px-5 py-3">
+                        <span className={`text-xs font-medium ${ORDER_STATUS[order.status]?.color || 'text-gray-400'}`}>
+                          {ORDER_STATUS[order.status]?.label || order.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-sm" style={{ color: '#6B7280' }}>{formatDate(order.createdAt)}</td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-2">
+                          <Link
+                            to={`/orders/${order.id}`}
+                            className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                            style={needsAction ? { background: '#003BFF', color: '#FFFFFF' } : { background: '#EFF6FF', color: '#003BFF' }}
+                          >
+                            {needsAction ? <Upload size={13} /> : <MessageSquare size={13} />}
+                            {needsAction ? 'Submit Details' : 'Open Order'}
+                          </Link>
+                          {needsAction && (
+                            <span className="flex items-center gap-1 text-xs font-bold" style={{ color: '#D97706' }}>
+                              <span className="w-2 h-2 rounded-full inline-block animate-pulse" style={{ background: '#D97706' }} />
+                              ACTION NEEDED
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

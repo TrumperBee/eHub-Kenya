@@ -1,11 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, getDoc, updateDoc, doc, addDoc, serverTimestamp, increment, deleteField } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import toast from 'react-hot-toast';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { ORDER_STATUS } from '../../utils/constants';
 import { formatKES, formatDate } from '../../utils/formatters';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { sendSystemMessage } from '../../services/chatService';
+
+const notifyParty = async (userId, order, title, message) => {
+  if (!userId) return;
+  try {
+    await addDoc(collection(db, 'notifications'), {
+      userId,
+      title,
+      message,
+      type: 'order',
+      orderId: order.id,
+      read: false,
+      createdAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.warn('Notification error:', err);
+  }
+};
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -19,28 +37,58 @@ export default function AdminOrdersPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleReleaseEscrow = async (orderId) => {
+  const handleReleaseEscrow = async (order) => {
     try {
-      await updateDoc(doc(db, 'orders', orderId), {
+      await updateDoc(doc(db, 'orders', order.id), {
         status: 'completed',
         escrowStatus: 'released',
         updatedAt: new Date().toISOString(),
       });
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'completed', escrowStatus: 'released' } : o));
+      if (order.listingId) {
+        await updateDoc(doc(db, 'listings', order.listingId), {
+          status: 'sold',
+          reservedById: deleteField(),
+          reservedAt: deleteField(),
+          updatedAt: serverTimestamp(),
+        }).catch(() => {});
+      }
+      if (order.sellerId) {
+        await updateDoc(doc(db, 'users', order.sellerId), { totalSales: increment(1) }).catch(() => {});
+      }
+      await sendSystemMessage(order.id, 'Escrow released by admin. Order completed — payout pending.');
+      await notifyParty(order.sellerId, order, 'Escrow Released',
+        `Escrow for "${order.listingTitle || 'your listing'}" (${formatKES(order.amount)}) was released to you. Complete the payout to your registered payout phone.`);
+      await notifyParty(order.buyerId, order, 'Order Completed',
+        `Your order "${order.listingTitle || ''}" was completed. Thank you for shopping with eHub Kenya.`);
+      setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'completed', escrowStatus: 'released' } : o));
       toast.success('Escrow released. Order completed.');
     } catch {
       toast.error('Failed to release escrow');
     }
   };
 
-  const handleRefund = async (orderId) => {
+  const handleRefund = async (order) => {
     try {
-      await updateDoc(doc(db, 'orders', orderId), {
+      await updateDoc(doc(db, 'orders', order.id), {
         status: 'refunded',
         escrowStatus: 'refunded',
         updatedAt: new Date().toISOString(),
       });
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'refunded', escrowStatus: 'refunded' } : o));
+      if (order.listingId) {
+        await updateDoc(doc(db, 'listings', order.listingId), {
+          status: 'active',
+          reservedById: deleteField(),
+          reservedAt: deleteField(),
+          soldAt: deleteField(),
+          updatedAt: serverTimestamp(),
+        }).catch(() => {});
+      }
+      await sendSystemMessage(order.id, 'Order refunded by admin. The listing has been re-listed.');
+      await notifyParty(order.buyerId, order, 'Refund Issued',
+        `Your refund of ${formatKES(order.amount)} for "${order.listingTitle || 'your order'}" has been approved. It will be sent back to your payment method.`);
+      await notifyParty(order.sellerId, order, 'Order Refunded',
+        `The order "${order.listingTitle || ''}" was refunded to the buyer. Your listing is now live again.`);
+      setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'refunded', escrowStatus: 'refunded' } : o));
       toast.success('Order marked refunded. Complete the refund in the Paystack dashboard.');
     } catch {
       toast.error('Failed to refund order');
@@ -101,12 +149,12 @@ export default function AdminOrdersPage() {
                             {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                           </button>
                           {(isDisputed || order.status === 'payment_confirmed') && (
-                            <button onClick={() => handleReleaseEscrow(order.id)} className="px-2 py-1 text-xs bg-green-600/20 text-green-500 rounded-lg border border-green-400/30 hover:bg-green-600/30 transition-colors">
+                            <button onClick={() => handleReleaseEscrow(order)} className="px-2 py-1 text-xs bg-green-600/20 text-green-500 rounded-lg border border-green-400/30 hover:bg-green-600/30 transition-colors">
                               Release
                             </button>
                           )}
                           {isDisputed && (
-                            <button onClick={() => handleRefund(order.id)} className="px-2 py-1 text-xs bg-red-600/20 text-red-500 rounded-lg border border-red-400/30 hover:bg-red-600/30 transition-colors">
+                            <button onClick={() => handleRefund(order)} className="px-2 py-1 text-xs bg-red-600/20 text-red-500 rounded-lg border border-red-400/30 hover:bg-red-600/30 transition-colors">
                               Refund
                             </button>
                           )}

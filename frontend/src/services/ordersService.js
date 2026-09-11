@@ -44,3 +44,16 @@ export const subscribeToOrder = (orderId, callback) => {
     }
   });
 };
+
+export const getOrderDeliveries = async (orderId) => {
+  const q = query(collection(db, 'orders', orderId, 'delivery'), orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+export const subscribeToDeliveries = (orderId, callback) => {
+  const q = query(collection(db, 'orders', orderId, 'delivery'), orderBy('createdAt', 'desc'));
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  });
+};
