@@ -168,16 +168,16 @@ export default function OrderDetailPage() {
                 <p className="text-xs text-konami-text-muted mb-1">Amount</p>
                 <p className="font-heading text-xl font-bold text-konami-text">{formatKES(order.amount)}</p>
               </div>
-              {order.paystackReference && (
+              {order.paymentReference && (
                 <div>
-                  <p className="text-xs text-konami-text-muted mb-1">Paystack Reference</p>
-                  <p className="text-sm text-konami-text font-mono">{order.paystackReference}</p>
+                  <p className="text-xs text-konami-text-muted mb-1">Payment Reference</p>
+                  <p className="text-sm text-konami-text font-mono">{order.paymentReference}</p>
                 </div>
               )}
-              {order.paystackChannel && (
+              {order.paymentChannel && (
                 <div>
                   <p className="text-xs text-konami-text-muted mb-1">Payment Channel</p>
-                  <p className="text-sm text-konami-text capitalize">{order.paystackChannel.replace('_', ' ')}</p>
+                  <p className="text-sm text-konami-text capitalize">{order.paymentChannel.replace('_', ' ')}</p>
                 </div>
               )}
               <div>

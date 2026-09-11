@@ -27,13 +27,13 @@ function manualActionFor(resolutionKey, amount, buyerPhone, sellerPhone) {
   if (resolutionKey === DISPUTE_RESOLUTIONS.release.key) {
     return {
       type: 'release_payout',
-      title: 'Manual M-Pesa payout to seller',
+      title: 'Manual payout to seller',
       detail: `Send ${formatKesLabel(amount)} to the seller${sellerPhone ? ` (${sellerPhone})` : ' (phone on record)'}. Confirm the transaction then mark the payout as sent.`,
     };
   }
   return {
     type: 'refund_reversal',
-    title: 'Manual M-Pesa reversal to buyer',
+    title: 'Manual refund to buyer',
     detail: `Send back ${formatKesLabel(amount)} to the buyer${buyerPhone ? ` (${buyerPhone})` : ' (phone on record)'}. Confirm the reversal then mark the refund as sent.`,
   };
 }
@@ -41,7 +41,7 @@ function manualActionFor(resolutionKey, amount, buyerPhone, sellerPhone) {
 /**
  * Pure builder: given an order, a resolution ('release' | 'refund'), an optional
  * actor, and contact details, returns the Firestore patch to apply, the system
- * message to post to the order chat, and the manual M-Pesa action the admin
+ * message to post to the order chat, and the manual payment action the admin
  * must perform to complete the resolution.
  */
 export function buildDisputeResolution(order, resolution, opts = {}) {
@@ -64,8 +64,8 @@ export function buildDisputeResolution(order, resolution, opts = {}) {
 
   const systemMessage =
     resolutionKey === DISPUTE_RESOLUTIONS.release.key
-      ? `Admin resolved the dispute in the seller's favour. Funds released to seller. A manual M-Pesa payout to the seller is pending admin confirmation.`
-      : `Admin resolved the dispute in the buyer's favour. Order refunded. A manual M-Pesa reversal to the buyer is pending admin confirmation.`;
+      ? `Admin resolved the dispute in the seller's favour. Funds released to seller. A manual payout to the seller is pending admin confirmation.`
+      : `Admin resolved the dispute in the buyer's favour. Order refunded. A manual refund to the buyer is pending admin confirmation.`;
 
   const manualAction = manualActionFor(
     resolutionKey,

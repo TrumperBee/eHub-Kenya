@@ -166,10 +166,13 @@ export default function AdminDisputesPage() {
           </div>
         </div>
 
-        {order.mpesaReceiptNumber && (
+        {order.paymentReference && (
           <div className="mb-4 p-3 bg-konami-light-gray rounded-xl">
-            <p className="text-xs text-konami-text-muted mb-0.5">M-Pesa Receipt</p>
-            <p className="text-sm font-mono text-konami-text">{order.mpesaReceiptNumber}</p>
+            <p className="text-xs text-konami-text-muted mb-0.5">Payment Reference</p>
+            <p className="text-sm font-mono text-konami-text">{order.paymentReference}</p>
+            {order.paymentProvider && (
+              <p className="text-xs text-konami-text-muted mt-1">Provider: {order.paymentProvider}</p>
+            )}
           </div>
         )}
 
@@ -222,7 +225,7 @@ export default function AdminDisputesPage() {
 
       <div className="mb-4 p-4 rounded-xl bg-konami-blue/5 border border-konami-blue/20">
         <p className="text-sm text-konami-text-dim leading-relaxed">
-          Review the dispute and the order chat below, then choose a resolution. Funds are only ever moved after you complete the corresponding <strong>manual M-Pesa action</strong> shown at confirmation — there is no automated payout or reversal in this system.
+          Review the dispute and the order chat below, then choose a resolution. Funds are only ever moved after you complete the corresponding <strong>manual payment action</strong> shown at confirmation — there is no automated payout or reversal in this system.
         </p>
       </div>
 
@@ -271,7 +274,7 @@ export default function AdminDisputesPage() {
             </div>
 
             <div className="p-4 rounded-xl mb-4" style={{ background: '#FFF7ED', border: '1px solid #FED7AA' }}>
-              <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: '#9A3412' }}>Manual M-Pesa action required</p>
+              <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: '#9A3412' }}>Manual payment action required</p>
               <p className="text-sm font-semibold text-konami-text">{pendingResolution.plan.manualAction.title}</p>
               <p className="text-sm text-konami-text-dim leading-relaxed mt-1">{pendingResolution.plan.manualAction.detail}</p>
             </div>
@@ -285,7 +288,7 @@ export default function AdminDisputesPage() {
               </button>
             </div>
             <p className="text-[11px] text-konami-text-muted mt-3">
-              This records the resolution and posts it to the order chat. You must still complete the manual M-Pesa step above.
+              This records the resolution and posts it to the order chat. You must still complete the manual payment step above.
             </p>
           </div>
         </div>

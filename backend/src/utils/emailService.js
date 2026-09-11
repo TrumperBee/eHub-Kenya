@@ -21,7 +21,7 @@ function baseTemplate(content) {
         ${content}
       </div>
       <div style="text-align:center;margin-top:24px;font-size:12px;color:#5C5C5C;">
-        <p>eFootball Hub Kenya — Buy & Sell with M-Pesa</p>
+        <p>eFootball Hub Kenya — Buy & Sell Securely with Paystack</p>
       </div>
     </div>
   `;

@@ -67,7 +67,7 @@ export default function AdminOrdersPage() {
                 <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Seller</th>
                 <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Listing</th>
                 <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Amount</th>
-                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Paystack Ref</th>
+                <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Payment Ref</th>
                 <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Channel</th>
                 <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Status</th>
                 <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Escrow</th>
@@ -88,8 +88,8 @@ export default function AdminOrdersPage() {
                       <td className="py-3 text-sm text-konami-text">{order.sellerDisplayName || '-'}</td>
                       <td className="py-3 text-sm text-konami-text-dim max-w-[150px] truncate">{order.listingTitle || '-'}</td>
                       <td className="py-3 text-sm font-semibold text-konami-text">{formatKES(order.amount)}</td>
-                      <td className="py-3 text-sm font-mono text-konami-text-dim">{order.paystackReference || '-'}</td>
-                      <td className="py-3 text-sm text-konami-text-dim capitalize">{order.paystackChannel ? order.paystackChannel.replace('_', ' ') : '-'}</td>
+                      <td className="py-3 text-sm font-mono text-konami-text-dim">{order.paymentReference || '-'}</td>
+                      <td className="py-3 text-sm text-konami-text-dim capitalize">{order.paymentChannel ? order.paymentChannel.replace('_', ' ') : '-'}</td>
                       <td className="py-3">
                         <span className={`text-xs ${cfg.color || 'text-konami-text-dim'}`}>{cfg.label || order.status}</span>
                       </td>
@@ -117,14 +117,15 @@ export default function AdminOrdersPage() {
                       <tr key={`${order.id}-expanded`}>
                         <td colSpan={11} className="px-4 py-3 bg-gray-50">
                           <div className="text-xs text-konami-text-dim space-y-1">
-                            <p><span className="text-konami-text-muted">Paystack Ref:</span> {order.paystackReference || '-'}</p>
-                            <p><span className="text-konami-text-muted">Paystack Tx ID:</span> {order.paystackTransactionId || '-'}</p>
-                            <p><span className="text-konami-text-muted">M-Pesa Receipt:</span> {order.mpesaReceiptNumber || '-'}</p>
+                            <p><span className="text-konami-text-muted">Payment Reference:</span> {order.paymentReference || '-'}</p>
+                            <p><span className="text-konami-text-muted">Payment Provider:</span> {order.paymentProvider || 'Paystack'}</p>
+                            <p><span className="text-konami-text-muted">Payment Status:</span> {order.paymentStatus || '-'}</p>
+                            <p><span className="text-konami-text-muted">Paystack Tx ID:</span> {order.paymentTransactionId || '-'}</p>
                             {order.disputeReason && <p><span className="text-konami-text-muted">Dispute Reason:</span> {order.disputeReason}</p>}
-                            <p><span className="text-konami-text-muted">Payment Phone:</span> {order.paymentPhone || '-'}</p>
-                            {isDisputed && order.paystackReference && (
+                            <p><span className="text-konami-text-muted">Contact Phone:</span> {order.paymentPhone || '-'}</p>
+                            {isDisputed && order.paymentReference && (
                               <p className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
-                                Refunds are done manually in Paystack: dashboard.paystack.com → Transactions → search reference <span className="font-mono">"{order.paystackReference}"</span> → Issue Refund. Then mark the order Refunded.
+                                Refunds are done manually in Paystack: dashboard.paystack.com → Transactions → search reference <span className="font-mono">"{order.paymentReference}"</span> → Issue Refund. Then mark the order Refunded.
                               </p>
                             )}
                           </div>

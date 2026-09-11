@@ -10,7 +10,7 @@ const WELCOME_MESSAGE = {
 
 const QUICK_SUGGESTIONS = [
   'How do I buy an account?',
-  'How does M-Pesa payment work?',
+  'How does payment work?',
   'What do the tiers mean?',
   'How do I become a seller?',
   'Is buying here safe?',

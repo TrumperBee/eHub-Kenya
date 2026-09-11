@@ -132,15 +132,15 @@ export default function EarningsTab({ profile, user, onTabChange }) {
       <div className="rounded-xl p-5 mb-6" style={{ background: '#F0FDF4', borderLeft: '4px solid #22C55E' }}>
         <h3 className="font-heading text-xs font-bold uppercase mb-2" style={{ color: '#15803D' }}><CreditCard size={14} className="inline" /> HOW PAYOUTS WORK</h3>
         <div className="text-sm leading-relaxed space-y-1" style={{ color: '#374151' }}>
-          <p>Payments are handled through M-Pesa and held by eHub until an order completes:</p>
+          <p>Payments are processed through Paystack and held by eHub until an order completes:</p>
           <ol className="list-decimal pl-4 space-y-0.5">
-            <li>When a buyer pays, the funds are credited to the platform and held while the order is in progress.</li>
-            <li>Once you transfer the account and the buyer confirms receipt, the admin processes and sends your payout to your M-Pesa number manually (typically within 24-48 hours after confirmation).</li>
+            <li>When a buyer pays, the funds are held securely while the order is in progress.</li>
+            <li>Once you transfer the account and the buyer confirms receipt, the admin processes and sends your payout manually (typically within 24-48 hours after confirmation).</li>
             <li>The platform service fee (0.5%, max KES 200) is applied when your payout is processed.</li>
             <li>If there is a dispute, the funds stay held until the admin resolves it.</li>
           </ol>
           <p className="mt-2">
-            Your registered M-Pesa number: <strong>{profile?.phoneNumber || 'Not set. Update in Profile'}</strong>
+            Your registered payout phone number: <strong>{profile?.phoneNumber || 'Not set. Update in Profile'}</strong>
           </p>
           <p className="text-xs" style={{ color: '#6B7280' }}>If your number is wrong, update it in your Profile tab before your next sale.</p>
         </div>

@@ -41,7 +41,7 @@ test('refund resolution: updates order to refunded and escrow refunded', () => {
   assert.equal(plan.orderPatch.disputeResolution, DISPUTE_RESOLUTIONS.refund.key);
 });
 
-test('refund manual action references buyer phone and amount for the M-Pesa reversal', () => {
+test('refund manual action references buyer phone and amount for the refund', () => {
   const plan = buildDisputeResolution(baseOrder, 'refund', {
     buyerPhone: baseOrder.paymentPhone,
     sellerPhone: '254700000002',
@@ -51,7 +51,7 @@ test('refund manual action references buyer phone and amount for the M-Pesa reve
   assert.match(plan.manualAction.detail, /KES 7,500/);
 });
 
-test('release manual action references seller phone and amount for the M-Pesa payout', () => {
+test('release manual action references seller phone and amount for the payout', () => {
   const plan = buildDisputeResolution(baseOrder, 'release', {
     buyerPhone: baseOrder.paymentPhone,
     sellerPhone: '254700000002',

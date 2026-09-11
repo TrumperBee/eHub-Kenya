@@ -3,7 +3,7 @@ import { usePaystackPayment } from 'react-paystack';
 import { useAuth } from '../../context/AuthContext';
 import { initializePaystackPayment } from '../../services/paymentService';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, Loader } from 'lucide-react';
+import { ShoppingBag, Loader, ShieldCheck } from 'lucide-react';
 import { formatKES } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 
@@ -64,20 +64,42 @@ export default function PayNowButton({ listing, effectivePrice }) {
   };
 
   return (
-    <button
-      onClick={handlePayNow}
-      disabled={loading || listing.status === 'sold'}
-      className="w-full flex items-center justify-center gap-3
-                 bg-konami-yellow hover:bg-yellow-300 active:scale-[0.98]
-                 text-konami-text font-heading font-bold uppercase tracking-wide
-                 rounded-xl py-4 text-base transition-all duration-200
-                 shadow-lg hover:shadow-xl
-                 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-    >
-      {loading
-        ? <><Loader size={20} className="animate-spin" /> Processing...</>
-        : <><ShoppingBag size={20} /> Buy Now — {formatKES(amount)}</>
-      }
-    </button>
+    <div className="w-full">
+      <div className="rounded-2xl p-5 mb-4" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)' }}>
+        <p className="text-white/50 text-[11px] uppercase tracking-widest font-heading mb-3 text-center">
+          Payment
+        </p>
+
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-white/70 text-sm">Amount</p>
+          <p className="font-heading text-2xl font-extrabold text-white">{formatKES(amount)}</p>
+        </div>
+
+        <div className="flex items-center justify-center gap-2 pt-4 border-t border-white/10">
+          <ShieldCheck size={16} style={{ color: '#FFF100' }} />
+          <p className="text-white/60 text-xs">Secure payment powered by Paystack</p>
+        </div>
+      </div>
+
+      <button
+        onClick={handlePayNow}
+        disabled={loading || listing.status === 'sold'}
+        className="w-full flex items-center justify-center gap-3
+                   bg-konami-yellow hover:bg-yellow-300 active:scale-[0.98]
+                   text-konami-text font-heading font-bold uppercase tracking-wide
+                   rounded-xl py-4 text-base transition-all duration-200
+                   shadow-lg hover:shadow-xl
+                   disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+      >
+        {loading
+          ? <><Loader size={20} className="animate-spin" /> Processing...</>
+          : <><ShoppingBag size={20} /> Continue to Payment</>
+        }
+      </button>
+
+      <p className="text-white/40 text-[11px] text-center mt-2 leading-relaxed">
+        Your payment is securely processed through Paystack. Your order will remain pending until payment is successfully verified.
+      </p>
+    </div>
   );
 }

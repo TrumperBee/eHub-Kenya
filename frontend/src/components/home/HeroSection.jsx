@@ -46,7 +46,7 @@ export default function HeroSection() {
 
         <div className="mt-6 max-w-[520px] mx-auto">
           <p className="text-[15px] md:text-[18px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>
-            M-Pesa payments. Escrow protected. Verified sellers. No scams. No stress. Just football.
+            Paystack payments. Escrow protected. Verified sellers. No scams. No stress. Just football.
           </p>
         </div>
 

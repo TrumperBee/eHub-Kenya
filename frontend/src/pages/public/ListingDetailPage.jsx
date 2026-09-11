@@ -70,7 +70,7 @@ export default function ListingDetailPage() {
         }
       }
     });
-    return () => { document.title = 'eFootball Hub Kenya - Buy & Sell eFootball Accounts with M-Pesa'; };
+    return () => { document.title = 'eFootball Hub Kenya - Buy & Sell eFootball Accounts with Paystack'; };
   }, [id]);
 
   if (loading) return <div className="pt-[68px]"><LoadingSpinner fullScreen /></div>;
@@ -111,7 +111,7 @@ export default function ListingDetailPage() {
 
   const howItWorksSteps = [
     'Find your desired account and click "Buy Now"',
-    'Pay securely via Paystack — M-Pesa, card, or bank transfer',
+    'Pay securely via Paystack — mobile money, card, or bank transfer',
     'Your payment is held in escrow until you confirm receipt',
     'Chat with the seller to arrange account transfer',
     'Confirm receipt to release funds to the seller',
@@ -387,7 +387,7 @@ export default function ListingDetailPage() {
                   <div className="mb-4">
                     <PayNowButton listing={listing} effectivePrice={effectivePrice} />
                     <p className="text-white/40 text-[11px] text-center mt-2">
-                      Secured by Paystack · M-Pesa, Card & Bank Transfer accepted
+                      Secured by Paystack · All payment methods handled in secure checkout
                     </p>
                   </div>
                 )}
@@ -423,7 +423,7 @@ export default function ListingDetailPage() {
                     Payment Methods
                   </p>
                   <div className="flex items-center justify-center gap-3 flex-wrap">
-                    <div className="bg-white/10 rounded-lg px-3 py-1.5 text-white/70 text-xs font-medium">M-Pesa</div>
+                    <div className="bg-white/10 rounded-lg px-3 py-1.5 text-white/70 text-xs font-medium">Mobile Money</div>
                     <div className="bg-white/10 rounded-lg px-3 py-1.5 text-white/70 text-xs font-medium">Visa / Mastercard</div>
                     <div className="bg-white/10 rounded-lg px-3 py-1.5 text-white/70 text-xs font-medium">Bank Transfer</div>
                   </div>

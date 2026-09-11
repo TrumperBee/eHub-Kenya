@@ -141,7 +141,7 @@ export default function RegisterPage() {
           <p className="text-white/80 text-sm mb-8">Join the #1 marketplace for verified eFootball accounts in Kenya.</p>
           <div className="space-y-4">
             {[
-              { icon: <Lock size={18} />, text: 'Secure M-Pesa payments' },
+              { icon: <Lock size={18} />, text: 'Secure Paystack payments' },
               { icon: <Zap size={18} />, text: 'Instant account delivery' },
               { icon: <Shield size={18} />, text: 'Escrow protection on every order' },
               { icon: <MessageCircle size={18} />, text: 'Real-time chat with sellers' },

@@ -65,7 +65,7 @@ export default function LoginPage() {
           <p className="text-white/80 text-sm mb-8">Sign in to manage your account, track orders, and more.</p>
           <div className="space-y-4">
             {[
-              { icon: <Lock size={18} />, text: 'Secure M-Pesa payments' },
+              { icon: <Lock size={18} />, text: 'Secure Paystack payments' },
               { icon: <Zap size={18} />, text: 'Instant account delivery' },
               { icon: <Shield size={18} />, text: 'Escrow protection on every order' },
               { icon: <MessageCircle size={18} />, text: 'Real-time chat with sellers' },

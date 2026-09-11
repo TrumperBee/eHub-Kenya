@@ -4,7 +4,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { updateUserDocument } from '../../../services/authService';
 import toast from 'react-hot-toast';
 
-const SAFARICOM_REGEX = /^(?:254|\+254|0)?[17]\d{8}$/;
+const PHONE_REGEX = /^(?:254|\+254|0)?[17]\d{8}$/;
 
 function ProfileSkeleton() {
   return (
@@ -54,9 +54,9 @@ export default function ProfileTab({ profile, user, onTabChange }) {
     }
   }, [profile]);
 
-  const validateSafaricom = (num) => {
+  const validatePhone = (num) => {
     if (!num || !num.trim()) return true;
-    return SAFARICOM_REGEX.test(num.trim());
+    return PHONE_REGEX.test(num.trim());
   };
 
   const handleSave = async () => {
@@ -65,8 +65,8 @@ export default function ProfileTab({ profile, user, onTabChange }) {
       toast.error('Seller display name must be at least 3 characters');
       return;
     }
-    if (phoneNumber.trim() && !validateSafaricom(phoneNumber)) {
-      toast.error('Please enter a valid Safaricom number (e.g. 0712345678)');
+    if (phoneNumber.trim() && !validatePhone(phoneNumber)) {
+      toast.error('Please enter a valid phone number (e.g. 0712345678)');
       return;
     }
     setSaving(true);
@@ -163,7 +163,7 @@ export default function ProfileTab({ profile, user, onTabChange }) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#6B7280' }}>M-Pesa Number (for receiving payouts)</label>
+            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#6B7280' }}>Payout Phone Number (for receiving payouts)</label>
             <input
               type="tel"
               value={phoneNumber}

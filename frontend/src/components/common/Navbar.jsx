@@ -361,7 +361,7 @@ export default function Navbar() {
           <div className="mx-3 my-4 rounded-xl p-4" style={{ background: 'rgba(255,241,0,0.12)', border: '1px solid rgba(255,241,0,0.4)' }}>
             <p className="font-heading text-sm font-extrabold mb-1" style={{ color: '#FFF100' }}>BECOME A SELLER</p>
             <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.7)' }}>
-              Apply to list your eFootball accounts and earn via M-Pesa.
+              Apply to list your eFootball accounts and earn via Paystack.
             </p>
             <Link
               to="/apply-seller"

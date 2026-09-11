@@ -479,7 +479,7 @@ export default function AccountPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1" style={{ color: '#374151' }}>PHONE NUMBER (SAFARICOM)</label>
+                  <label className="block text-sm font-medium mb-1" style={{ color: '#374151' }}>PHONE NUMBER</label>
                   <input
                     type="tel"
                     placeholder="e.g. 0712345678"
@@ -487,7 +487,7 @@ export default function AccountPage() {
                     onChange={e => setPhoneNumber(e.target.value)}
                     className="input-field"
                   />
-                  <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>Used for M-Pesa payments when you purchase accounts.</p>
+                  <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>Used for order contact. Payment happens securely in the Paystack checkout.</p>
                 </div>
 
                 <button

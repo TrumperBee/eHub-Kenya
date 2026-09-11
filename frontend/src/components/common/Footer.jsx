@@ -13,7 +13,7 @@ export default function Footer() {
               Kenya's Premier eFootball Account Marketplace
             </p>
             <p className="text-xs mt-4" style={{ color: 'rgba(255,255,255,0.4)' }}>
-              Powered by M-Pesa | Protected by Escrow
+              Powered by Paystack | Protected by Escrow
             </p>
           </div>
 
@@ -39,7 +39,7 @@ export default function Footer() {
             <h4 className="font-heading text-sm font-bold uppercase tracking-wider mb-4" style={{ color: '#FFF100' }}>SAFETY</h4>
             <ul className="space-y-3">
               {[
-                'M-Pesa Native Payments',
+                'Paystack Secured Payments',
                 'Buyer Escrow Protection',
                 'Verified Sellers Only',
                 'Admin-Moderated Platform',

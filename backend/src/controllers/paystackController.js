@@ -57,7 +57,9 @@ async function initializePayment(req, res) {
       listingTitle: listing.title,
       listingTier: listing.tier,
       amount: listing.price,
-      paystackReference: reference,
+      paymentProvider: 'paystack',
+      paymentReference: reference,
+      paymentStatus: 'pending',
       status: 'pending_payment',
       escrowStatus: 'none',
       buyerConfirmedReceipt: false,
@@ -87,7 +89,7 @@ async function processSuccessfulPayment(reference) {
 
   // Find the order by its Paystack reference (authoritative, independent of popup metadata)
   const orderSnap = await adminDb.collection('orders')
-    .where('paystackReference', '==', reference).limit(1).get();
+    .where('paymentReference', '==', reference).limit(1).get();
   if (orderSnap.empty) return null;
 
   const orderRef = orderSnap.docs[0].ref;
@@ -107,9 +109,10 @@ async function processSuccessfulPayment(reference) {
 
   await orderRef.update({
     status: 'payment_confirmed',
+    paymentStatus: 'paid',
     escrowStatus: 'held',
-    paystackTransactionId: transaction.id ? transaction.id.toString() : null,
-    paystackChannel: transaction.channel || null,
+    paymentTransactionId: transaction.id ? transaction.id.toString() : null,
+    paymentChannel: transaction.channel || null,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
@@ -170,11 +173,12 @@ async function handleCallback(req, res) {
     }
 
     const orderSnap = await adminDb.collection('orders')
-      .where('paystackReference', '==', reference).limit(1).get();
+      .where('paymentReference', '==', reference).limit(1).get();
     if (!orderSnap.empty) {
       const orderId = orderSnap.docs[0].id;
       await adminDb.doc(`orders/${orderId}`).update({
         status: 'cancelled',
+        paymentStatus: 'abandoned',
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       return res.redirect(`${process.env.FRONTEND_URL}/payment-failed?ref=${reference}`);

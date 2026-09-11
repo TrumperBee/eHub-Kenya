@@ -104,7 +104,7 @@ export default function FridayDropsPage() {
             {[
               { icon: <BadgePercent size={28} />, title: 'Deals Go Live Friday', text: 'At 12:00 EAT every Friday, approved deals unlock across the marketplace.' },
               { icon: <Users size={28} />, title: 'Verified Sellers Only', text: 'Every drop is submitted by an approved seller and reviewed by our team.' },
-              { icon: <ShieldCheck size={28} />, title: 'Protected by eHub Hub', text: 'Checkout is secured end-to-end with M-Pesa and our buyer protection.' },
+              { icon: <ShieldCheck size={28} />, title: 'Protected by eHub Hub', text: 'Checkout is secured end-to-end with Paystack and our buyer protection.' },
             ].map((step, i) => (
               <div key={i} className="rounded-2xl p-6 text-center" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)' }}>
                 <div className="w-14 h-14 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: '#FFF100', color: '#111111' }}>

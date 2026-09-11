@@ -177,7 +177,7 @@ export default function OverviewTab({ profile, user, onTabChange }) {
             <li><strong>Create a listing.</strong> Go to "My Listings" <ArrowRight size={14} className="inline" /> New Listing. Add clear photos of your squad, list your star players, and set a fair price.</li>
             <li><strong>Wait for a buyer.</strong> Once your listing is live, buyers can find it on the Browse page. You will receive a notification when someone pays.</li>
             <li><strong>Complete the transfer.</strong> When you get an order, go to "Orders", open the chat, and ask the buyer for their email. Then change your Konami account email to theirs.</li>
-            <li><strong>Get paid.</strong> Once you confirm the transfer and the buyer confirms receipt, the admin will release your payment to your M-Pesa number.</li>
+            <li><strong>Get paid.</strong> Once you confirm the transfer and the buyer confirms receipt, the admin will process your payout to your registered payout phone number.</li>
           </ol>
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid #FFF100' }}>
             <p className="font-semibold mb-1">Tips for faster sales:</p>
