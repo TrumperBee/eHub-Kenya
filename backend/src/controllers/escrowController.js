@@ -1,4 +1,12 @@
 const { admin, adminDb } = require('../services/firebaseAdmin');
+const {
+  sendSellerCredentialsSubmittedEmail,
+  sendBuyerCredentialsReadyEmail,
+  sendOrderCompletedEmail,
+  sendOrderRefundedEmail,
+  sendDisputeRaisedEmail,
+  sendDisputeResolvedEmail,
+} = require('../services/emailService');
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'ochiengv250@gmail.com';
 
@@ -121,6 +129,9 @@ async function release(req, res) {
       orderId,
     });
 
+    // Trusted event: escrow released by the buyer. Never blocks the workflow.
+    await sendOrderCompletedEmail(order);
+
     return res.json({ success: true });
   } catch (err) {
     console.error('Escrow release error:', err);
@@ -206,6 +217,9 @@ async function dispute(req, res) {
       orderId,
     });
 
+    // Trusted event: dispute opened. Never blocks the workflow.
+    await sendDisputeRaisedEmail({ ...order, id: orderId, disputeReason: reason });
+
     return res.json({ success: true });
   } catch (err) {
     console.error('Escrow dispute error:', err);
@@ -284,6 +298,10 @@ async function submitDelivery(req, res) {
       orderId,
     });
 
+    // Trusted event: credentials submitted (in-order). Never block on emails.
+    await sendSellerCredentialsSubmittedEmail({ ...order, id: orderId });
+    await sendBuyerCredentialsReadyEmail({ ...order, id: orderId });
+
     return res.json({ success: true });
   } catch (err) {
     console.error('Delivery submission error:', err);
@@ -291,4 +309,180 @@ async function submitDelivery(req, res) {
   }
 }
 
-module.exports = { release, dispute, submitDelivery };
+/**
+ * POST /api/escrow/resolve — admin-only. Resolves a dispute (or completes a
+ * manual admin release/refund for a paid order) FROM THE BACKEND so that the
+ * resolution writes, chat message, notifications and emails all happen behind
+ * the trusted event — the admin never mutates Firestore directly.
+ *
+ * The manual payment action itself (Paystack payout/reversal) stays with the
+ * admin, exactly as today — this endpoint records the resolution.
+ */
+const RESOLVABLE_STATUSES = [
+  'payment_confirmed',
+  'in_transfer',
+  'awaiting_seller_delivery',
+  'credentials_submitted',
+  'disputed',
+];
+
+async function resolve(req, res) {
+  try {
+    const { orderId, resolution } = req.body;
+    const actor = req.user;
+
+    if (!orderId || !resolution) {
+      return res.status(400).json({ success: false, error: 'orderId and resolution are required' });
+    }
+    if (resolution !== 'release' && resolution !== 'refund') {
+      return res.status(400).json({ success: false, error: 'resolution must be "release" or "refund"' });
+    }
+    if (!actor.email || actor.email !== ADMIN_EMAIL) {
+      return res.status(403).json({ success: false, error: 'Admin access required' });
+    }
+
+    const orderRef = adminDb.collection('orders').doc(orderId);
+    const orderSnap = await orderRef.get();
+    if (!orderSnap.exists) {
+      return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+
+    const order = orderSnap.data();
+    const isDisputed = order.status === 'disputed';
+
+    if (!RESOLVABLE_STATUSES.includes(order.status)) {
+      return res.status(400).json({ success: false, error: 'Order cannot be resolved in its current state' });
+    }
+
+    const isRelease = resolution === 'release';
+    const resolutionKey = isRelease ? 'released_to_seller' : 'refunded';
+    const orderStatus = isRelease ? 'completed' : 'refunded';
+    const escrowStatus = isRelease ? 'released' : 'refunded';
+    const resolvedAt = new Date().toISOString();
+
+    const patch = {
+      status: orderStatus,
+      escrowStatus,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+    if (isDisputed) {
+      Object.assign(patch, {
+        disputeStatus: 'resolved',
+        disputeResolution: resolutionKey,
+        disputeResolvedAt: resolvedAt,
+        disputeResolvedBy: actor.uid || '',
+        disputeResolvedByName: actor.name || 'Admin',
+        disputeUpdatedAt: resolvedAt,
+        adminReviewRequired: false,
+        resolvedAt,
+        resolvedById: actor.uid || '',
+        resolvedByName: actor.name || 'Admin',
+      });
+    }
+    await orderRef.update(patch);
+
+    if (isRelease) {
+      if (order.listingId) {
+        await adminDb.collection('listings').doc(order.listingId).update({
+          status: 'sold',
+          reservedById: admin.firestore.FieldValue.delete(),
+          reservedAt: admin.firestore.FieldValue.delete(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }).catch(() => {});
+      }
+      if (order.sellerId) {
+        await adminDb.collection('users').doc(order.sellerId).update({
+          totalSales: admin.firestore.FieldValue.increment(1),
+        }).catch(() => {});
+      }
+      await adminDb.doc('stats/global').update({
+        totalSalesCompleted: admin.firestore.FieldValue.increment(1),
+      }).catch(() => {});
+    } else {
+      if (order.listingId) {
+        await adminDb.collection('listings').doc(order.listingId).update({
+          status: 'active',
+          reservedById: admin.firestore.FieldValue.delete(),
+          reservedAt: admin.firestore.FieldValue.delete(),
+          soldAt: admin.firestore.FieldValue.delete(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }).catch(() => {});
+      }
+    }
+
+    const systemMessage = isDisputed
+      ? (isRelease
+          ? `Admin resolved the dispute in the seller's favour. Funds released to seller. A manual payout to the seller is pending admin confirmation.`
+          : `Admin resolved the dispute in the buyer's favour. Order refunded. A manual refund to the buyer is pending admin confirmation.`)
+      : (isRelease
+          ? 'Escrow released by admin. Order completed — payout pending.'
+          : 'Order refunded by admin. The listing has been re-listed.');
+
+    await orderRef.collection('messages').add({
+      senderId: 'system',
+      senderDisplayName: 'System',
+      senderRole: 'system',
+      messageType: 'system',
+      content: systemMessage,
+      text: systemMessage,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    }).catch(() => {});
+
+    if (isRelease) {
+      await createNotification({
+        userId: order.sellerId,
+        title: isDisputed ? '✅ Payment Released' : 'Escrow Released',
+        message: isDisputed
+          ? `The dispute for "${order.listingTitle || 'your listing'}" was resolved in your favour. ${formatAmount(order.amount)} has been released to you. Complete the payout to your registered payout phone.`
+          : `Escrow for "${order.listingTitle || 'your listing'}" (${formatAmount(order.amount)}) was released to you. Complete the payout to your registered payout phone.`,
+        type: 'payment',
+        orderId,
+      });
+      await createNotification({
+        userId: order.buyerId,
+        title: isDisputed ? 'Dispute Resolved' : 'Order Completed',
+        message: isDisputed
+          ? `Your dispute for "${order.listingTitle || ''}" was resolved in the seller's favour. The order is complete.`
+          : `Your order "${order.listingTitle || ''}" was completed. Thank you for shopping with eHub Kenya.`,
+        type: 'order',
+        orderId,
+      });
+    } else {
+      await createNotification({
+        userId: order.buyerId,
+        title: '✅ Refund Issued',
+        message: `Your dispute for "${order.listingTitle || 'your order'}" was resolved in your favour. ${formatAmount(order.amount)} will be refunded back to your payment method.`,
+        type: 'payment',
+        orderId,
+      });
+      await createNotification({
+        userId: order.sellerId,
+        title: 'Order Refunded',
+        message: `The order "${order.listingTitle || ''}" was refunded to the buyer. Your listing is now live again.`,
+        type: 'order',
+        orderId,
+      });
+    }
+
+    const emailOrder = { ...order, id: orderId };
+    if (isDisputed) {
+      await sendDisputeResolvedEmail(emailOrder, { toRole: 'seller', resolution });
+      await sendDisputeResolvedEmail(emailOrder, { toRole: 'buyer', resolution });
+    } else if (isRelease) {
+      await sendOrderCompletedEmail(emailOrder);
+    } else {
+      await sendOrderRefundedEmail(emailOrder);
+    }
+
+    return res.json({ success: true, resolutionKey });
+  } catch (err) {
+    console.error('Escrow resolve error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+function formatAmount(amount) {
+  return `KES ${Number(amount || 0).toLocaleString('en-KE')}`;
+}
+
+module.exports = { release, dispute, submitDelivery, resolve };

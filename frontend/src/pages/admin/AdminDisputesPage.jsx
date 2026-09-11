@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDoc, doc, updateDoc, onSnapshot, increment, serverTimestamp, addDoc, deleteField } from 'firebase/firestore';
+import { collection, query, where, getDoc, doc, updateDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import toast from 'react-hot-toast';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -15,10 +15,8 @@ import {
   formatKesLabel,
   resolutionLabelFor,
 } from '../../services/disputeResolver';
-import {
-  getOrderMessagesRef,
-  sendSystemMessage,
-} from '../../services/chatService';
+import { getOrderMessagesRef } from '../../services/chatService';
+import { resolveOrder } from '../../services/paymentService';
 
 const DISPUTE_STATUS_LABELS = {
   open: 'Open',
@@ -233,62 +231,16 @@ export default function AdminDisputesPage() {
     }
   };
 
-  const notifyParty = async (userId, order, title, message) => {
-    if (!userId) return;
-    try {
-      await addDoc(collection(db, 'notifications'), {
-        userId,
-        title,
-        message,
-        type: 'dispute',
-        orderId: order.id,
-        read: false,
-        createdAt: serverTimestamp(),
-      });
-    } catch (err) {
-      console.warn('Notification error:', err);
-    }
-  };
-
   const confirmResolution = async () => {
     if (!pendingResolution) return;
-    const { order, resolution, plan } = pendingResolution;
+    const { order, resolution } = pendingResolution;
     setResolving(true);
     try {
-      await updateDoc(doc(db, 'orders', order.id), plan.orderPatch);
-      if (resolution === 'release') {
-        if (order.listingId) {
-          await updateDoc(doc(db, 'listings', order.listingId), {
-            status: 'sold',
-            reservedById: deleteField(),
-            reservedAt: deleteField(),
-            updatedAt: serverTimestamp(),
-          }).catch(() => {});
-        }
-        if (order.sellerId) {
-          await updateDoc(doc(db, 'users', order.sellerId), { totalSales: increment(1) }).catch(() => {});
-        }
-        await notifyParty(order.sellerId, order, '✅ Payment Released',
-          `The dispute for "${order.listingTitle || 'your listing'}" was resolved in your favour. ${formatKES(order.amount)} has been released to you. Complete the payout to your registered payout phone.`);
-        await notifyParty(order.buyerId, order, 'Dispute Resolved',
-          `Your dispute for "${order.listingTitle || ''}" was resolved in the seller's favour. The order is complete.`);
-      } else {
-        if (order.listingId) {
-          await updateDoc(doc(db, 'listings', order.listingId), {
-            status: 'active',
-            reservedById: deleteField(),
-            reservedAt: deleteField(),
-            soldAt: deleteField(),
-            updatedAt: serverTimestamp(),
-          }).catch(() => {});
-        }
-        await notifyParty(order.buyerId, order, '✅ Refund Issued',
-          `Your dispute for "${order.listingTitle || 'your order'}" was resolved in your favour. ${formatKES(order.amount)} will be refunded back to your payment method.`);
-        await notifyParty(order.sellerId, order, 'Dispute Resolved',
-          `The dispute for "${order.listingTitle || ''}" was resolved in the buyer's favour. The order was refunded and your listing is now live again.`);
-      }
-      await sendSystemMessage(order.id, plan.systemMessage);
-      toast.success(plan.manualAction.title + ' pending.');
+      // Server-side resolution: the backend writes the order/listing/chat
+      // atomically, updates stats and notifications, and sends the
+      // dispute-resolved emails. The manual payment action stays with admin.
+      await resolveOrder(order.id, resolution);
+      toast.success(pendingResolution.plan.manualAction.title + ' pending.');
       setPendingResolution(null);
     } catch (err) {
       console.error('Resolve dispute error:', err);

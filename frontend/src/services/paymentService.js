@@ -45,6 +45,16 @@ export const submitDelivery = async (orderId, { accountEmail, accountPassword })
   return data;
 };
 
+export const resolveOrder = async (orderId, resolution) => {
+  const idToken = await auth.currentUser.getIdToken();
+  const { data } = await api.post(
+    '/api/escrow/resolve',
+    { orderId, resolution },
+    { headers: { Authorization: `Bearer ${idToken}` } }
+  );
+  return data;
+};
+
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 

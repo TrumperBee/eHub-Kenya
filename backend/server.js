@@ -6,6 +6,8 @@ require('dotenv').config();
 const paymentRoutes = require('./src/routes/payment.routes');
 const escrowRoutes = require('./src/routes/escrow.routes');
 const aiRoutes = require('./src/routes/ai.routes');
+const dropRoutes = require('./src/routes/drop.routes');
+const emailRoutes = require('./src/routes/email.routes');
 const errorHandler = require('./src/middleware/errorHandler');
 
 const app = express();
@@ -28,6 +30,8 @@ app.get('/api/health', (req, res) => {
 app.use('/api/payment', paymentRoutes);
 app.use('/api/escrow', escrowRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/drops', dropRoutes);
+app.use('/api/email', emailRoutes);
 
 app.use(errorHandler);
 

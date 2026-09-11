@@ -1,5 +1,9 @@
 const { verifyTransaction, generateReference } = require('../services/paystackService');
 const { admin, adminDb } = require('../services/firebaseAdmin');
+const {
+  sendBuyerPaymentConfirmedEmail,
+  sendSellerPaymentReceivedEmail,
+} = require('../services/emailService');
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'ochiengv250@gmail.com';
 
@@ -304,6 +308,12 @@ async function processSuccessfulPayment(reference) {
       orderId,
     });
   }
+
+  // Trusted event: Paystack verified the charge. Never blocks the purchase —
+  // if an email fails, the order itself is unaffected.
+  const emailOrder = { ...current, id: orderId, paymentChannel: transaction.channel || null };
+  await sendBuyerPaymentConfirmedEmail(emailOrder);
+  await sendSellerPaymentReceivedEmail(emailOrder);
 
   return { orderId, reference };
 }

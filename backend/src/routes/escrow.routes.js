@@ -6,5 +6,6 @@ const escrowController = require('../controllers/escrowController');
 router.post('/release', verifyFirebaseToken, escrowController.release);
 router.post('/dispute', verifyFirebaseToken, escrowController.dispute);
 router.post('/delivery', verifyFirebaseToken, escrowController.submitDelivery);
+router.post('/resolve', verifyFirebaseToken, escrowController.resolve);
 
 module.exports = router;

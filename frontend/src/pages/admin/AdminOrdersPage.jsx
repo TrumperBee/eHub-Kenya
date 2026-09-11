@@ -1,34 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, getDocs, updateDoc, doc, addDoc, serverTimestamp, increment, deleteField } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import toast from 'react-hot-toast';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { ORDER_STATUS } from '../../utils/constants';
 import { formatKES, formatDate } from '../../utils/formatters';
 import { ChevronDown, ChevronUp, CheckCircle, RotateCcw, X } from 'lucide-react';
-import { sendSystemMessage } from '../../services/chatService';
-import { useAuth } from '../../context/AuthContext';
-import { DISPUTE_RESOLUTIONS } from '../../services/disputeResolver';
-
-const notifyParty = async (userId, order, title, message) => {
-  if (!userId) return;
-  try {
-    await addDoc(collection(db, 'notifications'), {
-      userId,
-      title,
-      message,
-      type: 'order',
-      orderId: order.id,
-      read: false,
-      createdAt: serverTimestamp(),
-    });
-  } catch (err) {
-    console.warn('Notification error:', err);
-  }
-};
+import { resolveOrder } from '../../services/paymentService';
 
 export default function AdminOrdersPage() {
-  const { currentUser } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
@@ -42,43 +22,12 @@ export default function AdminOrdersPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const auditResolution = (resolutionKey) => ({
-    disputeStatus: 'resolved',
-    disputeResolution: resolutionKey,
-    disputeResolvedAt: new Date().toISOString(),
-    disputeResolvedBy: currentUser?.uid || '',
-    disputeResolvedByName: currentUser?.displayName || 'Admin',
-    disputeUpdatedAt: new Date().toISOString(),
-    adminReviewRequired: false,
-  });
-
   const handleReleaseEscrow = async (order) => {
     setActing(true);
     try {
-      const actor = auditResolution(DISPUTE_RESOLUTIONS.release.key);
-      const patch = {
-        status: 'completed',
-        escrowStatus: 'released',
-        updatedAt: new Date().toISOString(),
-      };
-      if (order.status === 'disputed') Object.assign(patch, actor);
-      await updateDoc(doc(db, 'orders', order.id), patch);
-      if (order.listingId) {
-        await updateDoc(doc(db, 'listings', order.listingId), {
-          status: 'sold',
-          reservedById: deleteField(),
-          reservedAt: deleteField(),
-          updatedAt: serverTimestamp(),
-        }).catch(() => {});
-      }
-      if (order.sellerId) {
-        await updateDoc(doc(db, 'users', order.sellerId), { totalSales: increment(1) }).catch(() => {});
-      }
-      await sendSystemMessage(order.id, 'Escrow released by admin. Order completed — payout pending.');
-      await notifyParty(order.sellerId, order, 'Escrow Released',
-        `Escrow for "${order.listingTitle || 'your listing'}" (${formatKES(order.amount)}) was released to you. Complete the payout to your registered payout phone.`);
-      await notifyParty(order.buyerId, order, 'Order Completed',
-        `Your order "${order.listingTitle || ''}" was completed. Thank you for shopping with eHub Kenya.`);
+      // Server-side: writes order/listing/chat, updates stats + notifications,
+      // and sends the order-completed emails. Manual payout stays with admin.
+      await resolveOrder(order.id, 'release');
       setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'completed', escrowStatus: 'released' } : o));
       toast.success('Escrow released. Order completed.');
     } catch {
@@ -92,28 +41,7 @@ export default function AdminOrdersPage() {
   const handleRefund = async (order) => {
     setActing(true);
     try {
-      const actor = auditResolution(DISPUTE_RESOLUTIONS.refund.key);
-      const patch = {
-        status: 'refunded',
-        escrowStatus: 'refunded',
-        updatedAt: new Date().toISOString(),
-      };
-      if (order.status === 'disputed') Object.assign(patch, actor);
-      await updateDoc(doc(db, 'orders', order.id), patch);
-      if (order.listingId) {
-        await updateDoc(doc(db, 'listings', order.listingId), {
-          status: 'active',
-          reservedById: deleteField(),
-          reservedAt: deleteField(),
-          soldAt: deleteField(),
-          updatedAt: serverTimestamp(),
-        }).catch(() => {});
-      }
-      await sendSystemMessage(order.id, 'Order refunded by admin. The listing has been re-listed.');
-      await notifyParty(order.buyerId, order, 'Refund Issued',
-        `Your refund of ${formatKES(order.amount)} for "${order.listingTitle || 'your order'}" has been approved. It will be sent back to your payment method.`);
-      await notifyParty(order.sellerId, order, 'Order Refunded',
-        `The order "${order.listingTitle || ''}" was refunded to the buyer. Your listing is now live again.`);
+      await resolveOrder(order.id, 'refund');
       setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'refunded', escrowStatus: 'refunded' } : o));
       toast.success('Order marked refunded. Complete the refund in the Paystack dashboard.');
     } catch {

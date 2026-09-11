@@ -1,46 +1,25 @@
-import { db } from './firebase';
-import { collection, query, where, getDocs, doc, addDoc, updateDoc, increment, serverTimestamp, onSnapshot } from 'firebase/firestore';
-import { calcDiscount, getCurrentDropWeek } from '../utils/fridayUtils';
+import axios from 'axios';
+import { db, auth } from './firebase';
+import { collection, query, where, getDocs, doc, updateDoc, increment, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { BACKEND_URL } from '../utils/constants';
 
 const dropsRef = collection(db, 'fridayDrops');
 
-const SERIES = (arr) => (Array.isArray(arr) ? arr : []);
-
-function cleanDropData(data) {
-  return {
-    listingId: data.listingId || '',
-    sellerId: data.sellerId || '',
-    sellerName: data.sellerName || 'Unknown Seller',
-    sellerPhotoURL: data.sellerPhotoURL || null,
-    sellerRating: Number(data.sellerRating) || 0,
-    title: data.title || 'Untitled Account',
-    photo: data.photo || null,
-    tier: data.tier || 'bronze',
-    platform: data.platform || 'android',
-    regularPrice: Number(data.regularPrice) || 0,
-    dropPrice: Number(data.dropPrice) || 0,
-    discountPercent: calcDiscount(data.regularPrice, data.dropPrice),
-    featuredPlayers: SERIES(data.featuredPlayers).filter(Boolean).slice(0, 5),
-    goldCoins: Number(data.goldCoins) || 0,
-    gp: Number(data.gp) || 0,
-    fiveStarCount: Number(data.fiveStarCount) || 0,
-    views: 0,
-  };
-}
-
+// Submission is handled by the trusted backend (https://api-drops-submit),
+// which computes the binding Friday in East Africa Time server-side and emails
+// the seller the Live/Scheduled notification. The drop document is created by
+// the backend, never directly by the client.
 export const submitDrop = async (data) => {
-  const week = getCurrentDropWeek();
-  const ref = await addDoc(dropsRef, {
-    ...cleanDropData(data),
-    weekNum: week.weekNum,
-    year: week.year,
-    fridayDateISO: week.fridayISO,
-    status: 'pending',
-    submittedAt: serverTimestamp(),
-    reviewedAt: null,
-    rejectionReason: null,
-  });
-  return ref;
+  const idToken = await auth.currentUser.getIdToken();
+  const { data: res } = await axios.post(
+    `${BACKEND_URL}/api/drops/submit`,
+    data,
+    { headers: { Authorization: `Bearer ${idToken}` } }
+  );
+  if (!res.success) {
+    throw new Error(res.error || 'Failed to submit drop');
+  }
+  return { id: res.dropId };
 };
 
 const mapSnap = (snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() }));
