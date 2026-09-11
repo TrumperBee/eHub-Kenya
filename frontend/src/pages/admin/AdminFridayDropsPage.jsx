@@ -5,7 +5,7 @@ import { Flame, CheckCircle, XCircle, Clock, Package, Tag, Eye } from 'lucide-re
 import AdminLayout from '../../components/admin/AdminLayout';
 import { subscribeToAllDrops, approveDrop, rejectDrop } from '../../services/fridayDropsService';
 import { formatKES, formatRelativeTime } from '../../utils/formatters';
-import { getCurrentDropWeek } from '../../utils/fridayUtils';
+import { getCurrentDropWeek, formatFridayLabel } from '../../utils/fridayUtils';
 
 const TABS = [
   { id: 'pending', label: 'Pending' },
@@ -50,7 +50,11 @@ export default function AdminFridayDropsPage() {
     setActionId(dropId);
     try {
       await approveDrop(dropId);
-      toast.success('Drop approved. It will go live Friday 12:00 EAT');
+      const drop = drops.find((d) => d.id === dropId);
+      const fridayLabel = drop?.fridayDateISO ? formatFridayLabel(drop.fridayDateISO) : '';
+      toast.success(fridayLabel
+        ? `Drop approved. Goes live ${fridayLabel} (12:00 AM – 11:59 PM EAT)`
+        : 'Drop approved');
     } catch {
       toast.error('Failed to approve drop');
     } finally {

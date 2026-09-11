@@ -204,7 +204,7 @@ export default function ListingCard({ listing }) {
               )}
               {fridayDrop && !dropLive && (
                 <span className="block text-[11px] mt-0.5" style={{ color: '#6B7280' }}>
-                  Live {formatFridayLabel(fridayDrop.fridayDateISO)}
+                  Scheduled {formatFridayLabel(fridayDrop.fridayDateISO)}
                 </span>
               )}
             </span>

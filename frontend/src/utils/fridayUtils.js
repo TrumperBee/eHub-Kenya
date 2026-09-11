@@ -1,4 +1,17 @@
 // All Friday Drops scheduling uses East Africa Time (EAT = UTC+3).
+//
+// BUSINESS RULE:
+//   - A seller may SUBMIT a drop any day.
+//   - A drop is ACTIVE only during the Friday 24-hour window:
+//       00:00:00.000 EAT  ->  23:59:59.999 EAT  (the whole Friday day).
+//   - The Friday a drop binds to:
+//       submitted on Friday (any time)  -> the CURRENT Friday
+//       submitted any other day         -> the NEXT Friday.
+//
+// Drop states are derived from this:
+//   scheduled (upcoming)  now < Friday 00:00:00 EAT
+//   live                  inside the Friday window
+//   expired               after Friday 23:59:59.999 EAT
 
 const EAT_OFFSET_MS = 3 * 60 * 60 * 1000;
 
@@ -30,20 +43,43 @@ export function isFriday(date = new Date()) {
   return getEATDay(date) === 5;
 }
 
+// True during the entire Friday (00:00–23:59:59.999 EAT).
 export function isDropLive(date = new Date()) {
-  const eat = eatParts(date);
-  return eat.getUTCDay() === 5 && eat.getUTCHours() >= 12;
+  return getEATDay(date) === 5;
 }
 
+/**
+ * The Friday (at 00:00 EAT) that a drop submitted at `date` binds to.
+ * Friday submissions bind to the CURRENT Friday; any other day binds to the NEXT Friday.
+ */
+export function getTargetFridayMs(date = new Date()) {
+  const nowEAT = eatParts(date);
+  const day = nowEAT.getUTCDay();
+  const diff = (5 - day + 7) % 7; // 0 on Friday (current), otherwise days until next Friday
+  const fridayEAT = new Date(nowEAT);
+  fridayEAT.setUTCDate(fridayEAT.getUTCDate() + diff);
+  fridayEAT.setUTCHours(0, 0, 0, 0); // 00:00 EAT
+  return eatDateToUTC(fridayEAT);
+}
+
+/**
+ * The next Friday at 00:00 EAT, strictly after `date`.
+ * Used only for the "upcoming" countdown (never during a live Friday).
+ */
 export function getNextFriday(date = new Date()) {
   const nowEAT = eatParts(date);
   const day = nowEAT.getUTCDay();
   let diff = (5 - day + 7) % 7;
-  if (diff === 0 && nowEAT.getUTCHours() >= 12) diff = 7;
+  if (diff === 0) diff = 7; // already Friday -> following Friday
   const fridayEAT = new Date(nowEAT);
   fridayEAT.setUTCDate(fridayEAT.getUTCDate() + diff);
-  fridayEAT.setUTCHours(12, 0, 0, 0);
+  fridayEAT.setUTCHours(0, 0, 0, 0);
   return eatDateToUTC(fridayEAT);
+}
+
+// ISO EAT date (YYYY-MM-DD) of the Friday a submission at `date` binds to.
+export function getUpcomingFridayISO(date = new Date()) {
+  return eatISODate(eatParts(getTargetFridayMs(date)));
 }
 
 export function getTimeUntilFriday(date = new Date()) {
@@ -56,8 +92,14 @@ export function getTimeUntilFriday(date = new Date()) {
   return { days, hours, minutes, seconds };
 }
 
-export function getUpcomingFridayISO(date = new Date()) {
-  return eatISODate(eatParts(getNextFriday(date)));
+// Time remaining in the current Friday window (used for the LIVE "Ends in" countdown).
+export function getTimeUntilDropEnd(date = new Date()) {
+  const end = getDropWindowEndMs(getEATDate(date));
+  let diff = Math.max(0, end - date.getTime());
+  const totalHours = Math.floor(diff / 3600000);
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
+  return { days: Math.floor(totalHours / 24), hours: totalHours, minutes, seconds };
 }
 
 export function getWeekNumber(date = new Date()) {
@@ -89,18 +131,16 @@ export function calcDiscount(regularPrice, dropPrice) {
   return Math.round(((r - d) / r) * 100);
 }
 
-// Drop lifecycle: a drop's fridayDateISO is an EAT calendar date (YYYY-MM-DD). It goes
-// live at 12:00 EAT (= 09:00 UTC) that day and stays live for that week (until just before
-// the next Friday's 12:00 EAT), at which point it is treated as expired.
-
+// Go live is 00:00:00 EAT Friday = 21:00:00 UTC on the day before fridayDateISO.
 export function getDropGoLiveMs(fridayDateISO) {
   const [y, m, d] = String(fridayDateISO).split('-').map(Number);
-  return Date.UTC(y, m - 1, d, 9, 0, 0, 0); // EAT 12:00
+  return Date.UTC(y, m - 1, d - 1, 21, 0, 0, 0);
 }
 
+// Window ends 23:59:59.999 EAT Friday = 20:59:59.999 UTC on fridayDateISO.
 export function getDropWindowEndMs(fridayDateISO) {
-  // Live for this entire week, up to just before the next Friday 12:00 EAT.
-  return getDropGoLiveMs(fridayDateISO) + (7 * 24 * 60 * 60 * 1000) - 1;
+  const [y, m, d] = String(fridayDateISO).split('-').map(Number);
+  return Date.UTC(y, m - 1, d, 20, 59, 59, 999);
 }
 
 export function classifyDrop(drop, now = new Date()) {
@@ -108,7 +148,7 @@ export function classifyDrop(drop, now = new Date()) {
   if (drop.status === 'expired') return 'expired';
   if (drop.status !== 'approved') return 'expired'; // pending/rejected are not purchasable
   const nowMs = now.getTime();
-  if (nowMs < getDropGoLiveMs(drop.fridayDateISO)) return 'upcoming';
+  if (nowMs < getDropGoLiveMs(drop.fridayDateISO)) return 'scheduled';
   if (nowMs > getDropWindowEndMs(drop.fridayDateISO)) return 'expired';
   return 'live';
 }
@@ -118,9 +158,16 @@ export function isDropRecordLive(drop, now = new Date()) {
 }
 
 export function isDropRecordUpcoming(drop, now = new Date()) {
-  return classifyDrop(drop, now) === 'upcoming';
+  return classifyDrop(drop, now) === 'scheduled';
 }
 
+// Human label for the drop lifecycle states used across the UI.
+export function dropStateLabel(drop, now = new Date()) {
+  if (classifyDrop(drop, now) === 'expired') return 'expired';
+  return classifyDrop(drop, now);
+}
+
+// "Friday, 11 Sep 2026" style label for an EAT calendar date.
 const FRIDAY_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export function formatFridayLabel(isoDate) {
@@ -131,3 +178,6 @@ export function formatFridayLabel(isoDate) {
   parts.forEach((p) => { if (p.type !== 'literal') map[p.type] = p.value; });
   return `${map.weekday || FRIDAY_WEEKDAYS[date.getUTCDay()]}, ${map.day || date.getUTCDate()} ${map.month || ''} ${map.year || ''}`.trim();
 }
+
+// Copy for the active window text.
+export const FRIDAY_ACTIVE_PERIOD = '12:00 AM – 11:59 PM EAT';

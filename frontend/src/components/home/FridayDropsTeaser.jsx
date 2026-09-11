@@ -13,7 +13,7 @@ export default function FridayDropsTeaser() {
           <div>
             <p className="inline-flex items-center gap-2 font-heading text-xs font-bold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full mb-4"
               style={{ background: 'rgba(255,241,0,0.15)', color: '#FFF100', border: '1px solid rgba(255,241,0,0.5)' }}>
-              <Flame size={14} style={{ color: '#C8102E' }} /> Every Friday 12:00 EAT
+              <Flame size={14} style={{ color: '#C8102E' }} /> Every Friday 12:00 AM – 11:59 PM EAT
             </p>
             <h2 className="font-heading text-3xl md:text-4xl font-extrabold uppercase leading-tight" style={{ color: '#FFFFFF' }}>
               FRIDAY <span style={{ color: '#FFF100' }}>DROPS</span>

@@ -340,7 +340,7 @@ Guarantee: This account's email has never been changed before. I guarantee deliv
                   <div>
                     <h2 className="font-heading text-base font-bold uppercase" style={{ color: '#003BFF' }}>Friday Drop</h2>
                     <p className="text-xs mt-1" style={{ color: '#6B7280' }}>
-                      List this account as a discounted Friday Drop deal. Once approved by our team, it goes live across the marketplace on Friday 12:00 EAT.
+                      List this account as a discounted Friday Drop deal. Once approved by our team, it goes live across the marketplace on the next Friday (12:00 AM – 11:59 PM EAT).
                     </p>
                   </div>
                 </div>

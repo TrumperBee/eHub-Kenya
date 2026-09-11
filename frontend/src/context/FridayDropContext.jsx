@@ -15,8 +15,8 @@ export function FridayDropProvider({ children }) {
     return unsub;
   }, []);
 
-  // Returns the most relevant approved drop for a listing within its active/upcoming
-  // window, tagged with its classified state ('live' | 'upcoming'), or null when there is
+  // Returns the most relevant approved drop for a listing within its active/scheduled
+  // window, tagged with its classified state ('live' | 'scheduled'), or null when there is
   // no in-window drop (covers expired/past drops so listings revert to normal pricing).
   const getDropForListing = useCallback(
     (listingId) => {
@@ -25,7 +25,7 @@ export function FridayDropProvider({ children }) {
       const candidates = approvedDrops
         .filter((d) => d.listingId === listingId)
         .map((d) => ({ ...d, state: classifyDrop(d, now) }))
-        .filter((d) => d.state === 'live' || d.state === 'upcoming')
+        .filter((d) => d.state === 'live' || d.state === 'scheduled')
         .sort((a, b) => {
           if (a.state === b.state) return b.dropPrice - a.dropPrice;
           return a.state === 'live' ? -1 : 1;

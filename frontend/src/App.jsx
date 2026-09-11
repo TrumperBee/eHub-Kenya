@@ -100,7 +100,7 @@ function AppContent() {
       trySend(`drop_reminder_${year}_${weekNum}`, {
         userId: currentUser.uid,
         title: 'Friday Drops: Submit Deals!',
-        message: 'Friday Drops go live tomorrow at 12:00 EAT. Discount one of your listings now.',
+        message: 'Friday Drops go live tomorrow at 12:00 AM EAT. Discount one of your listings now.',
         type: 'drop',
         link: '/transfer-room',
       });

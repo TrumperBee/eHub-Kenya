@@ -1,55 +1,117 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyDrop, isDropRecordLive, isDropRecordUpcoming, getDropGoLiveMs } from './fridayUtils.js';
+import {
+  getUpcomingFridayISO,
+  getTargetFridayMs,
+  getNextFriday,
+  getTimeUntilDropEnd,
+  isDropLive,
+  getDropGoLiveMs,
+  getDropWindowEndMs,
+  classifyDrop,
+  isDropRecordLive,
+} from './fridayUtils.js';
 
-const FRI = '2026-08-07'; // a Friday's EAT date
+// Build a UTC timestamp that reads as the given wall-clock time in EAT (UTC+3).
+const eat = (y, m, d, h, min = 0, sec = 0, ms = 0) => Date.UTC(y, m - 1, d, h - 3, min, sec, ms);
 
-function ms(y, m, d, h, min = 0) {
-  return Date.UTC(y, m - 1, d, h, min, 0, 0);
-}
+const THU_2346 = new Date(eat(2026, 9, 10, 23, 59, 59));
+const FRI_0001 = new Date(eat(2026, 9, 11, 0, 1));
+const FRI_1200 = new Date(eat(2026, 9, 11, 12, 0));
+const FRI_2359 = new Date(eat(2026, 9, 11, 23, 59, 59));
+const SAT_0001 = new Date(eat(2026, 9, 12, 0, 1));
+const SUN_1200 = new Date(eat(2026, 9, 13, 12, 0));
 
-// Go live is 12:00 EAT = 09:00 UTC on the drop date.
-test('go-live is EAT 12:00 (09:00 UTC) of the drop date', () => {
-  assert.equal(getDropGoLiveMs(FRI), ms(2026, 8, 7, 9));
+test('submit on Thursday -> schedules the NEXT Friday', () => {
+  assert.equal(getUpcomingFridayISO(THU_2346), '2026-09-11');
 });
 
-test('approved drop before go-live is upcoming', () => {
-  const drop = { status: 'approved', fridayDateISO: FRI };
-  assert.equal(classifyDrop(drop, new Date(ms(2026, 8, 7, 8, 59))), 'upcoming');
-  assert.equal(isDropRecordUpcoming(drop, new Date(ms(2026, 8, 7, 8, 59))), true);
-  assert.equal(isDropRecordLive(drop, new Date(ms(2026, 8, 7, 8, 59))), false);
+test('submit on Friday 00:01 EAT -> CURRENT Friday', () => {
+  assert.equal(getUpcomingFridayISO(FRI_0001), '2026-09-11');
 });
 
-test('approved drop at/beyond go-live is live', () => {
-  const drop = { status: 'approved', fridayDateISO: FRI };
-  assert.equal(classifyDrop(drop, new Date(ms(2026, 8, 7, 9))), 'live');
-  assert.equal(classifyDrop(drop, new Date(ms(2026, 8, 9, 0))), 'live'); // later in the week
-  assert.equal(isDropRecordLive(drop, new Date(ms(2026, 8, 7, 9))), true);
+test('submit on Friday 12:00 EAT -> CURRENT Friday', () => {
+  assert.equal(getUpcomingFridayISO(FRI_1200), '2026-09-11');
 });
 
-test('approved drop after its week window is expired', () => {
-  const drop = { status: 'approved', fridayDateISO: FRI };
-  // window ends just before the NEXT Friday 09:00 UTC (7 days later)
-  assert.equal(classifyDrop(drop, new Date(ms(2026, 8, 14, 9))), 'expired');
-  assert.equal(isDropRecordLive(drop, new Date(ms(2026, 8, 14, 9))), false);
+test('submit on Friday 23:59 EAT -> CURRENT Friday', () => {
+  assert.equal(getUpcomingFridayISO(FRI_2359), '2026-09-11');
 });
 
-test('status-expired drop is always expired even mid-window', () => {
-  const drop = { status: 'expired', fridayDateISO: FRI };
-  assert.equal(classifyDrop(drop, new Date(ms(2026, 8, 8, 0))), 'expired');
+test('submit on Saturday 00:01 EAT -> NEXT Friday', () => {
+  assert.equal(getUpcomingFridayISO(SAT_0001), '2026-09-18');
 });
 
-test('pending and rejected drops are not purchasable (treated expired)', () => {
-  assert.equal(classifyDrop({ status: 'pending', fridayDateISO: FRI }, new Date(ms(2026, 8, 8, 0))), 'expired');
-  assert.equal(classifyDrop({ status: 'rejected', fridayDateISO: FRI }, new Date(ms(2026, 8, 8, 0))), 'expired');
+test('submit on Sunday -> NEXT Friday', () => {
+  assert.equal(getUpcomingFridayISO(SUN_1200), '2026-09-18');
+});
+
+test('target Friday is 00:00 EAT of the bound date', () => {
+  assert.equal(getTargetFridayMs(FRI_1200).getTime(), eat(2026, 9, 11, 0, 0));
+  assert.equal(getTargetFridayMs(SAT_0001).getTime(), eat(2026, 9, 18, 0, 0));
+});
+
+test('getNextFriday (countdown) is the strictly-next Friday 00:00 EAT', () => {
+  assert.equal(getNextFriday(SAT_0001).getTime(), eat(2026, 9, 18, 0, 0));
+  assert.equal(getNextFriday(FRI_1200).getTime(), eat(2026, 9, 18, 0, 0));
+  assert.equal(getNextFriday(THU_2346).getTime(), eat(2026, 9, 11, 0, 0));
+});
+
+test('go-live is 00:00:00 EAT Friday (21:00 UTC the day before)', () => {
+  assert.equal(getDropGoLiveMs('2026-09-11'), Date.UTC(2026, 8, 10, 21, 0, 0, 0));
+  assert.equal(getDropGoLiveMs('2026-09-11'), eat(2026, 9, 11, 0, 0));
+  assert.equal(getDropGoLiveMs('2026-09-18'), eat(2026, 9, 18, 0, 0));
+});
+
+test('window ends 23:59:59.999 EAT Friday', () => {
+  assert.equal(getDropWindowEndMs('2026-09-11'), Date.UTC(2026, 8, 11, 20, 59, 59, 999));
+});
+
+test('isDropLive is true for the whole Friday, false otherwise', () => {
+  assert.equal(isDropLive(FRI_0001), true);
+  assert.equal(isDropLive(FRI_1200), true);
+  assert.equal(isDropLive(FRI_2359), true);
+  assert.equal(isDropLive(THU_2346), false);
+  assert.equal(isDropLive(SAT_0001), false);
+});
+
+const FRI_DROP = { status: 'approved', fridayDateISO: '2026-09-11' };
+
+test('approved drop is scheduled before Friday 00:00 EAT', () => {
+  assert.equal(classifyDrop(FRI_DROP, THU_2346), 'scheduled');
+  assert.equal(isDropRecordLive(FRI_DROP, THU_2346), false);
+});
+
+test('approved drop is live at Friday 00:00 EAT', () => {
+  assert.equal(classifyDrop(FRI_DROP, new Date(eat(2026, 9, 11, 0, 0))), 'live');
+});
+
+test('approved drop is live at Friday 23:59:59.999 EAT', () => {
+  assert.equal(classifyDrop(FRI_DROP, new Date(eat(2026, 9, 11, 23, 59, 59, 999))), 'live');
+});
+
+test('approved drop is expired at Saturday 00:00 EAT', () => {
+  assert.equal(classifyDrop(FRI_DROP, SAT_0001), 'expired');
+});
+
+test('status-expired drop is always expired', () => {
+  assert.equal(classifyDrop({ status: 'expired', fridayDateISO: '2026-09-11' }, FRI_1200), 'expired');
+});
+
+test('pending and rejected drops are not purchasable (not live)', () => {
+  assert.equal(classifyDrop({ status: 'pending', fridayDateISO: '2026-09-11' }, FRI_1200), 'expired');
+  assert.equal(classifyDrop({ status: 'rejected', fridayDateISO: '2026-09-11' }, FRI_1200), 'expired');
 });
 
 test('drop with no date is expired', () => {
-  assert.equal(classifyDrop({ status: 'approved' }, new Date(ms(2026, 8, 8, 0))), 'expired');
-  assert.equal(classifyDrop(null, new Date(ms(2026, 8, 8, 0))), 'expired');
+  assert.equal(classifyDrop({ status: 'approved' }, FRI_1200), 'expired');
+  assert.equal(classifyDrop(null, FRI_1200), 'expired');
 });
 
-test('multi-day (Monday) drop is live once the Friday has passed that week', () => {
-  const drop = { status: 'approved', fridayDateISO: FRI };
-  assert.equal(classifyDrop(drop, new Date(ms(2026, 8, 10, 12))), 'live'); // following Monday
+test('Ends-in countdown inside the Friday window counts toward the window end', () => {
+  const t = getTimeUntilDropEnd(new Date(eat(2026, 9, 11, 23, 58, 30)));
+  assert.equal(t.hours, 0);
+  assert.equal(t.minutes, 1);
+  assert.ok(t.seconds <= 30);
+  assert.ok(t.seconds >= 29);
 });

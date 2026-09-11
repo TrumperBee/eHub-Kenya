@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Rocket, Flame } from 'lucide-react';
-import { getTimeUntilFriday, isDropLive } from '../../utils/fridayUtils';
+import { getTimeUntilFriday, getTimeUntilDropEnd, isDropLive } from '../../utils/fridayUtils';
 
 function Segment({ value, label }) {
   return (
@@ -24,11 +24,13 @@ function Segment({ value, label }) {
 
 export default function CountdownTimer({ compact = false, onLive }) {
   const [time, setTime] = useState(() => getTimeUntilFriday());
+  const [end, setEnd] = useState(() => getTimeUntilDropEnd());
   const [live, setLive] = useState(() => isDropLive());
 
   useEffect(() => {
     const id = setInterval(() => {
       setTime(getTimeUntilFriday());
+      setEnd(getTimeUntilDropEnd());
       setLive(isDropLive());
     }, 1000);
     return () => clearInterval(id);
@@ -40,15 +42,20 @@ export default function CountdownTimer({ compact = false, onLive }) {
 
   if (live) {
     return (
-      <div
-        className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full"
-        style={{ background: 'rgba(200,16,46,0.15)', border: '1.5px solid #C8102E' }}
-      >
-        <span className="live-dot" />
-        <Flame size={16} style={{ color: '#C8102E' }} />
-        <span className="font-heading text-sm font-extrabold uppercase tracking-widest" style={{ color: '#C8102E' }}>
-          Live Now - Deals are dropping!
-        </span>
+      <div className="flex flex-col items-center gap-2.5">
+        <div
+          className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full"
+          style={{ background: 'rgba(200,16,46,0.15)', border: '1.5px solid #C8102E' }}
+        >
+          <span className="live-dot" />
+          <Flame size={16} style={{ color: '#C8102E' }} />
+          <span className="font-heading text-sm font-extrabold uppercase tracking-widest" style={{ color: '#C8102E' }}>
+            Live Now - Deals are dropping!
+          </span>
+        </div>
+        <p className="font-heading text-xs font-bold uppercase tracking-[0.25em]" style={{ color: 'rgba(255,255,255,0.85)' }}>
+          Ends in: {String(end.hours).padStart(2, '0')}h {String(end.minutes).padStart(2, '0')}m {String(end.seconds).padStart(2, '0')}s
+        </p>
       </div>
     );
   }

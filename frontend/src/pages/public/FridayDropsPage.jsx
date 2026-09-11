@@ -54,13 +54,15 @@ export default function FridayDropsPage() {
         <div className="max-w-7xl mx-auto px-4 py-14 md:py-20 text-center">
           <p className="inline-flex items-center gap-2 font-heading text-xs font-bold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full mb-4"
             style={{ background: 'rgba(255,241,0,0.15)', color: '#FFF100', border: '1px solid rgba(255,241,0,0.5)' }}>
-            <Flame size={14} style={{ color: '#C8102E' }} /> Weekly Deals
+            <Flame size={14} style={{ color: '#C8102E' }} /> {live ? 'LIVE NOW' : 'Weekly Deals'}
           </p>
           <h1 className="font-heading text-4xl md:text-6xl font-extrabold uppercase" style={{ color: '#FFFFFF' }}>
             Friday <span style={{ color: '#FFF100' }}>Drops</span>
           </h1>
           <p className="text-white/75 text-base md:text-lg mt-3 max-w-2xl mx-auto">
-            Every Friday 12:00 EAT, verified sellers slash prices on their best accounts.
+            {live
+              ? "Today's exclusive deals are live for 24 hours."
+              : 'New Friday deals go live every Friday.'}
           </p>
 
           <div className="mt-8 flex justify-center pb-2">
@@ -85,7 +87,7 @@ export default function FridayDropsPage() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-10">
             <h2 className="font-heading text-2xl md:text-3xl font-extrabold uppercase" style={{ color: '#111111' }}>
-              {live ? 'LIVE THIS FRIDAY' : `DROPPING ${formatFridayLabel(week.fridayISO).toUpperCase()}`}
+              {live ? '🔥 FRIDAY DROPS — LIVE NOW' : '🔥 NEXT FRIDAY DROP'}
             </h2>
             <p className="text-sm mt-2" style={{ color: '#6B7280' }}>
               Hand-picked discounts refreshed every Friday
@@ -101,7 +103,7 @@ export default function FridayDropsPage() {
               <Flame size={40} className="mx-auto mb-4" style={{ color: '#C8102E' }} />
               <h3 className="font-heading text-xl font-extrabold mb-2" style={{ color: '#003BFF' }}>NO DROPS THIS FRIDAY YET</h3>
               <p className="text-sm max-w-md mx-auto" style={{ color: '#6B7280' }}>
-                Sellers are submitting their best deals. Check back at 12:00 EAT on Friday, or browse the full marketplace now.
+                Sellers are submitting their best deals. Check back at 12:00 AM EAT on Friday, or browse the full marketplace now.
               </p>
             </div>
           ) : (
@@ -121,7 +123,7 @@ export default function FridayDropsPage() {
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { icon: <BadgePercent size={28} />, title: 'Deals Go Live Friday', text: 'At 12:00 EAT every Friday, approved deals unlock across the marketplace.' },
+              { icon: <BadgePercent size={28} />, title: 'Deals Go Live Friday', text: 'At 12:00 AM EAT every Friday, approved deals unlock marketplace-wide for 24 hours.' },
               { icon: <Users size={28} />, title: 'Verified Sellers Only', text: 'Every drop is submitted by an approved seller and reviewed by our team.' },
               { icon: <ShieldCheck size={28} />, title: 'Protected by eHub Hub', text: 'Checkout is secured end-to-end with Paystack and our buyer protection.' },
             ].map((step, i) => (

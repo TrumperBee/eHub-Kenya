@@ -107,9 +107,9 @@ export default function ListingDetailPage() {
   const { getDropForListing } = useFridayDrop();
   const fridayDrop = getDropForListing(listing.id) || null;
   const dropLive = fridayDrop?.state === 'live';
-  const dropUpcoming = fridayDrop?.state === 'upcoming';
+  const dropUpcoming = fridayDrop?.state === 'scheduled';
   const effectivePrice = dropLive && fridayDrop ? fridayDrop.dropPrice : listing.price;
-  const dropGoLiveLabel = fridayDrop ? `${formatFridayLabel(fridayDrop.fridayDateISO)} at 12:00 EAT` : '';
+  const dropGoLiveLabel = fridayDrop ? `${formatFridayLabel(fridayDrop.fridayDateISO)} (12:00 AM EAT)` : '';
 
   const howItWorksSteps = [
     'Find your desired account and click "Buy Now"',
@@ -382,9 +382,9 @@ export default function ListingDetailPage() {
                     <button
                       disabled
                       className="btn-primary w-full text-lg py-4 opacity-70 cursor-not-allowed"
-                      title={`Available from ${dropGoLiveLabel}`}
+                      title={`Available ${dropGoLiveLabel} – 11:59 PM EAT`}
                     >
-                      Live Friday - {formatKES(effectivePrice)}
+                      Friday Drop - {formatKES(effectivePrice)}
                     </button>
                   </div>
                 ) : (

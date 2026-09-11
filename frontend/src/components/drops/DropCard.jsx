@@ -154,8 +154,10 @@ export default function DropCard({ drop, onView }) {
           >
             {isLive ? (
               <>Grab Deal <ArrowRight size={14} className="inline" /></>
+            ) : state === 'expired' ? (
+              <>Deal Ended</>
             ) : (
-              <>Live {formatFridayLabel(drop.fridayDateISO)}</>
+              <>Scheduled {formatFridayLabel(drop.fridayDateISO)}</>
             )}
           </button>
         </div>

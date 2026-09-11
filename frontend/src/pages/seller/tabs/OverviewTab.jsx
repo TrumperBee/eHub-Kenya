@@ -113,7 +113,7 @@ export default function OverviewTab({ profile, user, onTabChange }) {
         <div className="flex-1 min-w-0">
           <p className="font-heading text-base font-extrabold uppercase" style={{ color: '#FFF100' }}>Sell more with Friday Drops</p>
           <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.85)' }}>
-            Put one of your active listings on a special discounted drop that goes live marketplace-wide every Friday 12:00 EAT. Approved by our team before it publishes.
+            Put one of your active listings on a special discounted drop that goes live marketplace-wide every Friday (12:00 AM – 11:59 PM EAT). Approved by our team before it publishes.
           </p>
         </div>
         <div className="shrink-0 flex items-center gap-2">

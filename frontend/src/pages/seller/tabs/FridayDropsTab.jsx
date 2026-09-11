@@ -5,7 +5,7 @@ import { subscribeToSellerDrops, submitDrop, getSellerDropForListing } from '../
 import { validateDropPrice } from '../../../services/fridayDropGuard';
 import { getSellerListings } from '../../../services/listingsService';
 import { formatKES } from '../../../utils/formatters';
-import { calcDiscount, getCurrentDropWeek, formatFridayLabel } from '../../../utils/fridayUtils';
+import { calcDiscount, getCurrentDropWeek, formatFridayLabel, isDropLive, FRIDAY_ACTIVE_PERIOD } from '../../../utils/fridayUtils';
 import CountdownTimer from '../../../components/drops/CountdownTimer';
 
 const STATUS_BADGE = {
@@ -139,7 +139,11 @@ export default function FridayDropsTab({ profile, user }) {
           <h2 className="font-heading text-2xl font-extrabold flex items-center gap-2" style={{ color: '#111' }}>
             <Flame size={22} style={{ color: '#C8102E' }} /> FRIDAY DROPS
           </h2>
-          <p className="text-xs mt-1" style={{ color: '#6B7280' }}>Deals go live {formatFridayLabel(week.fridayISO)} at 12:00 EAT</p>
+          <p className="text-xs mt-1" style={{ color: '#6B7280' }}>
+            {isDropLive()
+              ? `Your approved drops are LIVE today. Active period: ${formatFridayLabel(week.fridayISO)}, 12:00 AM – 11:59 PM EAT.`
+              : `Deals go live ${formatFridayLabel(week.fridayISO)} (12:00 AM EAT)`}
+          </p>
         </div>
         <button onClick={openModal} className="btn-primary flex items-center gap-2 text-sm" style={{ background: '#FFF100', color: '#111' }}>
           <Plus size={16} /> SUBMIT A DROP
@@ -155,7 +159,8 @@ export default function FridayDropsTab({ profile, user }) {
             <h3 className="font-heading text-base font-extrabold uppercase" style={{ color: '#FFFFFF' }}>How Friday Drops Work</h3>
             <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.85)' }}>
               Set a discounted price on an active account and submit it as a Friday Drop. Our team reviews every submission, then approved drops
-              go live marketplace-wide on Friday 12:00 EAT for that week only. No extra fees, and buyers only ever pay your drop price at checkout.
+              go live marketplace-wide every Friday (12:00 AM – 11:59 PM EAT). Drops submitted on a Friday bind to the same day's window.
+              No extra fees, and buyers only ever pay your drop price at checkout.
             </p>
             <ul className="mt-3 grid sm:grid-cols-2 gap-x-6 gap-y-1 text-xs" style={{ color: 'rgba(255,255,255,0.85)' }}>
               <li className="flex items-center gap-1.5"><span style={{ color: '#FFF100' }}>1.</span> Submit an active listing at 5%+ off</li>
@@ -192,7 +197,7 @@ export default function FridayDropsTab({ profile, user }) {
               <Flame size={40} className="mx-auto mb-3" style={{ color: '#C8102E' }} />
               <h3 className="font-heading text-xl font-extrabold mb-2" style={{ color: '#003BFF' }}>NO DROPS THIS WEEK</h3>
               <p className="text-sm max-w-md mx-auto mb-6" style={{ color: '#6B7280' }}>
-                Submit one of your active listings at a discount and it will go live across the marketplace on Friday 12:00 EAT.
+                Submit one of your active listings at a discount and it will go live across the marketplace on the next Friday (12:00 AM – 11:59 PM EAT).
               </p>
               <button onClick={openModal} className="btn-primary text-sm" style={{ background: '#FFF100', color: '#111' }}>
                 + SUBMIT YOUR FIRST DROP
@@ -253,7 +258,7 @@ export default function FridayDropsTab({ profile, user }) {
         <ul className="space-y-1.5 text-sm" style={{ color: '#374151' }}>
           <li> Each drop needs to be at least 5% below your regular listing price.</li>
           <li> Only one active drop per account per week.</li>
-          <li> Drops are reviewed and approved before going live on Friday 12:00 EAT.</li>
+          <li> Drops are reviewed and approved before going live during the Friday 12:00 AM – 11:59 PM EAT window.</li>
           <li> Drops can be edited only while still pending approval.</li>
         </ul>
         <p className="text-xs mt-3 pt-3" style={{ color: '#6B7280', borderTop: '1px solid #E5E7EB' }}>
@@ -269,6 +274,17 @@ export default function FridayDropsTab({ profile, user }) {
             <div className="flex items-center gap-3 mb-4">
               <Flame size={22} style={{ color: '#C8102E' }} />
               <h3 className="font-heading text-lg font-bold" style={{ color: '#111' }}>SUBMIT A FRIDAY DROP</h3>
+            </div>
+
+            <div className="mb-4 p-3 rounded-xl text-sm" style={{
+              background: isDropLive() ? 'rgba(200,16,46,0.1)' : 'rgba(255,241,0,0.15)',
+              border: `1px solid ${isDropLive() ? '#C8102E' : 'rgba(255,241,0,0.6)'}`,
+            }}>
+              <p style={{ color: '#111', fontWeight: 600, lineHeight: 1.5 }}>
+                {isDropLive()
+                  ? `Your drop will be LIVE TODAY. Active period: Friday, ${formatFridayLabel(week.fridayISO)}, ${FRIDAY_ACTIVE_PERIOD}.`
+                  : `Your drop has been submitted. It will go LIVE on: Friday, ${formatFridayLabel(week.fridayISO)}. Active period: ${FRIDAY_ACTIVE_PERIOD}.`}
+              </p>
             </div>
 
             <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: '#6B7280' }}>
