@@ -8,6 +8,12 @@ import { formatKES, formatDate } from '../../utils/formatters';
 import { PAID_AND_PENDING_STATUSES } from '../../utils/orderMachine';
 import { ORDER_STATUS } from '../../utils/constants';
 
+const PAYMENT_STATUS = {
+  paid:      { label: 'Paid',      color: 'text-green-600' },
+  pending:   { label: 'Pending',   color: 'text-yellow-600' },
+  abandoned: { label: 'Abandoned', color: 'text-gray-400' },
+};
+
 export default function BuyerDashboardPage() {
   const { currentUser, userProfile } = useAuth();
   const [orders, setOrders] = useState([]);
@@ -114,6 +120,11 @@ export default function BuyerDashboardPage() {
                     }`}>
                       {ORDER_STATUS[order.status]?.label || order.status.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
                     </span>
+                    {PAYMENT_STATUS[order.paymentStatus] && (
+                      <span className={`text-[11px] ml-1 ${PAYMENT_STATUS[order.paymentStatus].color}`}>
+                        · {PAYMENT_STATUS[order.paymentStatus].label}
+                      </span>
+                    )}
                   </div>
                 </Link>
               ))}

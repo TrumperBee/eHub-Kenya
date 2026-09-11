@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useOrder } from '../../hooks/useOrders';
 import { ORDER_STATUS, BACKEND_URL } from '../../utils/constants';
 import { formatKES, formatDate } from '../../utils/formatters';
+import { canViewOrder } from '../../utils/orderAccess';
 import { releaseEscrow, submitDelivery } from '../../services/paymentService';
 import { subscribeToDeliveries } from '../../services/ordersService';
 import { buyerCanConfirm, buyerCanDispute, sellerCanDeliver } from '../../utils/orderMachine';
@@ -15,9 +16,58 @@ import ReviewForm from '../../components/reviews/ReviewForm';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import {
   Shield, MessageSquare, CheckCircle, Mail, KeyRound, Eye, EyeOff,
-  Send, Upload, Clock, AlertTriangle,
+  Send, Upload, Clock, AlertTriangle, Lock, ShoppingBag,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+const PAYMENT_STATUS = {
+  paid:     { label: 'Paid',     color: 'text-green-600' },
+  pending:  { label: 'Pending',  color: 'text-yellow-600' },
+  abandoned:{ label: 'Abandoned', color: 'text-gray-500' },
+};
+
+function DeniedScreen() {
+  return (
+    <div className="pt-16 min-h-screen bg-konami-light-gray flex items-center justify-center px-4">
+      <div className="card p-10 max-w-md w-full text-center">
+        <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+          <Lock size={24} className="text-konami-red" />
+        </div>
+        <h1 className="font-heading text-xl font-bold text-konami-text mb-2">Not Authorized</h1>
+        <p className="text-sm text-konami-text-muted mb-6">
+          You are not authorized to view this order. Orders can only be accessed by the buyer, the seller, or eHub support.
+        </p>
+        <Link to="/orders" className="btn-primary inline-flex items-center gap-2 text-sm">
+          Go to My Orders
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function NotFoundScreen() {
+  return (
+    <div className="pt-16 min-h-screen bg-konami-light-gray flex items-center justify-center px-4">
+      <div className="card p-10 max-w-md w-full text-center">
+        <div className="w-14 h-14 rounded-full bg-konami-light-gray flex items-center justify-center mx-auto mb-4">
+          <ShoppingBag size={24} className="text-konami-text-muted" />
+        </div>
+        <h1 className="font-heading text-xl font-bold text-konami-text mb-2">Order Not Found</h1>
+        <p className="text-sm text-konami-text-muted mb-6">
+          We could not find this order. It may have been removed, or the link may be incorrect.
+        </p>
+        <div className="flex flex-col gap-2">
+          <Link to="/orders" className="btn-primary inline-flex items-center justify-center gap-2 text-sm">
+            My Orders
+          </Link>
+          <Link to="/browse" className="btn-secondary text-sm">
+            Browse Listings
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const STEPS = [
   { key: 'awaiting_seller_delivery', label: 'Awaiting Seller Delivery', index: 0 },
@@ -179,7 +229,7 @@ export default function OrderDetailPage() {
   const [searchParams] = useSearchParams();
   const paymentSuccess = searchParams.get('payment') === 'success';
   const { currentUser, userProfile } = useAuth();
-  const { order, loading } = useOrder(id);
+  const { order, loading, error } = useOrder(id);
   const [deliveries, setDeliveries] = useState([]);
   const [actionLoading, setActionLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -191,19 +241,16 @@ export default function OrderDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    const unsub = subscribeToDeliveries(id, setDeliveries);
+    const unsub = subscribeToDeliveries(id, setDeliveries, () => {});
     return unsub;
   }, [id]);
 
   if (loading) return <div className="pt-16"><LoadingSpinner fullScreen /></div>;
-  if (!order) {
-    return (
-      <div className="pt-16 min-h-screen bg-konami-light-gray flex items-center justify-center">
-        <p className="text-konami-text-dim">Order not found.</p>
-      </div>
-    );
-  }
+  if (error) return <DeniedScreen />;
+  if (!order) return <NotFoundScreen />;
+  if (!canViewOrder(order, currentUser)) return <DeniedScreen />;
 
+  const paymentStatusConfig = PAYMENT_STATUS[order.paymentStatus];
   const statusConfig = ORDER_STATUS[order.status] || {};
   const currentStepIndex = stepIndexFor(order.status);
   const isBuyer = currentUser && order.buyerId === currentUser.uid;
@@ -337,6 +384,12 @@ export default function OrderDetailPage() {
                 <div>
                   <p className="text-xs text-konami-text-muted mb-1">Payment Channel</p>
                   <p className="text-sm text-konami-text capitalize">{order.paymentChannel.replace('_', ' ')}</p>
+                </div>
+              )}
+              {paymentStatusConfig && (
+                <div>
+                  <p className="text-xs text-konami-text-muted mb-1">Payment Status</p>
+                  <p className={`text-sm font-semibold ${paymentStatusConfig.color}`}>{paymentStatusConfig.label}</p>
                 </div>
               )}
               <div>

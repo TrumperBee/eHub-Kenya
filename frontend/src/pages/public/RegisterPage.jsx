@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Zap, Shield, MessageCircle, CheckCircle, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { validateUsernameFormat, isUsernameTaken, generateSuggestions, checkUsername } from '../../utils/usernameUtils';
@@ -7,9 +7,12 @@ import { validateUsernameFormat, isUsernameTaken, generateSuggestions, checkUser
 export default function RegisterPage() {
   const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState({ displayName: '', username: '', email: '', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const from = location.state?.from;
+  const redirectPath = from ? `${from.pathname}${from.search || ''}` : '/account';
 
   const [usernameError, setUsernameError] = useState(null);
   const [usernameAvailable, setUsernameAvailable] = useState(null);
@@ -83,7 +86,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(form.email, form.password, form.displayName, form.username);
-      navigate('/account');
+      navigate(redirectPath);
     } catch (err) {
       const code = err.code || '';
       const msg = err.message.replace('Firebase: ', '').trim();
@@ -111,7 +114,7 @@ export default function RegisterPage() {
       if (result?.isNew) {
         navigate('/setup-username');
       } else {
-        navigate('/account');
+        navigate(redirectPath);
       }
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user') {

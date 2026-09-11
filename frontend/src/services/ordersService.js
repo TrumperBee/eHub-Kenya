@@ -37,12 +37,20 @@ export const getAllOrders = async () => {
   return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 };
 
-export const subscribeToOrder = (orderId, callback) => {
-  return onSnapshot(doc(db, 'orders', orderId), (snap) => {
-    if (snap.exists()) {
-      callback({ id: snap.id, ...snap.data() });
+export const subscribeToOrder = (orderId, callback, onError) => {
+  return onSnapshot(
+    doc(db, 'orders', orderId),
+    (snap) => {
+      if (snap.exists()) {
+        callback({ id: snap.id, ...snap.data() });
+      } else {
+        callback(null);
+      }
+    },
+    (err) => {
+      if (onError) onError(err);
     }
-  });
+  );
 };
 
 export const getOrderDeliveries = async (orderId) => {

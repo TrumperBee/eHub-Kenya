@@ -15,6 +15,12 @@ const FILTER_TABS = [
 
 const ACTIVE_STATUSES = ['pending_payment', ...PAID_AND_PENDING_STATUSES, 'disputed'];
 
+const PAYMENT_STATUS = {
+  paid:      { label: 'Paid',      bg: 'bg-green-100', text: 'text-green-700' },
+  pending:   { label: 'Pending',   bg: 'bg-yellow-100', text: 'text-yellow-700' },
+  abandoned: { label: 'Abandoned', bg: 'bg-gray-100',   text: 'text-gray-500' },
+};
+
 export default function MyOrdersPage() {
   const { userProfile } = useAuth();
   const [orders, setOrders] = useState([]);
@@ -87,6 +93,11 @@ export default function MyOrdersPage() {
                     <span className={`text-xs ${statusConfig.color || 'text-konami-text-dim'}`}>
                       {statusConfig.label || order.status}
                     </span>
+                    {PAYMENT_STATUS[order.paymentStatus] && (
+                      <span className={`ml-2 inline-block text-[11px] px-1.5 py-0.5 rounded-full font-medium ${PAYMENT_STATUS[order.paymentStatus].bg} ${PAYMENT_STATUS[order.paymentStatus].text}`}>
+                        {PAYMENT_STATUS[order.paymentStatus].label}
+                      </span>
+                    )}
                   </div>
                   <span className="text-xs text-konami-text-muted hover:text-konami-blue ml-2">View <ArrowRight size={12} className="inline" /></span>
                 </Link>

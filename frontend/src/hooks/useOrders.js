@@ -34,16 +34,31 @@ export function useSellerOrders(sellerId) {
 export function useOrder(id) {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!id) { setLoading(false); return; }
-    setLoading(true);
-    const unsub = subscribeToOrder(id, (data) => {
-      setOrder(data);
+    if (!id) {
+      setOrder(null);
+      setError(null);
       setLoading(false);
-    });
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const unsub = subscribeToOrder(
+      id,
+      (data) => {
+        setOrder(data);
+        setLoading(false);
+      },
+      (err) => {
+        console.error('Order subscription error:', err);
+        setError(err);
+        setLoading(false);
+      }
+    );
     return unsub;
   }, [id]);
 
-  return { order, loading };
+  return { order, loading, error };
 }

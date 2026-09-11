@@ -7,7 +7,9 @@ export default function ProtectedRoute({ children }) {
   const location = useLocation();
 
   if (loading) return <LoadingSpinner fullScreen />;
-  if (!currentUser) return <Navigate to="/login" state={{ message: 'Please log in to continue' }} replace />;
+  if (!currentUser) {
+    return <Navigate to="/login" state={{ from: location, message: 'Please log in to continue' }} replace />;
+  }
 
   return children;
 }

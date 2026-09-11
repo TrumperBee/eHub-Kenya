@@ -26,4 +26,4 @@ export const ORDER_STATUS = {
   cancelled:               { label: 'Cancelled',                    color: 'text-gray-500'   },
 };
 
-export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+export const BACKEND_URL = import.meta.env?.VITE_BACKEND_URL || 'http://localhost:5000';

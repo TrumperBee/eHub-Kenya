@@ -14,6 +14,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const message = location.state?.message;
+  const from = location.state?.from;
+  const redirectPath = from ? `${from.pathname}${from.search || ''}` : '/account';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,7 +27,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate('/account');
+      navigate(redirectPath);
     } catch (err) {
       setError(err.message.replace('Firebase: ', '').replace(/\(.*\)/, '').trim() || 'Login failed');
     } finally {
@@ -41,7 +43,7 @@ export default function LoginPage() {
       if (result?.isNew) {
         navigate('/setup-username');
       } else {
-        navigate('/account');
+        navigate(redirectPath);
       }
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user') {
