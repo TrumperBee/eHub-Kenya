@@ -1,5 +1,6 @@
 const { verifyTransaction, generateReference } = require('../services/paystackService');
 const { admin, adminDb } = require('../services/firebaseAdmin');
+const { getEATDateString } = require('../utils/fridayDropScheduler');
 const {
   sendBuyerPaymentConfirmedEmail,
   sendSellerPaymentReceivedEmail,
@@ -48,54 +49,80 @@ async function initializePayment(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const listingRef = adminDb.doc(`listings/${listingId}`);
-    const orderRef = adminDb.collection('orders').doc();
-    const orderId = orderRef.id;
-    const reference = generateReference(orderId);
+const listingRef = adminDb.doc(`listings/${listingId}`);
+const orderRef = adminDb.collection('orders').doc();
+const orderId = orderRef.id;
+const reference = generateReference(orderId);
 
-    let orderCreated = false;
+/**
+ * A live Friday Drop (approved, bound to today's EAT date) overrides the price
+ * the marketplace display shows and therefore the price the buyer pays. Resolve
+ * it from the backend so amount validation and the stored order amount match
+ * what the buyer saw. Non-fatal: if no live drop is found, listing.price is used.
+ */
+async function resolveEffectivePrice(listingId) {
+  const todayEAT = getEATDateString(new Date());
+  try {
+    const dropSnap = await adminDb.collection('fridayDrops')
+      .where('listingId', '==', listingId)
+      .get();
+    const live = dropSnap.docs.find((d) => {
+      const dd = d.data();
+      return dd.status === 'approved' && dd.fridayDateISO === todayEAT && Number(dd.dropPrice) > 0;
+    });
+    return live ? Number(live.data().dropPrice) : null;
+  } catch (err) {
+    console.warn('Drop price lookup failed, falling back to listing price:', err.message);
+    return null;
+  }
+}
 
-    try {
-      await adminDb.runTransaction(async (tx) => {
-        const listingSnap = await tx.get(listingRef);
-        if (!listingSnap.exists) {
-          throw new Error('LISTING_NOT_FOUND');
-        }
+let orderCreated = false;
 
-        const listing = listingSnap.data();
-        if (listing.status !== 'active') {
-          throw new Error('LISTING_UNAVAILABLE');
-        }
+try {
+  await adminDb.runTransaction(async (tx) => {
+    const listingSnap = await tx.get(listingRef);
+    if (!listingSnap.exists) {
+      throw new Error('LISTING_NOT_FOUND');
+    }
 
-        if (Math.abs(listing.price - amount) > 1) {
-          throw new Error('AMOUNT_MISMATCH');
-        }
+    const listing = listingSnap.data();
+    if (listing.status !== 'active') {
+      throw new Error('LISTING_UNAVAILABLE');
+    }
 
-        if (listing.sellerId === buyerId) {
-          throw new Error('OWN_LISTING');
-        }
+    const dropPrice = await resolveEffectivePrice(listingId);
+    const chargeablePrice = dropPrice != null ? dropPrice : listing.price;
 
-        tx.set(orderRef, {
-          id: orderId,
-          buyerId,
-          buyerEmail,
-          buyerDisplayName: req.user.name || req.user.email || 'Buyer',
-          sellerId: listing.sellerId,
-          sellerDisplayName: listing.sellerDisplayName || 'Seller',
-          listingId,
-          listingTitle: listing.title,
-          listingTier: listing.tier,
-          amount: listing.price,
-          paymentProvider: 'paystack',
-          paymentReference: reference,
-          paymentStatus: 'pending',
-          status: 'pending_payment',
-          escrowStatus: 'none',
-          buyerConfirmedReceipt: false,
-          disputeReason: null,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
+    if (Math.abs(chargeablePrice - amount) > 1) {
+      throw new Error('AMOUNT_MISMATCH');
+    }
+
+    if (listing.sellerId === buyerId) {
+      throw new Error('OWN_LISTING');
+    }
+
+    tx.set(orderRef, {
+      id: orderId,
+      buyerId,
+      buyerEmail,
+      buyerDisplayName: req.user.name || req.user.email || 'Buyer',
+      sellerId: listing.sellerId,
+      sellerDisplayName: listing.sellerDisplayName || 'Seller',
+      listingId,
+      listingTitle: listing.title,
+      listingTier: listing.tier,
+      amount: chargeablePrice,
+      paymentProvider: 'paystack',
+      paymentReference: reference,
+      paymentStatus: 'pending',
+      status: 'pending_payment',
+      escrowStatus: 'none',
+      buyerConfirmedReceipt: false,
+      disputeReason: null,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
 
         tx.update(listingRef, {
           status: 'reserved',

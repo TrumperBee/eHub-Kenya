@@ -67,4 +67,10 @@ function isFriday(date = new Date()) {
   return getEATDay(date) === 5;
 }
 
-module.exports = { getCurrentDropWeek, getUpcomingFridayISO, isFriday, getEATDay };
+// ISO EAT calendar date (YYYY-MM-DD) for `date`. Used to match a live drop
+// (status approved and fridayDateISO === the EAT date "today").
+function getEATDateString(date = new Date()) {
+  return eatISODate(eatParts(date));
+}
+
+module.exports = { getCurrentDropWeek, getUpcomingFridayISO, isFriday, getEATDay, getEATDateString };
