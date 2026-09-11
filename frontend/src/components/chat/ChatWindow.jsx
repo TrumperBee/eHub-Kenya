@@ -15,7 +15,7 @@ function getStatusMessage(status) {
     case 'completed':
       return 'This order is complete. Thank you!';
     case 'disputed':
-      return 'Dispute raised. Admin will review and resolve.';
+      return 'Dispute raised. Escrow frozen. Admin will review the case and resolve it. Seller: your payout is on hold. Buyer: your payment is protected while the case is reviewed.';
     case 'pending_payment':
       return 'Payment pending. This order opens once payment is confirmed.';
     default:

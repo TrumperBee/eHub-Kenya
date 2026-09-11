@@ -6,17 +6,33 @@ export const DISPUTE_RESOLUTIONS = {
     escrowStatus: 'released',
   },
   refund: {
-    key: 'refunded_to_buyer',
+    key: 'refunded',
     label: 'Refunded to Buyer',
     orderStatus: 'refunded',
     escrowStatus: 'refunded',
   },
 };
 
+// Written by the pre-Phase-2 flow; kept so legacy resolved disputes still resolve.
+export const LEGACY_DISPUTE_RESOLUTION_KEYS = ['refunded_to_buyer'];
+
 export const DISPUTE_RESOLUTION_KEYS = new Set([
-  DISPUTE_RESOLUTIONS.release.key,
-  DISPUTE_RESOLUTIONS.refund.key,
+  ...Object.values(DISPUTE_RESOLUTIONS).map((r) => r.key),
+  ...LEGACY_DISPUTE_RESOLUTION_KEYS,
 ]);
+
+export function isResolvedDispute(order) {
+  if (!order) return false;
+  if (order.disputeStatus === 'resolved') return true;
+  if (order.disputeResolution && DISPUTE_RESOLUTION_KEYS.has(order.disputeResolution)) return true;
+  return false;
+}
+
+export function resolutionLabelFor(resolutionKey) {
+  if (!resolutionKey) return '';
+  const entry = Object.values(DISPUTE_RESOLUTIONS).find((r) => r.key === resolutionKey);
+  return entry ? entry.label : 'Resolved';
+}
 
 export function formatKesLabel(amount) {
   const n = Number(amount) || 0;
@@ -43,6 +59,11 @@ function manualActionFor(resolutionKey, amount, buyerPhone, sellerPhone) {
  * actor, and contact details, returns the Firestore patch to apply, the system
  * message to post to the order chat, and the manual payment action the admin
  * must perform to complete the resolution.
+ *
+ * The patch closes the first-class dispute state (disputeStatus: 'resolved')
+ * and records the full audit trail:
+ *   disputeRaisedAt / disputeRaisedBy  (written by the backend at raise time)
+ *   disputeResolvedAt / disputeResolvedBy / disputeResolvedByName / disputeResolution
  */
 export function buildDisputeResolution(order, resolution, opts = {}) {
   const resolutionKey = DISPUTE_RESOLUTIONS[resolution]?.key;
@@ -52,12 +73,19 @@ export function buildDisputeResolution(order, resolution, opts = {}) {
 
   const config = DISPUTE_RESOLUTIONS[resolution];
   const actorName = opts.actorName || 'Admin';
+  const resolvedAt = opts.nowISO || new Date().toISOString();
 
   const orderPatch = {
     status: config.orderStatus,
     escrowStatus: config.escrowStatus,
+    disputeStatus: 'resolved',
     disputeResolution: resolutionKey,
-    resolvedAt: opts.nowISO || new Date().toISOString(),
+    disputeResolvedAt: resolvedAt,
+    disputeResolvedBy: opts.actorId || '',
+    disputeResolvedByName: actorName,
+    disputeUpdatedAt: resolvedAt,
+    adminReviewRequired: false,
+    resolvedAt,
     resolvedById: opts.actorId || '',
     resolvedByName: actorName,
   };

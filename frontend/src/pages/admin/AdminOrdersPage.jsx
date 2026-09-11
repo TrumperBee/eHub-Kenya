@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, getDocs, getDoc, updateDoc, doc, addDoc, serverTimestamp, increment, deleteField } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, updateDoc, doc, addDoc, serverTimestamp, increment, deleteField } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import toast from 'react-hot-toast';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { ORDER_STATUS } from '../../utils/constants';
 import { formatKES, formatDate } from '../../utils/formatters';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle, RotateCcw, X } from 'lucide-react';
 import { sendSystemMessage } from '../../services/chatService';
+import { useAuth } from '../../context/AuthContext';
+import { DISPUTE_RESOLUTIONS } from '../../services/disputeResolver';
 
 const notifyParty = async (userId, order, title, message) => {
   if (!userId) return;
@@ -26,9 +28,12 @@ const notifyParty = async (userId, order, title, message) => {
 };
 
 export default function AdminOrdersPage() {
+  const { currentUser } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
+  const [pendingAction, setPendingAction] = useState(null);
+  const [acting, setActing] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -37,13 +42,27 @@ export default function AdminOrdersPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const auditResolution = (resolutionKey) => ({
+    disputeStatus: 'resolved',
+    disputeResolution: resolutionKey,
+    disputeResolvedAt: new Date().toISOString(),
+    disputeResolvedBy: currentUser?.uid || '',
+    disputeResolvedByName: currentUser?.displayName || 'Admin',
+    disputeUpdatedAt: new Date().toISOString(),
+    adminReviewRequired: false,
+  });
+
   const handleReleaseEscrow = async (order) => {
+    setActing(true);
     try {
-      await updateDoc(doc(db, 'orders', order.id), {
+      const actor = auditResolution(DISPUTE_RESOLUTIONS.release.key);
+      const patch = {
         status: 'completed',
         escrowStatus: 'released',
         updatedAt: new Date().toISOString(),
-      });
+      };
+      if (order.status === 'disputed') Object.assign(patch, actor);
+      await updateDoc(doc(db, 'orders', order.id), patch);
       if (order.listingId) {
         await updateDoc(doc(db, 'listings', order.listingId), {
           status: 'sold',
@@ -64,16 +83,23 @@ export default function AdminOrdersPage() {
       toast.success('Escrow released. Order completed.');
     } catch {
       toast.error('Failed to release escrow');
+    } finally {
+      setActing(false);
+      setPendingAction(null);
     }
   };
 
   const handleRefund = async (order) => {
+    setActing(true);
     try {
-      await updateDoc(doc(db, 'orders', order.id), {
+      const actor = auditResolution(DISPUTE_RESOLUTIONS.refund.key);
+      const patch = {
         status: 'refunded',
         escrowStatus: 'refunded',
         updatedAt: new Date().toISOString(),
-      });
+      };
+      if (order.status === 'disputed') Object.assign(patch, actor);
+      await updateDoc(doc(db, 'orders', order.id), patch);
       if (order.listingId) {
         await updateDoc(doc(db, 'listings', order.listingId), {
           status: 'active',
@@ -92,6 +118,9 @@ export default function AdminOrdersPage() {
       toast.success('Order marked refunded. Complete the refund in the Paystack dashboard.');
     } catch {
       toast.error('Failed to refund order');
+    } finally {
+      setActing(false);
+      setPendingAction(null);
     }
   };
 
@@ -149,12 +178,12 @@ export default function AdminOrdersPage() {
                             {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                           </button>
                           {(isDisputed || order.status === 'payment_confirmed') && (
-                            <button onClick={() => handleReleaseEscrow(order)} className="px-2 py-1 text-xs bg-green-600/20 text-green-500 rounded-lg border border-green-400/30 hover:bg-green-600/30 transition-colors">
+                            <button onClick={() => setPendingAction({ order, type: 'release' })} className="px-2 py-1 text-xs bg-green-600/20 text-green-500 rounded-lg border border-green-400/30 hover:bg-green-600/30 transition-colors">
                               Release
                             </button>
                           )}
                           {isDisputed && (
-                            <button onClick={() => handleRefund(order)} className="px-2 py-1 text-xs bg-red-600/20 text-red-500 rounded-lg border border-red-400/30 hover:bg-red-600/30 transition-colors">
+                            <button onClick={() => setPendingAction({ order, type: 'refund' })} className="px-2 py-1 text-xs bg-red-600/20 text-red-500 rounded-lg border border-red-400/30 hover:bg-red-600/30 transition-colors">
                               Refund
                             </button>
                           )}
@@ -185,6 +214,66 @@ export default function AdminOrdersPage() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+    {pendingAction && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => !acting && setPendingAction(null)}>
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: pendingAction.type === 'refund' ? '#FEE2E2' : '#DCFCE7', color: pendingAction.type === 'refund' ? '#DC2626' : '#16A34A' }}>
+                  {pendingAction.type === 'refund' ? <RotateCcw size={20} /> : <CheckCircle size={20} />}
+                </div>
+                <div>
+                  <h3 className="font-heading text-lg font-bold text-konami-text">
+                    {pendingAction.type === 'refund' ? 'Refund Buyer' : 'Release to Seller'}
+                  </h3>
+                  <p className="text-xs text-konami-text-muted">{formatKES(pendingAction.order.amount)} — {pendingAction.order.listingTitle || 'Untitled'}</p>
+                </div>
+              </div>
+              <button onClick={() => !acting && setPendingAction(null)} disabled={acting} className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-konami-text-muted hover:text-konami-text" aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className={`p-4 rounded-xl mb-4 ${pendingAction.order.status === 'disputed' ? 'bg-red-50 border border-konami-red/20' : ''}`}>
+              <p className="text-sm text-konami-text-dim leading-relaxed">
+                {pendingAction.type === 'refund'
+                  ? `Mark order as refunded and send ${formatKES(pendingAction.order.amount)} back to the buyer. The listing will be re-listed as active.`
+                  : `Mark order as completed and release the escrowed ${formatKES(pendingAction.order.amount)} to the seller. This increments the seller's sales count.`}
+              </p>
+              {pendingAction.order.status === 'disputed' && (
+                <p className="mt-2 text-sm font-semibold" style={{ color: '#C8102E' }}>
+                  {pendingAction.type === 'refund' ? 'Resolve the dispute in favour of the buyer.' : 'Resolve the dispute in favour of the seller.'}
+                </p>
+              )}
+              {pendingAction.order.paymentReference && (
+                <p className="mt-2 text-xs text-konami-text-muted">
+                  Complete the {pendingAction.type === 'refund' ? 'refund' : 'payout'} manually: Paystack dashboard → search reference{' '}
+                  <span className="font-mono">"{pendingAction.order.paymentReference}"</span>
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button onClick={() => setPendingAction(null)} disabled={acting} className="flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-colors" style={{ borderColor: '#D1D5DB', color: '#374151' }}>
+                Cancel
+              </button>
+              <button
+                onClick={() => pendingAction.type === 'refund' ? handleRefund(pendingAction.order) : handleReleaseEscrow(pendingAction.order)}
+                disabled={acting}
+                className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors"
+                style={{ background: pendingAction.type === 'refund' ? '#DC2626' : '#16A34A' }}
+              >
+                {acting ? 'Applying...' : 'Confirm'}
+              </button>
+            </div>
+            <p className="text-[11px] text-konami-text-muted mt-3">
+              {pendingAction.order.status === 'disputed'
+                ? 'This closes the dispute, records the resolution, and notifies both parties.'
+                : 'This will also post a message to the order chat.'}
+            </p>
+          </div>
         </div>
       )}
     </AdminLayout>

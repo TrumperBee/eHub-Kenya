@@ -4,6 +4,7 @@ import {
   DISPUTE_RESOLUTIONS,
   buildDisputeResolution,
   formatKesLabel,
+  isResolvedDispute,
 } from './disputeResolver.js';
 
 const baseOrder = {
@@ -29,6 +30,20 @@ test('release resolution: updates order to completed and escrow released', () =>
   assert.equal(plan.orderPatch.resolvedByName, 'Juma');
 });
 
+test('release resolution includes disputeStatus resolved and audit trail', () => {
+  const plan = buildDisputeResolution(baseOrder, 'release', {
+    actorId: 'admin-1',
+    actorName: 'Juma',
+    buyerPhone: baseOrder.paymentPhone,
+    sellerPhone: '254700000002',
+  });
+  assert.equal(plan.orderPatch.disputeStatus, 'resolved');
+  assert.equal(plan.orderPatch.disputeResolvedBy, 'admin-1');
+  assert.equal(plan.orderPatch.disputeResolvedByName, 'Juma');
+  assert.ok(plan.orderPatch.disputeResolvedAt);
+  assert.equal(plan.orderPatch.adminReviewRequired, false);
+});
+
 test('refund resolution: updates order to refunded and escrow refunded', () => {
   const plan = buildDisputeResolution(baseOrder, 'refund', {
     actorId: 'admin-1',
@@ -39,6 +54,18 @@ test('refund resolution: updates order to refunded and escrow refunded', () => {
   assert.equal(plan.orderPatch.status, 'refunded');
   assert.equal(plan.orderPatch.escrowStatus, 'refunded');
   assert.equal(plan.orderPatch.disputeResolution, DISPUTE_RESOLUTIONS.refund.key);
+});
+
+test('refund resolution includes disputeStatus resolved and audit trail', () => {
+  const plan = buildDisputeResolution(baseOrder, 'refund', {
+    actorId: 'admin-1',
+    actorName: 'Amina',
+  });
+  assert.equal(plan.orderPatch.disputeStatus, 'resolved');
+  assert.equal(plan.orderPatch.disputeResolvedBy, 'admin-1');
+  assert.equal(plan.orderPatch.disputeResolvedByName, 'Amina');
+  assert.equal(plan.orderPatch.adminReviewRequired, false);
+  assert.equal(plan.orderPatch.resolvedById, 'admin-1');
 });
 
 test('refund manual action references buyer phone and amount for the refund', () => {
@@ -76,4 +103,20 @@ test('unknown resolution throws', () => {
 test('formatKesLabel pads thousands separators', () => {
   assert.equal(formatKesLabel(7500), 'KES 7,500');
   assert.equal(formatKesLabel(0), 'KES 0');
+});
+
+test('isResolvedDispute detects disputeStatus resolved', () => {
+  assert.equal(isResolvedDispute({ disputeStatus: 'resolved' }), true);
+});
+
+test('isResolvedDispute detects legacy refund key', () => {
+  assert.equal(isResolvedDispute({ disputeResolution: 'refunded_to_buyer' }), true);
+});
+
+test('isResolvedDispute detects current refund key', () => {
+  assert.equal(isResolvedDispute({ disputeResolution: 'refunded' }), true);
+});
+
+test('isResolvedDispute returns false for open dispute', () => {
+  assert.equal(isResolvedDispute({ disputeStatus: 'open', disputeReason: 'bad' }), false);
 });

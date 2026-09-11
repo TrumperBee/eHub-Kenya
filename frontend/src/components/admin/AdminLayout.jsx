@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { BarChart3, Clipboard, User, Package, ShoppingCart, Users, Scale, Flame } from 'lucide-react';
 import { ADMIN_ROUTE } from '../../utils/constants';
+import useOpenDisputeCount from '../../hooks/useOpenDisputeCount';
 
 const NAV_ITEMS = [
   { path: ADMIN_ROUTE,            label: 'Overview',          icon: <BarChart3 size={16} /> },
@@ -15,6 +16,7 @@ const NAV_ITEMS = [
 
 export default function AdminLayout({ children }) {
   const location = useLocation();
+  const { count } = useOpenDisputeCount();
 
   return (
     <div className="pt-16 min-h-screen bg-konami-light-gray">
@@ -28,6 +30,7 @@ export default function AdminLayout({ children }) {
           </div>
           <nav className="space-y-0.5">
             {NAV_ITEMS.map((item) => {
+              const isDisputesNav = item.path === `${ADMIN_ROUTE}/disputes`;
               const isActive = item.path === ADMIN_ROUTE
                 ? location.pathname === ADMIN_ROUTE
                 : location.pathname.startsWith(item.path);
@@ -42,7 +45,15 @@ export default function AdminLayout({ children }) {
                   }`}
                 >
                   <span className="text-base">{item.icon}</span>
-                  {item.label}
+                  <span className="flex-1">{item.label}</span>
+                  {isDisputesNav && count > 0 && (
+                    <span
+                      className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold text-white"
+                      style={{ background: '#C8102E' }}
+                    >
+                      {count > 9 ? '9+' : count}
+                    </span>
+                  )}
                 </Link>
               );
             })}

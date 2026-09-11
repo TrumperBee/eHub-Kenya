@@ -209,7 +209,7 @@ export default function OrderDetailPage() {
   const isBuyer = currentUser && order.buyerId === currentUser.uid;
   const isSeller = currentUser && order.sellerId === currentUser.uid;
   const canConfirmReceipt = isBuyer && buyerCanConfirm(order.status);
-  const canDispute = isBuyer && buyerCanDispute(order.status);
+  const canDispute = isBuyer && buyerCanDispute(order.status) && !['open', 'under_review'].includes(order.disputeStatus);
   const canSubmitDelivery = isSeller && sellerCanDeliver(order.status);
   const canReview = isBuyer && order.status === 'completed';
   const isClosed = ['completed', 'disputed', 'refunded', 'cancelled'].includes(order.status);
@@ -229,6 +229,10 @@ export default function OrderDetailPage() {
   };
 
   const handleDispute = async () => {
+    if (order.status === 'disputed') {
+      toast.error('A dispute is already open for this order.');
+      return;
+    }
     if (disputeReason.trim().length < 20) {
       setDisputeError('Please describe the issue in at least 20 characters.');
       return;
@@ -435,6 +439,70 @@ export default function OrderDetailPage() {
                     <p className="text-sm font-bold uppercase text-konami-blue">Account Details Received</p>
                   </div>
                   <CredentialsList deliveries={deliveries} isSeller={false} />
+                </div>
+              )}
+
+              {isSeller && order.status === 'disputed' && (
+                <div className="card p-4 space-y-3" style={{ borderColor: '#C8102E', borderWidth: 1 }}>
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle size={16} className="text-konami-red shrink-0" />
+                    <p className="text-sm font-bold uppercase" style={{ color: '#C8102E' }}>Dispute Raised</p>
+                  </div>
+                  <p className="text-xs text-konami-text-dim">
+                    A buyer has raised a dispute on this order. Your payout is currently on hold while the case is reviewed by eHub support.
+                  </p>
+                  {order.disputeReason && (
+                    <div className="p-3 bg-red-50 rounded-xl">
+                      <p className="text-xs font-semibold mb-1" style={{ color: '#C8102E' }}>Reason</p>
+                      <p className="text-xs text-konami-text-dim italic">"{order.disputeReason}"</p>
+                    </div>
+                  )}
+                  <p className="text-xs text-konami-text-dim">
+                    Keep communicating in the chat below — it is used as evidence during review.
+                  </p>
+                </div>
+              )}
+
+              {isBuyer && order.status === 'disputed' && (
+                <div className="card p-4 space-y-3" style={{ borderColor: '#C8102E', borderWidth: 1 }}>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle size={16} className="text-konami-red shrink-0" />
+                    <p className="text-sm font-bold uppercase" style={{ color: '#C8102E' }}>Dispute Raised ✅</p>
+                  </div>
+                  <p className="text-xs text-konami-text-dim">
+                    Your dispute has been submitted to eHub support. Your payment remains on hold while the case is reviewed.
+                  </p>
+                  <p className="text-xs text-konami-text-dim break-all">
+                    Order ID: <span className="font-mono">{id}</span>
+                  </p>
+                  {order.disputeReason && (
+                    <div className="p-3 bg-red-50 rounded-xl">
+                      <p className="text-xs font-semibold mb-1" style={{ color: '#C8102E' }}>Your reason</p>
+                      <p className="text-xs text-konami-text-dim italic">"{order.disputeReason}"</p>
+                    </div>
+                  )}
+                  <p className="text-xs text-konami-text-dim">
+                    You can continue checking this order for updates. eHub support will resolve the case.
+                  </p>
+                </div>
+              )}
+
+              {isBuyer && order.disputeResolution && (order.status === 'completed' || order.status === 'refunded') && (
+                <div className={`card p-4 space-y-3`} style={{ borderColor: order.status === 'refunded' ? '#C8102E' : '#16A34A', borderWidth: 1 }}>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle size={16} className={`${order.status === 'refunded' ? 'text-konami-red' : 'text-green-600'} shrink-0`} />
+                    <p className={`text-sm font-bold uppercase ${order.status === 'refunded' ? '' : 'text-green-600'}`} style={order.status === 'refunded' ? { color: '#C8102E' } : {}}>
+                      Dispute Resolved — {order.status === 'refunded' ? 'Refunded to You' : 'Released to Seller'}
+                    </p>
+                  </div>
+                  <p className="text-xs text-konami-text-dim">
+                    {order.status === 'refunded'
+                      ? `The dispute was resolved in your favour. ${order.disputeResolvedAt || order.resolvedAt ? 'Resolved on ' + formatDate(order.disputeResolvedAt || order.resolvedAt) + '. ' : ''}Your refund is being processed back to your payment method.`
+                      : `The dispute was resolved in the seller's favour${order.disputeResolvedAt || order.resolvedAt ? ' on ' + formatDate(order.disputeResolvedAt || order.resolvedAt) : ''}. The order is complete.`}
+                  </p>
+                  <p className="text-xs text-konami-text-dim">
+                    Check your notifications and the chat below for the resolution details.
+                  </p>
                 </div>
               )}
 

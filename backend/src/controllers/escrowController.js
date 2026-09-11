@@ -150,15 +150,33 @@ async function dispute(req, res) {
       return res.status(403).json({ success: false, error: 'Only the buyer can raise a dispute' });
     }
 
+    if (order.status === 'disputed') {
+      return res.status(400).json({ success: false, error: 'A dispute is already open for this order' });
+    }
+
     if (!DISPUTABLE_STATUSES.includes(order.status)) {
       return res.status(400).json({ success: false, error: 'Order cannot be disputed in its current state' });
     }
 
+    // First-class dispute state: never leaves escrow status contradictory,
+    // and every field that surfaces on the admin dashboard is written atomically.
     await orderRef.update({
       status: 'disputed',
+      paymentStatus: order.paymentStatus || 'paid',
+      escrowStatus: 'held',
+      disputeStatus: 'open',
       disputeReason: reason,
+      disputedBy: userId,
+      disputedAt: admin.firestore.FieldValue.serverTimestamp(),
+      disputeUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      disputeRaisedAt: admin.firestore.FieldValue.serverTimestamp(),
+      disputeRaisedBy: userId,
+      sellerNotified: true,
+      adminReviewRequired: true,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+
+    const shortId = orderId.slice(0, 8).toUpperCase();
 
     const messagesRef = orderRef.collection('messages');
     await messagesRef.add({
@@ -166,15 +184,15 @@ async function dispute(req, res) {
       senderDisplayName: 'System',
       senderRole: 'system',
       messageType: 'system',
-      content: `Buyer has raised a dispute: ${reason}. Admin has been notified. Escrow is frozen.`,
-      text: `Buyer has raised a dispute: ${reason}. Admin has been notified. Escrow is frozen.`,
+      content: `Buyer has raised a dispute on Order #${shortId}: ${reason}. Escrow is frozen while the admin reviews the case.`,
+      text: `Buyer has raised a dispute on Order #${shortId}: ${reason}. Escrow is frozen while the admin reviews the case.`,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     await createNotification({
       userId: order.sellerId,
-      title: 'Dispute Raised',
-      message: `A dispute was raised on order for "${order.listingTitle || 'your listing'}". Escrow is frozen until the admin resolves it.`,
+      title: '⚠️ DISPUTE RAISED',
+      message: `A buyer has raised a dispute on Order #${shortId} for "${order.listingTitle || 'your listing'}". Reason: ${reason}. Your payout is currently on hold while the dispute is reviewed.`,
       type: 'alert',
       orderId,
     });
@@ -183,7 +201,7 @@ async function dispute(req, res) {
     await createNotification({
       userId: adminId,
       title: 'New Dispute',
-      message: `A buyer raised a dispute on order ${orderId}. Review the order chat and resolve it from the Command Center.`,
+      message: `A buyer raised a dispute on Order #${shortId} for "${order.listingTitle || 'the listing'}". Reason: ${reason}. Open the Command Center → Disputes to review.`,
       type: 'alert',
       orderId,
     });
