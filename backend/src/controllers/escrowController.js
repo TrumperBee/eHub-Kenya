@@ -62,6 +62,16 @@ async function release(req, res) {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
+    await adminDb.collection('notifications').add({
+      userId: order.sellerId,
+      title: 'Payment Released!',
+      message: `The buyer confirmed receipt. Your KES ${order.amount} payment has been released.`,
+      type: 'payment',
+      orderId,
+      read: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
     return res.json({ success: true });
   } catch (err) {
     console.error('Escrow release error:', err);

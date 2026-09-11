@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { doc, setDoc, updateDoc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import axios from 'axios';
@@ -7,10 +7,12 @@ import { useAuth } from '../../context/AuthContext';
 import { useOrder } from '../../hooks/useOrders';
 import { ORDER_STATUS, BACKEND_URL } from '../../utils/constants';
 import { formatKES, formatDate } from '../../utils/formatters';
+import { releaseEscrow } from '../../services/paymentService';
 import ChatWindow from '../../components/chat/ChatWindow';
 import ReviewForm from '../../components/reviews/ReviewForm';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { Shield, MessageSquare } from 'lucide-react';
+import { Shield, MessageSquare, CheckCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const STEPS = [
   { key: 'payment_confirmed', label: 'Payment Confirmed', index: 0 },
@@ -20,12 +22,15 @@ const STEPS = [
 
 export default function OrderDetailPage() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const paymentSuccess = searchParams.get('payment') === 'success';
   const { currentUser, userProfile } = useAuth();
   const { order, loading } = useOrder(id);
   const [actionLoading, setActionLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showDisputeForm, setShowDisputeForm] = useState(false);
   const [disputeReason, setDisputeReason] = useState('');
+  const [disputeError, setDisputeError] = useState('');
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
 
@@ -48,10 +53,7 @@ export default function OrderDetailPage() {
   const handleConfirmReceipt = async () => {
     setActionLoading(true);
     try {
-      const token = await currentUser.getIdToken();
-      await axios.post(`${BACKEND_URL}/api/escrow/release`, { orderId: id }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await releaseEscrow(id);
       await addDoc(collection(db, 'notifications'), {
         userId: order.sellerId,
         title: 'Escrow Released',
@@ -62,15 +64,20 @@ export default function OrderDetailPage() {
         createdAt: serverTimestamp(),
       });
       setShowConfirm(false);
+      toast.success('Transaction complete. Thank you!');
     } catch (err) {
       console.error('Release error:', err);
+      toast.error(err?.response?.data?.error || 'Failed to release escrow');
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleDispute = async () => {
-    if (!disputeReason.trim()) return;
+    if (disputeReason.trim().length < 20) {
+      setDisputeError('Please describe the issue in at least 20 characters.');
+      return;
+    }
     setActionLoading(true);
     try {
       const token = await currentUser.getIdToken();
@@ -79,8 +86,11 @@ export default function OrderDetailPage() {
       });
       setShowDisputeForm(false);
       setDisputeReason('');
+      setDisputeError('');
+      toast.success('Dispute raised. Admin has been notified.');
     } catch (err) {
       console.error('Dispute error:', err);
+      toast.error('Failed to raise dispute');
     } finally {
       setActionLoading(false);
     }
@@ -123,6 +133,18 @@ export default function OrderDetailPage() {
   return (
     <div className="pt-16 min-h-screen bg-konami-light-gray">
       <div className="max-w-6xl mx-auto px-4 py-8">
+        {paymentSuccess && order.status !== 'completed' && (
+          <div className="bg-green-500 text-white rounded-xl p-4 mb-6 flex items-center gap-3">
+            <CheckCircle size={20} className="shrink-0" />
+            <div>
+              <p className="font-heading font-bold text-sm uppercase">Payment Successful!</p>
+              <p className="text-white/80 text-xs">
+                Your payment was received. Chat with the seller below to begin the account transfer.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="lg:w-[400px] shrink-0 space-y-4">
             <div className="card p-5 space-y-4">
@@ -146,10 +168,16 @@ export default function OrderDetailPage() {
                 <p className="text-xs text-konami-text-muted mb-1">Amount</p>
                 <p className="font-heading text-xl font-bold text-konami-text">{formatKES(order.amount)}</p>
               </div>
-              {order.mpesaReceiptNumber && (
+              {order.paystackReference && (
                 <div>
-                  <p className="text-xs text-konami-text-muted mb-1">M-Pesa Receipt</p>
-                  <p className="text-sm text-konami-text font-mono">{order.mpesaReceiptNumber}</p>
+                  <p className="text-xs text-konami-text-muted mb-1">Paystack Reference</p>
+                  <p className="text-sm text-konami-text font-mono">{order.paystackReference}</p>
+                </div>
+              )}
+              {order.paystackChannel && (
+                <div>
+                  <p className="text-xs text-konami-text-muted mb-1">Payment Channel</p>
+                  <p className="text-sm text-konami-text capitalize">{order.paystackChannel.replace('_', ' ')}</p>
                 </div>
               )}
               <div>
@@ -204,7 +232,7 @@ export default function OrderDetailPage() {
                 <>
                   {showConfirm ? (
                     <div className="card p-4 space-y-3">
-                      <p className="text-sm text-konami-text-dim">Are you sure? This releases payment to the seller.</p>
+                      <p className="text-sm text-konami-text-dim">Are you sure? This releases payment to the seller and cannot be undone.</p>
                       <div className="flex gap-2">
                         <button onClick={handleConfirmReceipt} disabled={actionLoading} className="btn-primary flex-1 text-sm py-2.5">
                           {actionLoading ? 'Processing...' : 'Yes, Release Payment'}
@@ -217,7 +245,7 @@ export default function OrderDetailPage() {
                   ) : (
                     <button onClick={() => setShowConfirm(true)} className="btn-primary w-full text-sm py-3 flex items-center justify-center gap-2">
                       <Shield size={16} />
-                      Mark as Account Received
+                      Mark Account as Received
                     </button>
                   )}
                 </>
@@ -229,15 +257,16 @@ export default function OrderDetailPage() {
                     <div className="card p-4 space-y-3">
                       <textarea
                         value={disputeReason}
-                        onChange={(e) => setDisputeReason(e.target.value)}
-                        placeholder="Describe the issue..."
+                        onChange={(e) => { setDisputeReason(e.target.value); setDisputeError(''); }}
+                        placeholder="Describe the issue (min 20 characters)..."
                         className="w-full px-3 py-2 bg-konami-light-gray border border-konami-mid-gray rounded-xl text-konami-text text-sm outline-none focus:border-konami-blue transition-colors resize-none min-h-[80px]"
                       />
+                      {disputeError && <p className="text-xs" style={{ color: '#C8102E' }}>{disputeError}</p>}
                       <div className="flex gap-2">
-                        <button onClick={handleDispute} disabled={actionLoading || !disputeReason.trim()} className="btn-primary flex-1 text-sm py-2.5 bg-konami-red hover:bg-konami-red-hover">
+                        <button onClick={handleDispute} disabled={actionLoading} className="btn-primary flex-1 text-sm py-2.5 bg-konami-red hover:bg-konami-red-hover">
                           {actionLoading ? 'Submitting...' : 'Submit Dispute'}
                         </button>
-                        <button onClick={() => { setShowDisputeForm(false); setDisputeReason(''); }} className="btn-secondary text-sm py-2.5">
+                        <button onClick={() => { setShowDisputeForm(false); setDisputeReason(''); setDisputeError(''); }} className="btn-secondary text-sm py-2.5">
                           Cancel
                         </button>
                       </div>

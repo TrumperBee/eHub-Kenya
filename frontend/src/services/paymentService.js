@@ -1,63 +1,32 @@
 import axios from 'axios';
-import { BACKEND_URL } from '../utils/constants';
 import { auth } from './firebase';
+import { BACKEND_URL } from '../utils/constants';
 
 const api = axios.create({ baseURL: BACKEND_URL });
 
+export const initializePaystackPayment = async ({ listingId, amount }) => {
+  const idToken = await auth.currentUser.getIdToken();
+  const buyerEmail = auth.currentUser.email;
+  const { data } = await api.post(
+    '/api/payment/initialize',
+    { listingId, buyerEmail, amount },
+    { headers: { Authorization: `Bearer ${idToken}` } }
+  );
+  return data;
+};
+
+export const releaseEscrow = async (orderId) => {
+  const idToken = await auth.currentUser.getIdToken();
+  const { data } = await api.post(
+    '/api/escrow/release',
+    { orderId },
+    { headers: { Authorization: `Bearer ${idToken}` } }
+  );
+  return data;
+};
+
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
-export const generateOrderId = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = 'OD';
-  for (let i = 0; i < 10; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
-
-export const initiatePayment = async ({ phone, amount, orderId, listingId, listingTitle }) => {
-  const token = await auth.currentUser?.getIdToken();
-  const { data } = await api.post('/api/payment/initiate', {
-    phone,
-    amount,
-    orderId,
-    listingId,
-    listingTitle,
-  }, { headers: { Authorization: `Bearer ${token}` } });
-  return data;
-};
-
-export const pollPaymentStatus = async (checkoutRequestId, maxAttempts = 12) => {
-  for (let i = 0; i < maxAttempts; i++) {
-    await new Promise((r) => setTimeout(r, 5000));
-    try {
-      const { data } = await api.get(`/api/payment/status/${checkoutRequestId}`);
-      if (data.status === 'success' || data.status === 'failed') {
-        return { status: data.status, mpesaReceiptNumber: data.mpesaReceiptNumber };
-      }
-    } catch {
-      // continue polling
-    }
-  }
-  return { status: 'timeout', mpesaReceiptNumber: null };
-};
-
-export const initiateMpesaPayment = async (phone, amount, orderId, listingTitle) => {
-  const token = await auth.currentUser?.getIdToken();
-  const { data } = await api.post('/api/payment/initiate', {
-    phone,
-    amount,
-    orderId,
-    listingTitle,
-  }, { headers: { Authorization: `Bearer ${token}` } });
-  return data;
-};
-
-export const checkPaymentStatus = async (checkoutRequestId) => {
-  const { data } = await api.get(`/api/payment/status/${checkoutRequestId}`);
-  return data;
-};
 
 export const uploadListingImages = async (files) => {
   if (!CLOUD_NAME || !UPLOAD_PRESET) {
@@ -65,7 +34,6 @@ export const uploadListingImages = async (files) => {
   }
 
   const urls = [];
-
   for (const file of files) {
     const formData = new FormData();
     formData.append('file', file);
@@ -91,5 +59,4 @@ export const uploadListingImages = async (files) => {
 
 export const deleteListingImage = async () => {
   // Cloudinary unsigned uploads can't be deleted via API without a secret.
-  // Old images will be cleaned up automatically or via Cloudinary dashboard.
 };

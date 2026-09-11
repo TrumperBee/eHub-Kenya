@@ -29,6 +29,7 @@ import RegisterPage from './pages/public/RegisterPage';
 import SellerPublicProfilePage from './pages/public/SellerPublicProfilePage';
 import SetupUsernamePage from './pages/public/SetupUsernamePage';
 import FridayDropsPage from './pages/public/FridayDropsPage';
+import PaymentFailedPage from './pages/public/PaymentFailedPage';
 
 import BuyerDashboardPage from './pages/buyer/BuyerDashboardPage';
 import MyOrdersPage from './pages/buyer/MyOrdersPage';
@@ -141,6 +142,7 @@ function AppContent() {
             <Route path="/how-it-works" element={<PageLayout><HowItWorksPage /></PageLayout>} />
             <Route path="/faq" element={<PageLayout><FAQPage /></PageLayout>} />
             <Route path="/seller/:sellerId" element={<PageLayout><SellerPublicProfilePage /></PageLayout>} />
+            <Route path="/payment-failed" element={<PageLayout><PaymentFailedPage /></PageLayout>} />
 
             <Route path="/setup-username" element={
               <ProtectedRoute><SetupUsernamePage /></ProtectedRoute>

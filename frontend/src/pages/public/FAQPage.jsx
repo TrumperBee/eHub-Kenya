@@ -5,8 +5,8 @@ const categories = [
   {
     title: 'Buying',
     questions: [
-      { q: 'How do I buy an account?', a: 'Browse listings, click "Buy Now" on your preferred account, enter your M-Pesa number, and confirm the STK Push on your phone.' },
-      { q: 'Is my payment secure?', a: 'Yes. Payments are processed through M-Pesa STK Push and held in escrow until you confirm receipt of the account.' },
+      { q: 'How do I buy an account?', a: 'Browse listings, click "Buy Now" on your preferred account, pay securely through the Paystack popup via M-Pesa, card, or bank transfer, then chat with the seller to arrange your transfer.' },
+      { q: 'Is my payment secure?', a: 'Yes. Payments are processed by Paystack, Africa\'s leading payment platform, and held in escrow until you confirm receipt of the account.' },
       { q: 'What if I don\'t receive the account?', a: 'If the seller doesn\'t deliver within 24 hours, you can raise a dispute and our team will investigate.' },
       { q: 'Can I get a refund?', a: 'If the seller fails to deliver or the account doesn\'t match the listing description, you are eligible for a full refund.' },
       { q: 'How do I confirm receipt?', a: 'Once you receive the account credentials and verify they work, go to your order and click "Confirm Receipt" to release funds to the seller.' },
@@ -17,7 +17,7 @@ const categories = [
     questions: [
       { q: 'How do I become a seller?', a: 'Submit a seller application from your dashboard. Our team will review and approve your application within 24-48 hours.' },
       { q: 'How do I list an account?', a: 'Once approved, access the Transfer Room and click "Create Listing". Fill in the account details, add photos, and set your price.' },
-      { q: 'When do I get paid?', a: 'Once the buyer confirms receipt, the admin processes and sends your payout to your M-Pesa number manually. Payouts are typically processed within 24-48 hours of confirmation.' },
+      { q: 'When do I get paid?', a: 'Once the buyer confirms receipt, the payment is released from escrow and sent to your registered payout account. Sellers are contacted directly during onboarding for payout setup.' },
       { q: 'What if a buyer disputes?', a: 'If a buyer raises a dispute, our team reviews the evidence from both sides. Funds are held until the dispute is resolved.' },
       { q: 'Can I remove my listing?', a: 'Yes. You can pause or remove your listing anytime from the Transfer Room.' },
     ],
@@ -25,11 +25,11 @@ const categories = [
   {
     title: 'Payments',
     questions: [
-      { q: 'What payment methods are accepted?', a: 'We accept M-Pesa STK Push payments only. This ensures fast, secure transactions directly from your Safaricom line.' },
-      { q: 'How does the escrow system work?', a: 'When you pay, funds are held by our system. They are only released to the seller once you confirm receipt of the account.' },
-      { q: 'How long does M-Pesa payment take?', a: 'STK Push is instant. Once you enter your PIN on M-Pesa, the payment is processed within seconds.' },
-      { q: 'What if the STK Push doesn\'t arrive?', a: 'Check that your Safaricom number is correct and you have sufficient funds. You can retry the payment from your orders page.' },
-      { q: 'Are there any hidden fees?', a: 'No hidden fees. The price you see is the price you pay. Sellers cover the M-Pesa transaction fee.' },
+      { q: 'What payment methods are accepted?', a: 'We accept M-Pesa (Safaricom), Visa/Mastercard cards, and bank transfers — all processed through Paystack. M-Pesa payments arrive as a standard STK Push prompt handled by Paystack.' },
+      { q: 'How does the escrow system work?', a: 'When you pay, funds are held securely in escrow. They are only released to the seller once you confirm receipt of the account.' },
+      { q: 'How long does payment take?', a: 'M-Pesa via Paystack is instant — once you enter your PIN, the payment is confirmed within seconds. Card and bank transfer approval times vary slightly.' },
+      { q: 'What if my payment fails?', a: 'If a payment fails or is cancelled, no money is taken. You can simply try again from the listing page. If you were charged but the order did not update, contact support.' },
+      { q: 'Are there any hidden fees?', a: 'No hidden fees. The price you see is the price you pay. There are no extra charges on top of the listed price.' },
     ],
   },
   {

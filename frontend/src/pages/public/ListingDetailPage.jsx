@@ -12,11 +12,11 @@ import TierBadge from '../../components/listings/TierBadge';
 import PlayerBadge from '../../components/listings/PlayerBadge';
 import ReviewCard from '../../components/reviews/ReviewCard';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import BuyNowModal from '../../components/checkout/BuyNowModal';
+import PayNowButton from '../../components/checkout/PayNowButton';
 import SaveButton from '../../components/listings/SaveButton';
 import CommentSection from '../../components/comments/CommentSection';
 import { toggleSaveListing, subscribeSavedListingIds } from '../../services/savedListingsService';
-import { ChevronDown, ChevronUp, Shield, Star, Circle, ChevronRight, Bookmark, Flame } from 'lucide-react';
+import { ChevronDown, ChevronUp, Shield, Star, Circle, ChevronRight, Bookmark, Flame, MessageCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const statRows = [
@@ -32,7 +32,6 @@ export default function ListingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showSteps, setShowSteps] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(0);
-  const [showBuyModal, setShowBuyModal] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [sellerSales, setSellerSales] = useState(0);
 
@@ -112,8 +111,8 @@ export default function ListingDetailPage() {
 
   const howItWorksSteps = [
     'Find your desired account and click "Buy Now"',
-    'Enter your M-Pesa phone number to receive STK Push',
-    'Confirm the payment on your phone',
+    'Pay securely via Paystack — M-Pesa, card, or bank transfer',
+    'Your payment is held in escrow until you confirm receipt',
     'Chat with the seller to arrange account transfer',
     'Confirm receipt to release funds to the seller',
   ];
@@ -364,7 +363,7 @@ export default function ListingDetailPage() {
                     </Link>
                   </div>
                 ) : isOwner ? (
-                  <div>
+                  <div className="mb-4">
                     <p className="text-sm text-white/60 mb-3">This is your listing</p>
                     <Link to={`/transfer-room/edit/${listing.id}`} className="btn-secondary w-full text-center text-sm block">
                       Edit Listing
@@ -375,24 +374,59 @@ export default function ListingDetailPage() {
                     Login to Buy
                   </Link>
                 ) : dropUpcoming ? (
-                  <button
-                    disabled
-                    className="btn-primary w-full text-lg py-4 mb-4 opacity-70 cursor-not-allowed"
-                    title={`Available from ${dropGoLiveLabel}`}
-                  >
-                    Live Friday - {formatKES(effectivePrice)}
-                  </button>
+                  <div className="mb-4">
+                    <button
+                      disabled
+                      className="btn-primary w-full text-lg py-4 opacity-70 cursor-not-allowed"
+                      title={`Available from ${dropGoLiveLabel}`}
+                    >
+                      Live Friday - {formatKES(effectivePrice)}
+                    </button>
+                  </div>
                 ) : (
-                  <button onClick={() => setShowBuyModal(true)} className="btn-primary w-full text-lg py-4 mb-4">
-                    Buy Now - {formatKES(effectivePrice)}
+                  <div className="mb-4">
+                    <PayNowButton listing={listing} effectivePrice={effectivePrice} />
+                    <p className="text-white/40 text-[11px] text-center mt-2">
+                      Secured by Paystack · M-Pesa, Card & Bank Transfer accepted
+                    </p>
+                  </div>
+                )}
+
+                {listing.status !== 'sold' && !isOwner && listing.sellerWhatsapp && (
+                  <button
+                    onClick={() => {
+                      const phone = listing.sellerWhatsapp.replace(/\D/g, '').replace(/^0/, '254');
+                      const msg = encodeURIComponent(
+                        `Hello, I have a question about your listing: ${listing.title}\n${window.location.href}`
+                      );
+                      window.open(`https://wa.me/${phone}?text=${msg}`, '_blank', 'noopener');
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 mb-4
+                               bg-white/10 hover:bg-white/20 border border-white/20
+                               text-white/70 hover:text-white rounded-xl text-sm
+                               font-heading font-bold uppercase tracking-wide transition-all"
+                  >
+                    <MessageCircle size={16} />
+                    Ask Seller a Question
                   </button>
                 )}
 
-                <div className="rounded-xl p-3 flex items-start gap-2" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                <div className="rounded-xl p-3 flex items-start gap-2 mb-4" style={{ background: 'rgba(255,255,255,0.1)' }}>
                   <Shield size={16} className="text-white/70 mt-0.5 shrink-0" />
                   <p className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                    Payment held in escrow until you confirm receipt
+                    Payment held in escrow by Paystack until you confirm receipt
                   </p>
+                </div>
+
+                <div className="pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+                  <p className="text-white/40 text-[11px] uppercase tracking-widest font-heading mb-3 text-center">
+                    Payment Methods
+                  </p>
+                  <div className="flex items-center justify-center gap-3 flex-wrap">
+                    <div className="bg-white/10 rounded-lg px-3 py-1.5 text-white/70 text-xs font-medium">M-Pesa</div>
+                    <div className="bg-white/10 rounded-lg px-3 py-1.5 text-white/70 text-xs font-medium">Visa / Mastercard</div>
+                    <div className="bg-white/10 rounded-lg px-3 py-1.5 text-white/70 text-xs font-medium">Bank Transfer</div>
+                  </div>
                 </div>
               </div>
 
@@ -423,10 +457,6 @@ export default function ListingDetailPage() {
           </div>
         </div>
       </div>
-
-      {showBuyModal && (
-        <BuyNowModal listing={listing} price={effectivePrice} platform={dropLive ? fridayDrop?.platform : undefined} onClose={() => setShowBuyModal(false)} />
-      )}
     </div>
   );
 }

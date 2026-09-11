@@ -1,18 +1,18 @@
-import { Search, ShoppingCart, Smartphone, MessageSquare, CheckCircle } from 'lucide-react';
+import { Search, ShoppingBag, CreditCard, MessageSquare, CheckCircle } from 'lucide-react';
 
 const steps = [
-  { icon: Search, title: 'Browse Accounts', desc: 'Browse through our verified listings to find the perfect eFootball account for your squad. Filter by tier, platform, price, and more.' },
-  { icon: ShoppingCart, title: 'Click Buy Now', desc: 'Found your dream account? Click the Buy Now button on any listing to begin the purchase process.' },
-  { icon: Smartphone, title: 'Pay via M-Pesa', desc: 'Enter your Safaricom phone number to receive an M-Pesa STK Push prompt. Confirm the payment on your phone to complete the transaction.' },
-  { icon: MessageSquare, title: 'Chat with the Seller', desc: 'Once payment is confirmed, you can chat directly with the seller. They will transfer the Konami account credentials to your registered email.' },
-  { icon: CheckCircle, title: 'Confirm & Complete', desc: 'Once you receive the account and verify everything works, mark the order as complete. The funds are then released to the seller.' },
+  { icon: Search, title: 'Browse Accounts', desc: 'Find the account that matches your budget and squad goals. Filter by tier, price, and more on the Browse page.' },
+  { icon: ShoppingBag, title: 'Click Buy Now', desc: 'Select your perfect account and click Buy Now. Your order is created instantly.' },
+  { icon: CreditCard, title: 'Pay Securely', desc: 'Pay via M-Pesa, card, or bank transfer — powered by Paystack, Africa\'s leading payment platform. Your payment is held securely until you confirm delivery.' },
+  { icon: MessageSquare, title: 'Receive Your Account', desc: 'The seller transfers the Konami account email to yours. Chat with them directly in your order to coordinate the transfer.' },
+  { icon: CheckCircle, title: 'Confirm & Done', desc: 'Mark the account as received — payment is released to the seller. Transaction complete.' },
 ];
 
 const faqs = [
   { q: 'Is my money safe?', a: 'Yes. Every payment is held in escrow until you confirm receipt. The seller only gets paid after you confirm you have received and verified the account.' },
   { q: 'What if the seller doesn\'t deliver?', a: 'If the seller fails to deliver the account within 24 hours, you can raise a dispute. Our team will investigate and issue a full refund if the seller is at fault.' },
   { q: 'How long does transfer take?', a: 'Most sellers complete the transfer within 24 hours. The chat system allows you to communicate directly with the seller for real-time updates.' },
-  { q: 'What if I don\'t receive the STK Push?', a: 'Make sure you entered the correct Safaricom number. If you still don\'t receive the prompt, check that your M-Pesa app is updated and try again. Contact support if the issue persists.' },
+  { q: 'What payment methods are accepted?', a: 'Paystack powers all payments. You can pay via M-Pesa (Safaricom), Visa/Mastercard card, or bank transfer. M-Pesa users receive a standard STK Push prompt on their phone, handled automatically by Paystack.' },
 ];
 
 export default function HowItWorksPage() {
