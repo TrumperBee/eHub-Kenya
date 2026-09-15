@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Zap, Shield, MessageCircle, CheckCircle, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import PasswordInput from '../../components/common/PasswordInput';
 import { validateUsernameFormat, isUsernameTaken, generateSuggestions, checkUsername } from '../../utils/usernameUtils';
 
 export default function RegisterPage() {
@@ -276,25 +277,34 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <input
-                type="password"
-                placeholder="Password (min 8 characters)"
+              <PasswordInput
                 value={form.password}
                 onChange={update('password')}
-                className="input-field"
+                placeholder="Password"
                 autoComplete="new-password"
               />
+              {form.password && (
+                <div className="flex items-center gap-1.5 mt-2">
+                  <CheckCircle size={14} style={{ color: form.password.length >= 8 ? '#10B981' : '#9CA3AF' }} />
+                  <span className="text-xs" style={{ color: form.password.length >= 8 ? '#10B981' : '#9CA3AF' }}>
+                    At least 8 characters
+                  </span>
+                </div>
+              )}
             </div>
 
             <div>
-              <input
-                type="password"
-                placeholder="Confirm password"
+              <PasswordInput
                 value={form.confirmPassword}
                 onChange={update('confirmPassword')}
-                className="input-field"
+                placeholder="Confirm password"
                 autoComplete="new-password"
               />
+              {form.confirmPassword && form.confirmPassword !== form.password && (
+                <p className="text-xs mt-1" style={{ color: '#EF4444' }}>
+                  Passwords do not match
+                </p>
+              )}
             </div>
 
             <button

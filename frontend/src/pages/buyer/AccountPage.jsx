@@ -6,6 +6,7 @@ import { auth } from '../../services/firebase';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { updateUserDocument } from '../../services/authService';
+import PasswordInput from '../../components/common/PasswordInput';
 import { validateUsernameFormat, isUsernameTaken, generateSuggestions, checkUsername } from '../../utils/usernameUtils';
 import { formatDate, formatKES } from '../../utils/formatters';
 import { ORDER_STATUS } from '../../utils/constants';
@@ -13,7 +14,7 @@ import toast from 'react-hot-toast';
 import {
   User, Lock, Bell, ShoppingBag, Settings, LogOut, Camera, CheckCircle,
   Store, Calendar, Clock, AlertTriangle, X, Loader2, HelpCircle, MessageCircle,
-  ChevronRight, Eye, Shield, Check, UserCheck, Package, Star, Save,
+  ChevronRight, Shield, Check, UserCheck, Package, Star, Save,
 } from 'lucide-react';
 
 const TABS = [
@@ -551,20 +552,17 @@ export default function AccountPage() {
                   <h3 className="font-heading font-bold uppercase text-sm" style={{ color: '#003BFF' }}>Change Password</h3>
                   <div>
                     <label className="block text-sm mb-1" style={{ color: '#374151' }}>Current Password</label>
-                    <input
-                      type="password"
+                    <PasswordInput
                       value={currentPassword}
                       onChange={e => setCurrentPassword(e.target.value)}
-                      className="input-field"
                     />
                   </div>
                   <div>
                     <label className="block text-sm mb-1" style={{ color: '#374151' }}>New Password</label>
-                    <input
-                      type="password"
+                    <PasswordInput
                       value={newPassword}
                       onChange={e => setNewPassword(e.target.value)}
-                      className="input-field"
+                      autoComplete="new-password"
                     />
                     {newPassword && (
                       <div className="mt-2">
@@ -580,11 +578,10 @@ export default function AccountPage() {
                   </div>
                   <div>
                     <label className="block text-sm mb-1" style={{ color: '#374151' }}>Confirm New Password</label>
-                    <input
-                      type="password"
+                    <PasswordInput
                       value={confirmNewPassword}
                       onChange={e => setConfirmNewPassword(e.target.value)}
-                      className="input-field"
+                      autoComplete="new-password"
                     />
                   </div>
                   <button

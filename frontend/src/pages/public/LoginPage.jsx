@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Zap, Shield, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import toast from 'react-hot-toast';
+import PasswordInput from '../../components/common/PasswordInput';
 
 export default function LoginPage() {
   const { login, loginWithGoogle } = useAuth();
@@ -113,12 +113,10 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <input
-                type="password"
-                placeholder="Password"
+              <PasswordInput
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="input-field"
+                placeholder="Password"
                 autoComplete="current-password"
               />
             </div>
@@ -158,12 +156,12 @@ export default function LoginPage() {
           </button>
 
           <div className="mt-4 text-center">
-            <button
-              onClick={() => toast.error('Not yet available')}
+            <Link
+              to="/forgot-password"
               className="text-xs text-konami-text-muted hover:text-konami-text transition-colors"
             >
               Forgot password?
-            </button>
+            </Link>
           </div>
 
           <p className="mt-6 text-center text-sm text-konami-text-muted">
