@@ -25,6 +25,16 @@ export const cancelPayment = async (orderId) => {
   return data;
 };
 
+export const verifyOrderPayment = async (orderId) => {
+  const idToken = await auth.currentUser.getIdToken();
+  const { data } = await api.post(
+    '/api/payment/verify',
+    { orderId },
+    { headers: { Authorization: `Bearer ${idToken}` } }
+  );
+  return data;
+};
+
 export const releaseEscrow = async (orderId) => {
   const idToken = await auth.currentUser.getIdToken();
   const { data } = await api.post(

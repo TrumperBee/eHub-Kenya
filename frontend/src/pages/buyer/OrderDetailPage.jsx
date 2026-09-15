@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { doc, setDoc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -8,9 +8,9 @@ import { useOrder } from '../../hooks/useOrders';
 import { ORDER_STATUS, BACKEND_URL } from '../../utils/constants';
 import { formatKES, formatDate } from '../../utils/formatters';
 import { canViewOrder } from '../../utils/orderAccess';
-import { releaseEscrow, submitDelivery } from '../../services/paymentService';
+import { releaseEscrow, submitDelivery, verifyOrderPayment } from '../../services/paymentService';
 import { subscribeToDeliveries } from '../../services/ordersService';
-import { buyerCanConfirm, buyerCanDispute, sellerCanDeliver } from '../../utils/orderMachine';
+import { buyerCanConfirm, buyerCanDispute, sellerCanDeliver, isPaidStatus } from '../../utils/orderMachine';
 import { buyerGuide, sellerGuide } from '../../utils/orderGuide';
 import OrderStatePanel from '../../components/orders/OrderStatePanel';
 import ContextHint from '../../components/common/ContextHint';
@@ -19,7 +19,7 @@ import ReviewForm from '../../components/reviews/ReviewForm';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import {
   Shield, MessageSquare, CheckCircle, Mail, KeyRound, Eye, EyeOff,
-  Send, Upload, AlertTriangle, Lock, ShoppingBag,
+  Send, Upload, AlertTriangle, Lock, ShoppingBag, Loader, RefreshCw,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -27,6 +27,7 @@ const PAYMENT_STATUS = {
   paid:     { label: 'Paid',     color: 'text-green-600' },
   pending:  { label: 'Pending',  color: 'text-yellow-600' },
   abandoned:{ label: 'Abandoned', color: 'text-gray-500' },
+  confirming: { label: 'Confirming…', color: 'text-blue-600' },
 };
 
 function DeniedScreen() {
@@ -241,6 +242,8 @@ export default function OrderDetailPage() {
   const [disputeError, setDisputeError] = useState('');
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
+  const autoVerifiedRef = useRef(false);
 
   useEffect(() => {
     if (!id) return;
@@ -248,12 +251,41 @@ export default function OrderDetailPage() {
     return unsub;
   }, [id]);
 
+  // Self-heal: react-paystack's popup never redirects to the merchant callback
+  // URL, so the ONLY server notification for popup payments is the Paystack
+  // webhook. If that webhook isn't wired up (or fires late), the order would
+  // otherwise sit in pending_payment forever while Paystack shows success.
+  // When we arrive via ?payment=success, ask the backend to verify the charge
+  // once (idempotent even if the webhook already confirmed the payment).
+  useEffect(() => {
+    if (!paymentSuccess || autoVerifiedRef.current) return;
+    if (!order || order.status !== 'pending_payment') return;
+    if (order.paymentStatus === 'paid' || isPaidStatus(order.status)) return;
+    autoVerifiedRef.current = true;
+    let cancelled = false;
+    verifyOrderPayment(id)
+      .then(() => {
+        if (!cancelled) toast.success('Payment confirmed. The seller has been notified.');
+      })
+      .catch((err) => {
+        console.error('Auto payment verification failed:', err);
+      });
+    return () => { cancelled = true; };
+  }, [paymentSuccess, order, id]);
+
   if (loading) return <div className="pt-16"><LoadingSpinner fullScreen /></div>;
   if (error) return <DeniedScreen />;
   if (!order) return <NotFoundScreen />;
   if (!canViewOrder(order, currentUser)) return <DeniedScreen />;
 
-  const paymentStatusConfig = PAYMENT_STATUS[order.paymentStatus];
+  // Firestore order state is the single source of truth for what this page shows.
+  // The ?payment=success URL param is only a redirect signal from Paystack/popup:
+  // while the backend has not yet confirmed the charge, we show a transient
+  // "Confirming your payment" state instead of claiming payment is confirmed.
+  const isPaid = order.paymentStatus === 'paid' || isPaidStatus(order.status);
+  const isClosed = ['completed', 'disputed', 'refunded', 'cancelled'].includes(order.status);
+  const isConfirming = paymentSuccess && !isPaid && order.status === 'pending_payment';
+  const paymentStatusConfig = isConfirming ? PAYMENT_STATUS.confirming : PAYMENT_STATUS[order.paymentStatus];
   const statusConfig = ORDER_STATUS[order.status] || {};
   const currentStepIndex = stepIndexFor(order.status);
   const isBuyer = currentUser && order.buyerId === currentUser.uid;
@@ -262,7 +294,11 @@ export default function OrderDetailPage() {
   const canDispute = isBuyer && buyerCanDispute(order.status) && !['open', 'under_review'].includes(order.disputeStatus);
   const canSubmitDelivery = isSeller && sellerCanDeliver(order.status);
   const canReview = isBuyer && order.status === 'completed';
-  const isClosed = ['completed', 'disputed', 'refunded', 'cancelled'].includes(order.status);
+
+  const progressSteps = [
+    { key: 'payment', label: isPaid ? 'Payment Confirmed' : 'Payment Pending', index: 0 },
+    ...STEPS.map((step) => ({ ...step, index: step.index + 1 })),
+  ];
 
   const handleConfirmReceipt = async () => {
     setActionLoading(true);
@@ -305,6 +341,19 @@ export default function OrderDetailPage() {
     }
   };
 
+  const handleVerifyPayment = async () => {
+    setVerifyingPayment(true);
+    try {
+      await verifyOrderPayment(id);
+      toast.success('Payment status checked. This page updates automatically.');
+    } catch (err) {
+      console.error('Payment verify error:', err);
+      toast.error(err?.response?.data?.error || 'Could not verify the payment right now. Try again in a moment.');
+    } finally {
+      setVerifyingPayment(false);
+    }
+  };
+
   const handleSubmitReview = async ({ rating, comment }) => {
     if (!order.listingId) return;
     setReviewLoading(true);
@@ -342,7 +391,27 @@ export default function OrderDetailPage() {
   return (
     <div className="pt-16 min-h-screen bg-konami-light-gray">
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {paymentSuccess && !isClosed && (
+        {isConfirming && (
+          <div className="bg-blue-600 text-white rounded-xl p-4 mb-6 flex items-center gap-3">
+            <Loader size={20} className="shrink-0 animate-spin" />
+            <div className="flex-1">
+              <p className="font-heading font-bold text-sm uppercase">Confirming your payment</p>
+              <p className="text-white/80 text-xs">
+                Paystack says the payment went through. We're verifying it now — this page updates automatically once confirmed.
+              </p>
+            </div>
+            <button
+              onClick={handleVerifyPayment}
+              disabled={verifyingPayment}
+              className="shrink-0 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide bg-white/20 hover:bg-white/30 rounded-lg px-3 py-2 transition-colors disabled:opacity-60"
+            >
+              {verifyingPayment ? <Loader size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+              {verifyingPayment ? 'Checking…' : 'Check Now'}
+            </button>
+          </div>
+        )}
+
+        {paymentSuccess && isPaid && !isClosed && !isConfirming && (
           <div className="bg-green-500 text-white rounded-xl p-4 mb-6 flex items-center gap-3">
             <CheckCircle size={20} className="shrink-0" />
             <div>
@@ -408,9 +477,13 @@ export default function OrderDetailPage() {
               <div className="relative">
                 <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-konami-mid-gray" />
                 <div className="space-y-6">
-                  {STEPS.map((step) => {
-                    const isComplete = currentStepIndex >= step.index;
-                    const isCurrent = step.key === order.status;
+                  {progressSteps.map((step) => {
+                    const isComplete = step.key === 'payment'
+                      ? isPaid
+                      : isPaid && (currentStepIndex + 1) >= step.index;
+                    const isCurrent = step.key === 'payment'
+                      ? order.status === 'pending_payment' && !isPaid
+                      : step.key === order.status;
                     return (
                       <div key={step.key} className="flex items-center gap-3 relative">
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 z-10 ${
@@ -444,7 +517,14 @@ export default function OrderDetailPage() {
 
             <div className="space-y-3">
               {isBuyer ? (
-                <OrderStatePanel guide={buyerGuide(order)}>
+                <OrderStatePanel guide={isConfirming ? {
+                  tone: 'waiting',
+                  title: 'CONFIRMING PAYMENT',
+                  whatHappened: 'Paystack accepted your payment. We are verifying it now — this can take a few seconds.',
+                  next: 'This page updates automatically once confirmed. No need to pay again.',
+                  whoActs: 'eHub × Paystack',
+                  ctaLabel: 'Check payment status',
+                } : buyerGuide(order)}>
                   {order.status === 'credentials_submitted' && deliveries.length > 0 && (
                     <CredentialsList deliveries={deliveries} isSeller={false} />
                   )}
@@ -456,7 +536,7 @@ export default function OrderDetailPage() {
                     </div>
                   )}
 
-                  {order.status === 'pending_payment' && order.listingId && (
+                  {order.status === 'pending_payment' && !isConfirming && order.listingId && (
                     <Link to={`/listing/${order.listingId}`} className="btn-primary w-full text-sm py-3 flex items-center justify-center gap-2">
                       <ShoppingBag size={16} /> View Listing to Pay
                     </Link>
