@@ -40,6 +40,12 @@ export default function OrderStatePanel({ guide, children }) {
         </p>
       )}
 
+      {guide.statusLabel && (
+        <p className="inline-flex items-center text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full" style={{ background: t.color, color: '#FFFFFF' }}>
+          {guide.statusLabel}
+        </p>
+      )}
+
       <p className="text-sm leading-snug" style={{ color: '#111111' }}>{guide.whatHappened}</p>
 
       <p className="text-xs leading-snug" style={{ color: '#4B5563' }}>

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { LayoutDashboard, List, ShoppingBag, Wallet, User, Plus, Star, Flame } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import Badge from '../../components/common/Badge';
+import useSellerActionOrders from '../../hooks/useSellerActionOrders';
 import OverviewTab from './tabs/OverviewTab';
 import ListingsTab from './tabs/ListingsTab';
 import OrdersTab from './tabs/OrdersTab';
@@ -33,6 +35,7 @@ export default function TransferRoomPage() {
   const requestedTab = searchParams.get('tab');
   const isValidTab = NAV_ITEMS.some((t) => t.id === requestedTab);
   const [activeTab, setActiveTab] = useState(isValidTab ? requestedTab : 'overview');
+  const actionOrders = useSellerActionOrders(currentUser?.uid);
 
   return (
     <div className="pt-[68px] min-h-screen" style={{ background: '#F5F5F5' }}>
@@ -62,6 +65,7 @@ export default function TransferRoomPage() {
                 >
                   <tab.icon size={16} />
                   {tab.label}
+                  {tab.id === 'orders' && actionOrders > 0 && <Badge count={actionOrders} className="ml-auto" />}
                 </button>
               );
             })}
@@ -88,6 +92,7 @@ export default function TransferRoomPage() {
                     }}
                   >
                     <tab.icon size={14} /> {tab.label}
+                    {tab.id === 'orders' && actionOrders > 0 && <Badge count={actionOrders} />}
                   </button>
                 );
               })}

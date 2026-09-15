@@ -147,9 +147,10 @@ export function sellerGuide(order = {}) {
     case 'awaiting_seller_delivery':
       return {
         tone: GUIDE_TONES.paid,
-        title: 'BUYER PAID \u2705',
-        whatHappened: 'Payment has been confirmed.',
-        next: 'Submit the eFootball account credentials to the buyer.',
+        title: 'PAYMENT RECEIVED \u2705',
+        statusLabel: 'ACCOUNT DETAILS REQUIRED',
+        whatHappened: 'The buyer paid for your listing. The order is locked and your payout is held securely in escrow.',
+        next: 'Submit the buyer\u2019s eFootball account login details (email + password) using the form below. Deliver them only inside this order \u2014 never in public chat or email.',
         whoActs: 'You',
         ctaLabel: 'Submit Account Details',
       };
@@ -158,9 +159,10 @@ export function sellerGuide(order = {}) {
     case 'credentials_submitted':
       return {
         tone: GUIDE_TONES.waiting,
-        title: 'ACCOUNT DETAILS SENT \u2705',
-        whatHappened: 'The buyer is verifying the account.',
-        next: "You'll be notified when the buyer confirms delivery.",
+        title: 'ACCOUNT DETAILS SUBMITTED \u2705',
+        statusLabel: 'WAITING FOR BUYER',
+        whatHappened: 'You delivered the buyer\u2019s eFootball account login details inside this order.',
+        next: 'The buyer is logging in to verify the account. You will be notified the moment they confirm delivery.',
         whoActs: 'Buyer',
         ctaLabel: 'Wait for confirmation',
       };
@@ -168,19 +170,21 @@ export function sellerGuide(order = {}) {
     case 'disputed':
       return {
         tone: GUIDE_TONES.dispute,
-        title: 'DISPUTE RAISED \u26a0\ufe0f',
-        whatHappened: 'The buyer reported an issue with this order.',
-        next: 'Your payout is on hold while the dispute is reviewed.',
+        title: 'PAYMENT ON HOLD \u2014 ADMIN REVIEW',
+        statusLabel: 'DISPUTE OPEN',
+        whatHappened: 'The buyer raised a dispute. Your payout is frozen in escrow while the case is under review.',
+        next: 'eHub support reviews the chat below as evidence. No release happens until the admin resolves the dispute.',
         whoActs: 'eHub support',
-        ctaLabel: 'Keep chatting below — it is used as evidence',
+        ctaLabel: 'Keep chatting below',
       };
 
     case 'completed':
       return {
         tone: GUIDE_TONES.complete,
-        title: 'ORDER COMPLETED \u2705',
-        whatHappened: 'The buyer confirmed delivery.',
-        next: `Payout status: ${payoutLabelFor(order)}.`,
+        title: 'SALE COMPLETE \u2705',
+        statusLabel: 'SALE COMPLETE',
+        whatHappened: 'The buyer confirmed delivery. Escrow has been released.',
+        next: `Payout status: ${payoutLabelFor(order)}. The admin sends the payout to your registered payout phone. Payout is only marked released once the admin confirms it was sent.`,
         whoActs: 'eHub support',
         ctaLabel: 'Review your order chat',
       };
@@ -189,6 +193,7 @@ export function sellerGuide(order = {}) {
       return {
         tone: GUIDE_TONES.refunded,
         title: 'ORDER REFUNDED',
+        statusLabel: 'ORDER REFUNDED',
         whatHappened: 'The dispute was resolved in the buyer\u2019s favour.',
         next: 'No payout will be issued for this order.',
         whoActs: 'eHub support',
@@ -209,6 +214,7 @@ export function sellerGuide(order = {}) {
       return {
         tone: GUIDE_TONES.pending,
         title: 'AWAITING BUYER PAYMENT',
+        statusLabel: 'AWAITING PAYMENT',
         whatHappened: 'A buyer created an order but has not paid yet.',
         next: 'You will be notified as soon as payment is confirmed.',
         whoActs: 'Buyer',

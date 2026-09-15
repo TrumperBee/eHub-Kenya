@@ -1,15 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Bell, LogOut, Shield, ShoppingBag, User, House, Search, HelpCircle, MessageCircle, Package, Store, Plus, BarChart3, Settings, Clipboard, Users, DoorOpen, ArrowRight, Wallet, CheckCircle, AlertTriangle, Bookmark, Flame } from 'lucide-react';
+import { Menu, X, Bell, LogOut, Shield, ShoppingBag, User, House, Search, HelpCircle, MessageCircle, Package, Store, Plus, BarChart3, Settings, Clipboard, Users, DoorOpen, ArrowRight, Wallet, CheckCircle, AlertTriangle, Bookmark, Flame, LayoutGrid } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { ADMIN_EMAIL, ADMIN_ROUTE } from '../../utils/constants';
 import { formatRelativeTime } from '../../utils/formatters';
 import { isDropLive } from '../../utils/fridayUtils';
+import useSellerActionOrders from '../../hooks/useSellerActionOrders';
+import Badge from './Badge';
 
 export default function Navbar() {
   const { currentUser, userProfile, logout } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const actionOrders = useSellerActionOrders(currentUser?.uid);
   const navigate = useNavigate();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -85,7 +88,7 @@ export default function Navbar() {
   const displayName = userProfile?.sellerDisplayName || userProfile?.displayName || currentUser?.displayName || 'User';
   const initials = getInitials(displayName);
 
-  const DrawerNavItem = ({ icon, label, href, activeColor }) => (
+  const DrawerNavItem = ({ icon, label, href, activeColor, badge }) => (
     <Link
       to={href}
       onClick={closeDrawer}
@@ -98,7 +101,8 @@ export default function Navbar() {
       onMouseLeave={(e) => { if (!isActive(href)) e.currentTarget.style.background = 'transparent'; }}
     >
       <span style={{ color: isActive(href) ? (activeColor || '#FFF100') : '#FFFFFF', fontSize: 18, width: 20, textAlign: 'center', flexShrink: 0 }}>{icon}</span>
-      <span className="font-heading text-sm font-bold uppercase tracking-wide">{label}</span>
+      <span className="font-heading text-sm font-bold uppercase tracking-wide flex-1">{label}</span>
+      {badge != null && badge > 0 && <Badge count={badge} />}
     </Link>
   );
 
@@ -245,10 +249,17 @@ export default function Navbar() {
                     </Link>
 
                     {userProfile?.sellerApproved && (
-                      <Link to="/transfer-room" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors">
-                        <Shield size={16} />
-                        Transfer Room
-                      </Link>
+                      <>
+                        <Link to="/transfer-room?tab=orders" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors">
+                          <Store size={16} />
+                          My Sales
+                          <span className="ml-auto"><Badge count={actionOrders} /></span>
+                        </Link>
+                        <Link to="/transfer-room" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors">
+                          <Shield size={16} />
+                          Transfer Room
+                        </Link>
+                      </>
                     )}
 
                     {!userProfile?.sellerApproved && (
@@ -350,9 +361,10 @@ export default function Navbar() {
           <>
             <div className="mx-5 mt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} />
             <SectionLabel label="SELLER" />
-            <DrawerNavItem icon={<Store size={18} />} label="Transfer Room" href="/transfer-room" />
+            <DrawerNavItem icon={<Store size={18} />} label="My Sales" href="/transfer-room?tab=orders" badge={actionOrders} />
+            <DrawerNavItem icon={<LayoutGrid size={18} />} label="Transfer Room" href="/transfer-room" />
             <DrawerNavItem icon={<Plus size={18} />} label="New Listing" href="/transfer-room/new" />
-            <DrawerNavItem icon={<BarChart3 size={18} />} label="My Earnings" href="/transfer-room/earnings" />
+            <DrawerNavItem icon={<BarChart3 size={18} />} label="My Earnings" href="/transfer-room?tab=earnings" />
             <DrawerNavItem icon={<Flame size={18} />} label="Friday Drops" href="/transfer-room?tab=fridayDrops" />
           </>
         )}

@@ -40,7 +40,7 @@ function EarningsError({ onRetry }) {
   );
 }
 
-export default function EarningsTab({ profile, user, onTabChange }) {
+export default function EarningsTab({ profile }) {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -112,10 +112,10 @@ export default function EarningsTab({ profile, user, onTabChange }) {
         <div className="bg-white rounded-2xl shadow-sm p-4 relative overflow-hidden">
           <div style={{ height: 4, background: '#003BFF', position: 'absolute', top: 0, left: 0, right: 0 }} />
           <p className="font-heading text-3xl font-extrabold mb-1" style={{ color: '#D97706' }}>{formatKES(pendingEscrow)}</p>
-          <p className="text-sm font-medium" style={{ color: '#111' }}>Pending Escrow</p>
+          <p className="text-sm font-medium" style={{ color: '#111' }}>Payout Pending</p>
           <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 mt-1 leading-snug">
             <Clock size={12} className="shrink-0" style={{ color: '#D97706' }} />
-            <span className="text-xs" style={{ color: '#6B7280' }}>Awaiting buyer confirmation</span>
+            <span className="text-xs" style={{ color: '#6B7280' }}>Funds held until the order completes</span>
           </div>
         </div>
 
@@ -135,11 +135,14 @@ export default function EarningsTab({ profile, user, onTabChange }) {
         <div className="text-sm leading-relaxed space-y-1" style={{ color: '#374151' }}>
           <p>Payments are processed through Paystack and held by eHub until an order completes:</p>
           <ol className="list-decimal pl-4 space-y-0.5">
-            <li>When a buyer pays, the funds are held securely while the order is in progress.</li>
-            <li>Once you transfer the account and the buyer confirms delivery, the admin processes and sends your payout manually (typically within 24-48 hours after confirmation).</li>
+            <li>When a buyer pays, the funds are held securely while the order is in progress (Payout Pending).</li>
+            <li>Once you transfer the account and the buyer confirms delivery, escrow is released and the payout becomes <strong>Eligible</strong> — the admin sends it manually, typically within 24-48 hours after confirmation.</li>
             <li>The platform service fee (0.5%, max KES 200) is applied when your payout is processed.</li>
             <li>If there is a dispute, the funds stay held until the admin resolves it.</li>
           </ol>
+          <p className="mt-2">
+            A payout is only ever marked <strong>Released</strong> on this page once the admin confirms it was sent to your registered payout phone.
+          </p>
           <p className="mt-2">
             Your registered payout phone number: <strong>{profile?.phoneNumber || 'Not set. Update in Profile'}</strong>
           </p>
@@ -188,7 +191,7 @@ export default function EarningsTab({ profile, user, onTabChange }) {
                       <td className="px-5 py-3 text-sm font-semibold" style={{ color: '#22C55E' }}>{formatKES(net)}</td>
                       <td className="px-5 py-3">
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: '#FEF3C7', color: '#B45309' }}>
-                          <Clock size={11} /> Pending admin payout
+                          <Clock size={11} /> Payout Eligible
                         </span>
                       </td>
                     </tr>

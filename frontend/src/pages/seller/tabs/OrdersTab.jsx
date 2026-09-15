@@ -1,27 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, AlertTriangle, ChevronUp, ChevronDown, Store, Upload, MessageSquare, ArrowRight } from 'lucide-react';
+import { AlertTriangle, ChevronUp, ChevronDown, Store, Upload, MessageSquare, ArrowRight } from 'lucide-react';
 import { getSellerOrders } from '../../../services/ordersService';
-import { ORDER_STATUS } from '../../../utils/constants';
 import { formatKES, formatDate } from '../../../utils/formatters';
-
-const STATUS_FILTERS = [
-  { id: 'all', label: 'All' },
-  { id: 'pending', label: 'Pending Delivery' },
-  { id: 'submitted', label: 'Awaiting Confirmation' },
-  { id: 'completed', label: 'Completed' },
-  { id: 'disputed', label: 'Disputed' },
-];
-
-const FILTER_MATCH = {
-  all: () => true,
-  pending: (s) => ['awaiting_seller_delivery', 'payment_confirmed'].includes(s),
-  submitted: (s) => ['credentials_submitted', 'in_transfer'].includes(s),
-  completed: (s) => s === 'completed',
-  disputed: (s) => s === 'disputed',
-};
-
-const ACTIONS_REQUIRED_STATUSES = ['awaiting_seller_delivery', 'payment_confirmed'];
+import {
+  ACTIONS_REQUIRED_STATUSES,
+  STATUS_FILTERS,
+  FILTER_MATCH,
+  SELLER_STATUS,
+} from './ordersConstants';
 
 function OrdersSkeleton() {
   return (
@@ -75,9 +62,9 @@ function EmptyState({ filter, onTabChange }) {
     );
   }
   const messages = {
-    pending: 'No orders awaiting delivery. All caught up!',
-    submitted: 'No orders awaiting buyer confirmation.',
-    completed: 'No completed orders yet. Keep selling!',
+    pending: 'No orders need your action. All caught up!',
+    submitted: 'No orders waiting for buyer confirmation.',
+    completed: 'No completed sales yet. Keep selling!',
     disputed: 'No disputes. Great work!',
   };
   return (
@@ -87,7 +74,7 @@ function EmptyState({ filter, onTabChange }) {
   );
 }
 
-export default function OrdersTab({ profile, user, onTabChange }) {
+export default function OrdersTab({ profile, onTabChange }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -262,8 +249,11 @@ export default function OrdersTab({ profile, user, onTabChange }) {
                       <td className="px-5 py-3 text-sm" style={{ color: '#6B7280' }}>{order.buyerDisplayName || 'Anonymous'}</td>
                       <td className="px-5 py-3 text-sm font-semibold" style={{ color: '#111' }}>{formatKES(order.amount)}</td>
                       <td className="px-5 py-3">
-                        <span className={`text-xs font-medium ${ORDER_STATUS[order.status]?.color || 'text-gray-400'}`}>
-                          {ORDER_STATUS[order.status]?.label || order.status}
+                        <span
+                          className="inline-flex items-center text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
+                          style={{ color: SELLER_STATUS[order.status]?.color || '#6B7280', background: SELLER_STATUS[order.status]?.bg || '#F3F4F6' }}
+                        >
+                          {SELLER_STATUS[order.status]?.label || order.status.replace(/_/g, ' ').toUpperCase()}
                         </span>
                       </td>
                       <td className="px-5 py-3 text-sm" style={{ color: '#6B7280' }}>{formatDate(order.createdAt)}</td>
@@ -275,12 +265,12 @@ export default function OrdersTab({ profile, user, onTabChange }) {
                             style={needsAction ? { background: '#003BFF', color: '#FFFFFF' } : { background: '#EFF6FF', color: '#003BFF' }}
                           >
                             {needsAction ? <Upload size={13} /> : <MessageSquare size={13} />}
-                            {needsAction ? 'Submit Details' : 'Open Order'}
+                            Open Order
                           </Link>
                           {needsAction && (
                             <span className="flex items-center gap-1 text-xs font-bold" style={{ color: '#D97706' }}>
                               <span className="w-2 h-2 rounded-full inline-block animate-pulse" style={{ background: '#D97706' }} />
-                              ACTION NEEDED
+                              ACTION REQUIRED
                             </span>
                           )}
                         </div>

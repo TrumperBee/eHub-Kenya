@@ -8,13 +8,13 @@ import { formatKES, formatDate } from '../../../utils/formatters';
 
 const ORDER_STATUS_MAP = {
   pending_payment: 'Awaiting Payment',
-  payment_confirmed: 'Payment Received',
-  awaiting_seller_delivery: 'Awaiting Seller Delivery',
-  in_transfer: 'Account Transfer',
-  credentials_submitted: 'Account Details Submitted',
-  completed: 'Completed',
-  disputed: 'Disputed',
-  refunded: 'Refunded',
+  payment_confirmed: 'New Paid Order',
+  awaiting_seller_delivery: 'New Paid Order',
+  in_transfer: 'Waiting for Buyer',
+  credentials_submitted: 'Waiting for Buyer',
+  completed: 'Sale Complete',
+  disputed: 'Payment on Hold',
+  refunded: 'Order Refunded',
   cancelled: 'Cancelled',
 };
 
@@ -51,7 +51,7 @@ function OverviewError({ onRetry }) {
   );
 }
 
-export default function OverviewTab({ profile, user, onTabChange }) {
+export default function OverviewTab({ profile, onTabChange }) {
   const navigate = useNavigate();
   const [listings, setListings] = useState([]);
   const [orders, setOrders] = useState([]);

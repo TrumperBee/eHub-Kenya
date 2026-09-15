@@ -65,31 +65,36 @@ test('buyer: refunded is accurate about processing, not instant credit', () => {
 
 test('seller: buyer paid requires submitting credentials', () => {
   const g = sellerGuide({ status: 'awaiting_seller_delivery' });
-  assert.equal(g.title, 'BUYER PAID \u2705');
-  assert.match(g.whatHappened, /Payment has been confirmed/);
-  assert.match(g.next, /credentials/);
+  assert.equal(g.title, 'PAYMENT RECEIVED \u2705');
+  assert.equal(g.statusLabel, 'ACCOUNT DETAILS REQUIRED');
+  assert.match(g.whatHappened, /held securely in escrow/);
+  assert.match(g.next, /never in public chat or email/);
   assert.equal(g.whoActs, 'You');
   assert.equal(g.ctaLabel, 'Submit Account Details');
 });
 
-test('seller: credentials sent means waiting on buyer', () => {
+test('seller: credentials submitted means waiting on buyer', () => {
   const g = sellerGuide({ status: 'credentials_submitted' });
-  assert.match(g.title, /ACCOUNT DETAILS SENT/);
-  assert.match(g.next, /buyer confirms delivery/);
+  assert.equal(g.title, 'ACCOUNT DETAILS SUBMITTED \u2705');
+  assert.equal(g.statusLabel, 'WAITING FOR BUYER');
+  assert.match(g.next, /moment they confirm delivery/);
   assert.equal(g.whoActs, 'Buyer');
 });
 
 test('seller: dispute holds payout, never claims money was sent', () => {
   const g = sellerGuide({ status: 'disputed' });
-  assert.match(g.title, /DISPUTE RAISED/);
-  assert.match(g.next, /payout is on hold/);
+  assert.match(g.title, /PAYMENT ON HOLD/);
+  assert.equal(g.statusLabel, 'DISPUTE OPEN');
+  assert.match(g.whatHappened, /frozen in escrow/);
   assert.doesNotMatch(g.next, /money.*sent|payout.*paid/i);
 });
 
 test('seller: completed reports the *actual* payout status', () => {
   const g = sellerGuide({ status: 'completed', escrowStatus: 'released' });
-  assert.match(g.title, /ORDER COMPLETED/);
+  assert.equal(g.title, 'SALE COMPLETE \u2705');
+  assert.equal(g.statusLabel, 'SALE COMPLETE');
   assert.match(g.next, /Payout status: Released — payout pending/);
+  assert.match(g.next, /only marked released once the admin confirms/);
 });
 
 test('payout label never claims money already left the platform', () => {
