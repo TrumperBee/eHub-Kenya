@@ -312,8 +312,21 @@ async function processSuccessfulPayment(reference) {
     };
   });
 
-  // Already confirmed (or cancelled/refunded) — nothing more to do.
-  if (!state) return { orderId, reference };
+  // Already confirmed (or cancelled/refunded) — nothing to transition. But if
+  // the order is in a paid state and an earlier entry point transitioned it
+  // while some side effect failed, re-attempt the two transactional payment
+  // emails here. They are idempotent (emailEvents claims) so the callback,
+  // webhook and verify racing in can never send a duplicate.
+  if (!state) {
+    const freshSnap = await orderRef.get();
+    const fresh = freshSnap.exists ? freshSnap.data() : null;
+    if (fresh && PROCESSED_STATUSES.includes(fresh.status)) {
+      const emailOrder = { ...fresh, id: orderId, paymentChannel: fresh.paymentChannel || null };
+      safeSideEffect('buyer payment email (retry)', () => sendBuyerPaymentConfirmedEmail(emailOrder));
+      safeSideEffect('seller payment email (retry)', () => sendSellerPaymentReceivedEmail(emailOrder));
+    }
+    return { orderId, reference };
+  }
 
   // The listing is already 'reserved' from the atomic purchase lock; keep it
   // reserved (excluded from the marketplace) until the buyer confirms receipt.
@@ -332,49 +345,59 @@ async function processSuccessfulPayment(reference) {
   return { orderId, reference };
 }
 
+// Runs a single side effect so one failure can never starve the others. The
+// order is already confirmed by the transaction, so a slow email or a failed
+// chat write must never block the webhook ack, callback redirect, or the other
+// notifications.
+function safeSideEffect(name, fn) {
+  return Promise.resolve()
+    .then(fn)
+    .catch((err) => console.error(`Payment side-effect (${name}) failed:`, err.message));
+}
+
 function runPaymentSideEffects(order, transaction, orderId) {
-  const run = async () => {
-    // Payment verified — recompute the derived counters from source-of-truth.
-    await reconcileAsync();
+  const emailOrder = { ...order, paymentChannel: transaction.channel || null };
 
-    const messagesRef = adminDb.collection(`orders/${orderId}/messages`);
-    await messagesRef.add({
-      senderId: 'system',
-      senderDisplayName: 'eFootball Hub Kenya',
-      senderRole: 'system',
-      content: `Payment of KES ${(transaction.amount / 100).toLocaleString()} confirmed via ${transaction.channel || 'Paystack'}. The order chat is now open. Seller: submit the buyer's eFootball account login details from the order page. Buyer: once the seller submits the account details, verify the login and confirm delivery.`,
-      messageType: 'system',
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+  // Payment verified — recompute the derived counters from source-of-truth.
+  // reconcileAsync() is non-throwing fire-and-forget; kept inside a safe
+  // side effect for consistency.
+  safeSideEffect('stats reconcile', () => reconcileAsync());
 
-    if (order.buyerId) {
-      await createNotification({
-        userId: order.buyerId,
-        title: 'Payment Confirmed!',
-        message: `Your payment for "${order.listingTitle || 'the listing'}" was successful. The seller has been notified to submit the account details.`,
-        type: 'payment',
-        orderId,
-      });
-    }
+  const messagesRef = adminDb.collection(`orders/${orderId}/messages`);
+  safeSideEffect('order chat system message', () => messagesRef.add({
+    senderId: 'system',
+    senderDisplayName: 'eFootball Hub Kenya',
+    senderRole: 'system',
+    content: `Payment of KES ${(transaction.amount / 100).toLocaleString()} confirmed via ${transaction.channel || 'Paystack'}. The order chat is now open. Seller: submit the buyer's eFootball account login details from the order page. Buyer: once the seller submits the account details, verify the login and confirm delivery.`,
+    messageType: 'system',
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  }));
 
-    if (order.sellerId) {
-      await createNotification({
-        userId: order.sellerId,
-        title: 'New Paid Order',
-        message: `The buyer paid for "${order.listingTitle || 'your listing'}". Submit the account login details from the order page now.`,
-        type: 'order',
-        orderId,
-      });
-    }
+  if (order.buyerId) {
+    safeSideEffect('buyer notification', () => createNotification({
+      userId: order.buyerId,
+      title: 'Payment Confirmed!',
+      message: `Your payment for "${order.listingTitle || 'the listing'}" was successful. The seller has been notified to submit the account details.`,
+      type: 'payment',
+      orderId,
+    }));
+  }
 
-    // Trusted event: Paystack verified the charge. Never blocks the purchase —
-    // if an email fails, the order itself is unaffected.
-    const emailOrder = { ...order, paymentChannel: transaction.channel || null };
-    await sendBuyerPaymentConfirmedEmail(emailOrder);
-    await sendSellerPaymentReceivedEmail(emailOrder);
-  };
+  if (order.sellerId) {
+    safeSideEffect('seller notification', () => createNotification({
+      userId: order.sellerId,
+      title: 'NEW PAID ORDER',
+      message: `The buyer has paid for "${order.listingTitle || 'your listing'}". Submit the account details from your Orders page.`,
+      type: 'order',
+      orderId,
+    }));
+  }
 
-  run().catch((err) => console.error('Payment side-effects error:', err));
+  // Trusted event: Paystack verified the charge. Never blocks the purchase —
+  // if an email fails, the order itself is unaffected and the re-entry path
+  // (callback/webhook/verify) retries them idempotently.
+  safeSideEffect('buyer payment email', () => sendBuyerPaymentConfirmedEmail(emailOrder));
+  safeSideEffect('seller payment email', () => sendSellerPaymentReceivedEmail(emailOrder));
 }
 
 /**

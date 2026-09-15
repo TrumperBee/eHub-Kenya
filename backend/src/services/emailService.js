@@ -23,6 +23,12 @@ const { FRONTEND_URL } = require('../config');
 const FROM = `${FROM_NAME} <${FROM_EMAIL}>`;
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
+if (!RESEND_API_KEY) {
+  logger.warn('RESEND_API_KEY is not set — transactional emails are disabled (order flows keep working).');
+} else if (!process.env.RESEND_FROM_EMAIL) {
+  logger.warn('RESEND_FROM_EMAIL is not set — sending from onboarding@resend.dev (Resend sandbox). Configure a verified domain so recipients beyond the account owner receive mail.');
+}
+
 const esc = (v) => String(v ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -169,24 +175,26 @@ async function sendBuyerPaymentConfirmedEmail(order) {
   if (!order || !order.buyerEmail) return;
   const key = `buyer-payment-confirmed-${order.id}`;
   await runWithIdempotency(key, async () => {
-    const title = `Payment Confirmed for "${esc(order.listingTitle || 'your purchase')}"`;
+    const title = `Payment Confirmed — ${order.listingTitle || 'your purchase'}`;
     const bodyHtml =
       bodyP(`Hi ${esc(order.buyerDisplayName || 'there')},`) +
-      bodyP(`Your payment of ${bodyStrong(formatKES(order.amount))} has been confirmed via ${esc(order.paymentChannel || 'Paystack')}.`) +
-      bodyP(`The seller has been notified and will submit the account login details on your order page. Once they do, you can verify the account and confirm delivery.`) +
-      bodyBox(bodyStrong(`What to do now:`)+`<br>1) Sign in to verify the account works.<br>2) Then click “Confirm Delivery” to release funds to the seller.`) +
-      bodyP(`If anything looks wrong, raise a dispute from your order page and admin will review it right away.`);
+      bodyP(`Your payment of ${bodyStrong(formatKES(order.amount))} for "${esc(order.listingTitle || 'your purchase')}" has been confirmed via ${esc(order.paymentChannel || 'Paystack')}.`) +
+      bodyP(`The seller has been notified and will now submit the account login details on your order page.`) +
+      bodyBox(
+        bodyStrong(`NEXT STEP:`)+` Open your order to track delivery progress. Once the seller submits the account details, sign in to verify the account and confirm delivery.`
+      ) +
+      bodyP(`Your account login details are shown on the private order page only — they are never sent by email. If anything looks wrong, raise a dispute from your order page and admin will review it right away.`);
     return sendRaw({
       to: order.buyerEmail,
-      subject: `✅ Payment Confirmed`,
+      subject: `Payment Confirmed — eHub Kenya`,
       html: renderLayout({
         eyebrow: 'Payment Received',
         title,
         bodyHtml,
-        cta: orderCta(order, 'View Your Order'),
+        cta: orderCta(order, 'VIEW ORDER'),
         footnote: `Order ${order.id} · ${formatKES(order.amount)} — account login details never appear in this email.`,
       }),
-      text: `Payment confirmed for ${formatKES(order.amount)}. View your order: ${orderUrl(order)}`,
+      text: `Payment confirmed for ${formatKES(order.amount)}. Track your order: ${orderUrl(order)}`,
     });
   });
 }
@@ -205,26 +213,29 @@ async function sendSellerPaymentReceivedEmail(order) {
     const attachments = pdfBuffer
       ? [{ filename: 'eHub Seller Order Guide.pdf', content: pdfBuffer, contentType: 'application/pdf' }]
       : undefined;
-    const title = `New Paid Order — "${esc(order.listingTitle || 'your listing')}"`;
+    const title = `New Paid Order — "${order.listingTitle || 'your listing'}"`;
     const bodyHtml =
       bodyP(`Hi ${esc(order.sellerDisplayName || 'there')},`) +
-      bodyP(`A buyer just paid ${bodyStrong(formatKES(order.amount))} for your account. Complete the order to get paid.`) +
       bodyBox(
-        bodyStrong(`Your steps:`)+`<br>1) Open the order and read any buy notes.<br>2) Sign into the account yourself to confirm the login works.<br>3) Submit the account email and password in the “Submit Account Details” box.<br>4) Wait for the buyer to verify, then admin releases your payout to your registered payout phone.`
+        bodyStrong(`Listing:`)+` ${esc(order.listingTitle || 'your listing')}<br>`+
+        bodyStrong(`Amount:`)+` ${formatKES(order.amount)}<br>`+
+        bodyStrong(`Status:`)+` Payment confirmed`
       ) +
+      bodyP(bodyStrong(`NEXT STEP:`)+` Open the order from your Orders / Sales page and submit the buyer's account login details in the “Submit Account Details” box.`) +
+      bodyP(`The buyer is waiting on you. Once you submit the details, the buyer verifies the account and confirms delivery — then admin releases your payout to your registered payout phone.`) +
       bodyP(`The attached ${bodyStrong('eHub Seller Order Guide (PDF)')} walks you through all 6 steps.`) +
-      bodyP(`Payout is processed by admin to your registered payout phone — never share your payout details, eHub password, or the account password anywhere except the private order page.`);
+      bodyP(`Account login details, eHub passwords and payment secrets are ${bodyStrong('never')} transmitted by email or outside the private order page.`);
     return sendRaw({
       to: sellerEmail,
-      subject: `🔔 New Paid Order — ${formatKES(order.amount)}`,
+      subject: `New Paid Order — Action Required`,
       html: renderLayout({
         eyebrow: 'Payment Received',
         title,
         bodyHtml,
-        cta: orderCta(order, 'Submit Account Details', 'You must be signed in to open the order page.'),
+        cta: orderCta(order, 'OPEN ORDER', 'You must be signed in to open the order page.'),
         footnote: `Order ${order.id} · ${formatKES(order.amount)} · Seller guide attached as a PDF.`,
       }),
-      text: `A buyer paid ${formatKES(order.amount)} for your listing. Submit the account details from the order page: ${orderUrl(order)}`,
+      text: `New paid order — ${formatKES(order.amount)} for ${order.listingTitle || 'your listing'}. Submit the account details from your Orders page: ${orderUrl(order)}`,
       attachments,
     });
   });
