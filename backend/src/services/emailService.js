@@ -18,7 +18,7 @@ const logger = require('../utils/logger');
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 const FROM_NAME = process.env.RESEND_FROM_NAME || 'eHub Kenya';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const { FRONTEND_URL } = require('../config');
 
 const FROM = `${FROM_NAME} <${FROM_EMAIL}>`;
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;

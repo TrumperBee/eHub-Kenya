@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { collection, query, orderBy, where, getDocs, getCountFromServer } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { getListingById, incrementViewCount } from '../../services/listingsService';
 import { useAuth } from '../../context/AuthContext';
@@ -55,18 +55,14 @@ export default function ListingDetailPage() {
       setReviews(reviewsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       setLoading(false);
       if (listingData) {
-        incrementViewCount(id);
+        incrementViewCount(id).catch(() => {});
         document.title = `${listingData.title} - eFootball Hub Kenya`;
         if (listingData.sellerId) {
-          getDocs(query(
-            collection(db, 'orders'),
-            where('sellerId', '==', listingData.sellerId)
-          ))
-            .then((snap) => {
-              const completed = snap.docs.filter((d) => d.data().status === 'completed').length;
-              setSellerSales(completed || 0);
+          getDoc(doc(db, 'users', listingData.sellerId))
+            .then((sellerSnap) => {
+              setSellerSales(sellerSnap.exists() ? (sellerSnap.data().totalSales || 0) : 0);
             })
-            .catch(() => {});
+            .catch(() => setSellerSales(0));
         }
       }
     });

@@ -1,6 +1,7 @@
 const { verifyTransaction, generateReference } = require('../services/paystackService');
 const { admin, adminDb } = require('../services/firebaseAdmin');
 const { getEATDateString } = require('../utils/fridayDropScheduler');
+const { FRONTEND_URL } = require('../config');
 const {
   sendBuyerPaymentConfirmedEmail,
   sendSellerPaymentReceivedEmail,
@@ -245,10 +246,10 @@ async function handlePaystackCancel(req, res) {
         await cancelPendingOrder(orderSnap.docs[0].id);
       }
     }
-    return res.redirect(`${process.env.FRONTEND_URL}/payment-failed`);
+    return res.redirect(`${FRONTEND_URL}/payment-failed`);
   } catch (err) {
     console.error('Paystack cancel error:', err);
-    return res.redirect(`${process.env.FRONTEND_URL}/payment-failed`);
+    return res.redirect(`${FRONTEND_URL}/payment-failed`);
   }
 }
 
@@ -302,9 +303,9 @@ async function processSuccessfulPayment(reference) {
     });
   }
 
-  await adminDb.doc('stats/global').update({
+  await adminDb.doc('stats/global').set({
     transactionsProcessed: admin.firestore.FieldValue.increment(1),
-  });
+  }, { merge: true });
 
   const messagesRef = adminDb.collection(`orders/${orderId}/messages`);
   await messagesRef.add({
@@ -353,19 +354,19 @@ async function handleCallback(req, res) {
     const result = await processSuccessfulPayment(reference);
 
     if (result && result.orderId) {
-      return res.redirect(`${process.env.FRONTEND_URL}/orders/${result.orderId}?payment=success`);
+      return res.redirect(`${FRONTEND_URL}/orders/${result.orderId}?payment=success`);
     }
 
     const orderSnap = await adminDb.collection('orders')
       .where('paymentReference', '==', reference).limit(1).get();
     if (!orderSnap.empty) {
       await cancelPendingOrder(orderSnap.docs[0].id);
-      return res.redirect(`${process.env.FRONTEND_URL}/payment-failed?ref=${reference}`);
+      return res.redirect(`${FRONTEND_URL}/payment-failed?ref=${reference}`);
     }
-    return res.redirect(`${process.env.FRONTEND_URL}/payment-failed`);
+    return res.redirect(`${FRONTEND_URL}/payment-failed`);
   } catch (err) {
     console.error('Paystack callback error:', err);
-    return res.redirect(`${process.env.FRONTEND_URL}/payment-failed`);
+    return res.redirect(`${FRONTEND_URL}/payment-failed`);
   }
 }
 

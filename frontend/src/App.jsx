@@ -147,6 +147,7 @@ function AppContent() {
             <Route path="/faq" element={<PageLayout><FAQPage /></PageLayout>} />
             <Route path="/seller/:sellerId" element={<PageLayout><SellerPublicProfilePage /></PageLayout>} />
             <Route path="/payment-failed" element={<PageLayout><PaymentFailedPage /></PageLayout>} />
+            <Route path="/payment-cancelled" element={<PageLayout><PaymentFailedPage /></PageLayout>} />
 
             <Route path="/setup-username" element={
               <ProtectedRoute><SetupUsernamePage /></ProtectedRoute>

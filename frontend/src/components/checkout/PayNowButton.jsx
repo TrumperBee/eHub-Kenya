@@ -69,10 +69,20 @@ export default function PayNowButton({ listing, effectivePrice }) {
       });
     } catch (err) {
       console.error(err);
+      // Safety: if the backend reserved the listing + created the order but the
+      // Paystack popup never opened, release the reservation so the buyer can
+      // retry safely.
       if (orderId) {
         cancelPayment(orderId).catch(() => {});
       }
-      toast.error(err?.response?.data?.error || 'Payment failed. Please try again.');
+      const backendMessage = err?.response?.data?.error;
+      if (backendMessage) {
+        toast.error(backendMessage);
+      } else {
+        toast.error(
+          'Payment could not be started. Something went wrong while connecting to the payment service. Your order has not been paid. Try Again.'
+        );
+      }
       setLoading(false);
     }
   };

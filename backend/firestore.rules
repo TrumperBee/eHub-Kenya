@@ -31,7 +31,10 @@ service cloud.firestore {
     match /listings/{listingId} {
       allow read: if true;
       allow create: if isSeller();
-      allow update: if isSeller() && resource.data.sellerId == request.auth.uid || isAdmin();
+      allow update: if (isLoggedIn() &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount']))
+        || (isSeller() && resource.data.sellerId == request.auth.uid)
+        || isAdmin();
       allow delete: if isAdmin();
 
       match /reviews/{reviewId} {
@@ -95,10 +98,17 @@ service cloud.firestore {
     }
 
     // Public platform counters (read by everyone, written by backend Admin SDK
-    // which bypasses rules — client write allowed for listing/seller counters)
+    // which bypasses rules). Client writes are limited to atomic counter fields
+    // only — a full document overwrite is rejected.
     match /stats/{docId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isLoggedIn() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'totalAccountsListed',
+          'registeredSellers',
+          'totalSalesCompleted',
+          'transactionsProcessed',
+        ]);
     }
 
     match /notifications/{notifId} {

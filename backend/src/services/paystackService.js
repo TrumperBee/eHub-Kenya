@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { FRONTEND_URL } = require('../config');
 
 const PAYSTACK_BASE = 'https://api.paystack.co';
 const SECRET = process.env.PAYSTACK_SECRET_KEY;
@@ -18,7 +19,7 @@ const initializeTransaction = async ({ email, amount, reference, metadata, callb
       currency: 'KES',
       callback_url: callbackUrl || process.env.PAYSTACK_CALLBACK_URL,
       metadata: {
-        cancel_action: `${process.env.FRONTEND_URL}/payment-cancelled`,
+        cancel_action: `${FRONTEND_URL}/payment-cancelled`,
         ...metadata,
       },
     },

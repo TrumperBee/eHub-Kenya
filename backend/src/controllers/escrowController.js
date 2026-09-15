@@ -106,9 +106,9 @@ async function release(req, res) {
       });
     }
 
-    await adminDb.doc('stats/global').update({
+    await adminDb.doc('stats/global').set({
       totalSalesCompleted: admin.firestore.FieldValue.increment(1),
-    });
+    }, { merge: true });
 
     const messagesRef = orderRef.collection('messages');
     await messagesRef.add({
@@ -395,9 +395,9 @@ async function resolve(req, res) {
           totalSales: admin.firestore.FieldValue.increment(1),
         }).catch(() => {});
       }
-      await adminDb.doc('stats/global').update({
+      await adminDb.doc('stats/global').set({
         totalSalesCompleted: admin.firestore.FieldValue.increment(1),
-      }).catch(() => {});
+      }, { merge: true }).catch(() => {});
     } else {
       if (order.listingId) {
         await adminDb.collection('listings').doc(order.listingId).update({
