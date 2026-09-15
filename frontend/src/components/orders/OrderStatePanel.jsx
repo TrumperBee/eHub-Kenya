@@ -1,4 +1,4 @@
-import { Clock, CheckCircle2, PackageCheck, ShieldAlert, RotateCcw, Ban, Lock } from 'lucide-react';
+import { Clock, CheckCircle2, PackageCheck, ShieldAlert, RotateCcw, Lock } from 'lucide-react';
 
 const TONES = {
   pending:  { color: '#D97706', bg: '#FFFBEB', border: '#FDE68A', Icon: Clock },
@@ -33,6 +33,12 @@ export default function OrderStatePanel({ guide, children }) {
           {guide.title}
         </p>
       </div>
+
+      {guide.paymentConfirmedBadge && (
+        <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full" style={{ background: '#16A34A', color: '#FFFFFF' }}>
+          <CheckCircle2 size={13} /> {guide.paymentConfirmedBadge}
+        </p>
+      )}
 
       <p className="text-sm leading-snug" style={{ color: '#111111' }}>{guide.whatHappened}</p>
 

@@ -15,7 +15,7 @@ export const PLATFORMS = {
 };
 
 export const ORDER_STATUS = {
-  pending_payment:         { label: 'Awaiting Payment',            color: 'text-yellow-400' },
+  pending_payment:         { label: 'Payment Pending',            color: 'text-yellow-400' },
   payment_confirmed:       { label: 'Payment Received',             color: 'text-blue-400'   },
   awaiting_seller_delivery:{ label: 'Awaiting Seller Delivery',     color: 'text-yellow-400' },
   in_transfer:             { label: 'Account Transfer',             color: 'text-purple-400' },

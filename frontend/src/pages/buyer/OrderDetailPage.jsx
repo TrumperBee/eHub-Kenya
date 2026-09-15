@@ -526,7 +526,14 @@ export default function OrderDetailPage() {
                   ctaLabel: 'Check payment status',
                 } : buyerGuide(order)}>
                   {order.status === 'credentials_submitted' && deliveries.length > 0 && (
-                    <CredentialsList deliveries={deliveries} isSeller={false} />
+                    <details open className="group">
+                      <summary className="text-sm font-bold text-konami-blue cursor-pointer flex items-center gap-1.5 select-none">
+                        <KeyRound size={15} className="shrink-0" /> View Account Details
+                      </summary>
+                      <div className="mt-3">
+                        <CredentialsList deliveries={deliveries} isSeller={false} />
+                      </div>
+                    </details>
                   )}
 
                   {order.status === 'disputed' && order.disputeReason && (
@@ -538,7 +545,7 @@ export default function OrderDetailPage() {
 
                   {order.status === 'pending_payment' && !isConfirming && order.listingId && (
                     <Link to={`/listing/${order.listingId}`} className="btn-primary w-full text-sm py-3 flex items-center justify-center gap-2">
-                      <ShoppingBag size={16} /> View Listing to Pay
+                      <ShoppingBag size={16} /> Continue to Pay
                     </Link>
                   )}
 
@@ -591,10 +598,15 @@ export default function OrderDetailPage() {
                             </button>
                           )}
                           {canDispute && (
-                            <button onClick={() => setShowDisputeForm(true)} className="w-full text-sm py-3 rounded-xl border border-konami-red/30 text-konami-red hover:bg-konami-red/5 transition-colors flex items-center justify-center gap-2">
-                              <MessageSquare size={16} />
-                              Raise a Dispute
-                            </button>
+                            <>
+                              {order.status === 'awaiting_seller_delivery' && (
+                                <p className="text-xs text-konami-text-muted pt-1">Need help? You can raise a dispute while you wait.</p>
+                              )}
+                              <button onClick={() => setShowDisputeForm(true)} className="w-full text-sm py-3 rounded-xl border border-konami-red/30 text-konami-red hover:bg-konami-red/5 transition-colors flex items-center justify-center gap-2">
+                                <MessageSquare size={16} />
+                                {order.status === 'credentials_submitted' || order.status === 'in_transfer' ? 'Report a Problem' : 'Raise a Dispute'}
+                              </button>
+                            </>
                           )}
                         </div>
                       )}

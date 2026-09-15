@@ -5,30 +5,43 @@ import { buyerGuide, sellerGuide, payoutLabelFor, GUIDE_TONES } from './orderGui
 test('buyer: pending payment tells buyer to pay via Paystack', () => {
   const g = buyerGuide({ status: 'pending_payment' });
   assert.equal(g.title, 'PAYMENT PENDING');
-  assert.match(g.next, /Paystack/);
+  assert.equal(g.whatHappened, 'Your order has been created, but payment has not been completed.');
+  assert.equal(g.next, 'Complete your payment through Paystack to continue.');
   assert.equal(g.whoActs, 'You');
+  assert.equal(g.ctaLabel, 'Continue to Pay');
+});
+
+test('buyer: paid-but-unadvanced doc never shows PAYMENT PENDING', () => {
+  const g = buyerGuide({ status: 'pending_payment', paymentStatus: 'paid' });
+  assert.notEqual(g.title, 'PAYMENT PENDING');
+  assert.equal(g.title, 'WAITING FOR SELLER');
+  assert.match(g.paymentConfirmedBadge, /PAYMENT CONFIRMED/);
 });
 
 test('buyer: payment confirmed holds funds and notifies seller', () => {
   const g = buyerGuide({ status: 'payment_confirmed' });
   assert.match(g.title, /PAYMENT CONFIRMED/);
-  assert.match(g.whatHappened, /payment has been received/);
-  assert.match(g.next, /seller has been notified/);
+  assert.match(g.whatHappened, /funds.*held securely/);
+  assert.equal(g.next, 'The seller must submit the account details.');
   assert.equal(g.whoActs, 'Seller');
 });
 
-test('buyer: waiting for seller explains next step', () => {
+test('buyer: waiting for seller shows confirmed badge and explains next step', () => {
   const g = buyerGuide({ status: 'awaiting_seller_delivery' });
   assert.equal(g.title, 'WAITING FOR SELLER');
+  assert.match(g.paymentConfirmedBadge, /PAYMENT CONFIRMED/);
+  assert.match(g.whatHappened, /payment is confirmed/);
   assert.equal(g.whoActs, 'Seller');
+  assert.equal(g.ctaLabel, 'Need help? Raise a dispute');
 });
 
-test('buyer: credentials received shows both possible actions', () => {
+test('buyer: credentials received shows view/confirm/report actions', () => {
   const g = buyerGuide({ status: 'credentials_submitted' });
   assert.match(g.title, /ACCOUNT DETAILS RECEIVED/);
   assert.match(g.next, /Confirm delivery/i);
-  assert.match(g.next, /Raise a dispute/i);
+  assert.match(g.next, /Report a problem/i);
   assert.equal(g.whoActs, 'You');
+  assert.equal(g.ctaLabel, 'View Account Details');
 });
 
 test('buyer: dispute puts payment on hold', () => {

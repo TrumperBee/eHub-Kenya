@@ -33,24 +33,31 @@ export function payoutLabelFor(order = {}) {
 // ---------------------------------------------------------------------------
 
 export function buyerGuide(order = {}) {
-  const status = order.status;
+  // A payment that was actually completed but whose status never advanced is
+  // resolved to the paid presentation — "PAYMENT PENDING" must only ever show
+  // for orders where paymentStatus !== 'paid' AND status === 'pending_payment'.
+  const status =
+    order.status === 'pending_payment' && (order.paymentStatus === 'paid' || isPaid(order))
+      ? 'awaiting_seller_delivery'
+      : order.status;
+
   switch (status) {
     case 'pending_payment':
       return {
         tone: GUIDE_TONES.pending,
         title: 'PAYMENT PENDING',
-        whatHappened: 'Your order was created, but payment has not gone through yet.',
+        whatHappened: 'Your order has been created, but payment has not been completed.',
         next: 'Complete your payment through Paystack to continue.',
         whoActs: 'You',
-        ctaLabel: 'Browse or try paying again',
+        ctaLabel: 'Continue to Pay',
       };
 
     case 'payment_confirmed':
       return {
         tone: GUIDE_TONES.paid,
         title: 'PAYMENT CONFIRMED \u2705',
-        whatHappened: 'Your payment has been received and is being held while the order is completed.',
-        next: 'The seller has been notified. Wait for the seller to submit the account details.',
+        whatHappened: 'Your payment has been verified and your funds are being held securely while the order is completed.',
+        next: 'The seller must submit the account details.',
         whoActs: 'Seller',
         ctaLabel: 'Wait for the seller',
       };
@@ -59,10 +66,11 @@ export function buyerGuide(order = {}) {
       return {
         tone: GUIDE_TONES.waiting,
         title: 'WAITING FOR SELLER',
-        whatHappened: 'The seller has been notified that you paid.',
-        next: "Once the seller submits the account details, you'll be able to verify the account.",
+        paymentConfirmedBadge: 'PAYMENT CONFIRMED \u2705',
+        whatHappened: 'Your payment is confirmed and is being held securely. The seller has been notified and must now submit the account login details.',
+        next: 'Wait for the seller to submit the account details.',
         whoActs: 'Seller',
-        ctaLabel: 'Wait for the seller',
+        ctaLabel: 'Need help? Raise a dispute',
       };
 
     case 'in_transfer':
@@ -70,10 +78,10 @@ export function buyerGuide(order = {}) {
       return {
         tone: GUIDE_TONES.received,
         title: 'ACCOUNT DETAILS RECEIVED \u2705',
-        whatHappened: 'Log in to the account and verify that it matches the listing.',
-        next: 'Everything correct? Confirm delivery to complete the order. Something wrong? Raise a dispute.',
+        whatHappened: 'The seller has submitted the account login details. Log in to verify they match the listing.',
+        next: 'Check that you can log in successfully. Everything correct? Confirm delivery to complete. Something wrong? Report a problem.',
         whoActs: 'You',
-        ctaLabel: 'Confirm Delivery or Raise a Dispute',
+        ctaLabel: 'View Account Details',
       };
 
     case 'disputed':
@@ -90,7 +98,7 @@ export function buyerGuide(order = {}) {
       return {
         tone: GUIDE_TONES.complete,
         title: 'ORDER COMPLETED \u2705',
-        whatHappened: 'You confirmed delivery. The order is complete.',
+        whatHappened: 'The transaction has been completed.',
         next: 'Leave a review for the seller.',
         whoActs: 'You',
         ctaLabel: 'Leave a Review',
