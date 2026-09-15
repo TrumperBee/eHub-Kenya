@@ -34,7 +34,7 @@ export default function AIAssistant() {
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
-  const hideOnPaths = ['/login', '/register', '/setup-username'];
+  const hideOnPaths = ['/login', '/register', '/setup-username', '/forgot-password', '/reset-password'];
   const isAdminPath = location.pathname.startsWith('/hub-command-af29x');
 
   useEffect(() => {
@@ -152,6 +152,7 @@ export default function AIAssistant() {
     const panelW = Math.min(360, window.innerWidth - 32);
     const panelH = Math.min(520, window.innerHeight * 0.6);
     const gap = 12;
+    const bottomPad = window.innerWidth < 768 ? 80 : 16;
     let left = position.x + 28 - panelW / 2;
     left = Math.max(16, Math.min(window.innerWidth - panelW - 16, left));
     let top;
@@ -160,8 +161,8 @@ export default function AIAssistant() {
       if (top < 68) top = 68;
     } else {
       top = position.y + 56 + gap;
-      if (top + panelH > window.innerHeight - 16) {
-        top = window.innerHeight - panelH - 16;
+      if (top + panelH > window.innerHeight - bottomPad) {
+        top = window.innerHeight - panelH - bottomPad;
       }
     }
     return { left, top, width: panelW, height: panelH };
@@ -180,7 +181,7 @@ export default function AIAssistant() {
           top: position.y,
           width: 56,
           height: 56,
-          zIndex: 8000,
+          zIndex: 40,
           cursor: isDragging ? 'grabbing' : 'grab',
         }}
         onMouseDown={handleMouseDown}
@@ -205,7 +206,7 @@ export default function AIAssistant() {
           style={{
             position: 'fixed',
             ...panelPos,
-            zIndex: 7999,
+            zIndex: 39,
             background: '#FFFFFF',
             borderRadius: 20,
             border: '1px solid #E0E0E0',

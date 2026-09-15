@@ -306,30 +306,49 @@ export default function AccountPage() {
     );
   };
 
-  const mobileTab = (tab) => {
+  const mobileNavItem = (tab) => {
     const Icon = tab.icon;
     const isActive = activeTab === tab.id;
     const isSignOut = tab.id === 'signout';
     return (
       <button
         key={tab.id}
+        type="button"
         onClick={() => {
           if (tab.id === 'signout') { logout(); navigate('/'); return; }
           setActiveTab(tab.id);
         }}
-        className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap rounded-lg transition-all ${
-          isActive ? 'bg-[#003BFF] text-white' : isSignOut ? 'text-red-500' : 'text-[#6B7280]'
-        }`}
+        aria-current={isActive ? 'true' : undefined}
+        className="w-full flex items-center gap-3 rounded-xl px-3 min-h-[52px] transition-all active:scale-[0.99]"
+        style={{
+          background: isActive ? '#003BFF' : '#FFFFFF',
+          border: isActive ? '1px solid #003BFF' : '1px solid transparent',
+          boxShadow: isActive ? '0 2px 10px rgba(0,59,255,0.25)' : '0 1px 2px rgba(17,17,17,0.06)',
+        }}
       >
-        <Icon size={14} />
-        {tab.label}
+        <span
+          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+          style={isActive
+            ? { background: 'rgba(255,255,255,0.18)', color: '#FFFFFF' }
+            : { background: isSignOut ? '#FEE2E2' : '#F3F4F6', color: isSignOut ? '#C8102E' : '#6B7280' }}
+        >
+          <Icon size={16} />
+        </span>
+        <span
+          className="font-heading text-sm font-bold uppercase tracking-wide flex-1 text-left truncate"
+          style={{ color: isActive ? '#FFFFFF' : isSignOut ? '#C8102E' : '#111111' }}
+        >
+          {tab.label}
+        </span>
+        <ChevronRight size={16} className="shrink-0"
+          style={{ color: isActive ? 'rgba(255,255,255,0.85)' : isSignOut ? '#C8102E' : '#9CA3AF' }} />
       </button>
     );
   };
 
   return (
     <div className="pt-[68px] min-h-screen bg-[#F5F5F5]">
-      <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
+      <div className="max-w-7xl mx-auto px-4 py-4 md:py-6 flex gap-6">
         <div className="hidden md:flex flex-col w-60 shrink-0">
           <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 text-center">
             <div className="w-[72px] h-[72px] rounded-full bg-[#003BFF] flex items-center justify-center text-white text-xl font-heading font-bold mx-auto mb-3">
@@ -354,12 +373,20 @@ export default function AccountPage() {
           </div>
         </div>
 
-        <div className="md:hidden flex gap-1.5 overflow-x-auto pb-3 -mx-4 px-4">
-          {TABS.map(mobileTab)}
-        </div>
-
         <div className="flex-1 min-w-0">
-          {activeTab === 'profile' && (
+          <div className="md:hidden mb-5">
+            <h2
+              className="font-heading text-sm font-extrabold uppercase tracking-[0.12em] mb-3"
+              style={{ color: '#001E7A' }}
+            >
+              Account
+            </h2>
+            <div className="space-y-2">
+              {TABS.map(mobileNavItem)}
+            </div>
+          </div>
+
+        {activeTab === 'profile' && (
             <div className="space-y-5">
               <div className="bg-white rounded-2xl p-6 shadow-sm text-center">
                 <div className="w-24 h-24 rounded-full bg-[#003BFF] flex items-center justify-center text-white text-3xl font-heading font-bold mx-auto mb-3 relative">
