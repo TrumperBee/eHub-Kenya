@@ -1,71 +1,36 @@
-import { collection, query, where, onSnapshot, doc, updateDoc, increment } from 'firebase/firestore';
+import { onSnapshot, doc, setDoc, increment } from 'firebase/firestore';
 import { db } from './firebase';
 
+// Public platform counters. Written by the backend (sales/transactions) and by
+// listing/seller flows (accounts/sellers). Firestore rules allow public reads of
+// this doc, unlike the restricted orders/transactions collections.
 const STATS_REF = doc(db, 'stats', 'global');
 
-const ordersRef = collection(db, 'orders');
-const transactionsRef = collection(db, 'transactions');
-const listingsRef = collection(db, 'listings');
-const usersRef = collection(db, 'users');
-
 export const seedStatsIfMissing = async () => {
-  // Retained only for call-site compatibility. Live counts are computed from the
-  // source collections and there are no placeholder values to seed.
+  // Retained only for call-site compatibility. Counts come live from stats/global.
   return Promise.resolve();
 };
 
 export const subscribeToStats = (callback) => {
-  const completedOrdersQ = query(ordersRef, where('status', '==', 'completed'));
-  const successTxQ = query(transactionsRef, where('status', '==', 'success'));
-  const activeListingsQ = query(listingsRef, where('status', '==', 'active'));
-  const approvedSellersQ = query(
-    usersRef,
-    where('role', '==', 'seller'),
-    where('sellerApproved', '==', true)
-  );
-
-  const compute = () => callback({
-    totalSalesCompleted: completedOrdersCount,
-    transactionsProcessed: successTxCount,
-    totalAccountsListed: activeListingsCount,
-    registeredSellers: approvedSellersCount,
-  });
-
-  let completedOrdersCount = 0;
-  let successTxCount = 0;
-  let activeListingsCount = 0;
-  let approvedSellersCount = 0;
-
-  const watches = [
-    onSnapshot(completedOrdersQ, (snap) => {
-      completedOrdersCount = snap.size;
-      compute();
-    }, (err) => console.warn('Stats subscription error:', err.code)),
-    onSnapshot(successTxQ, (snap) => {
-      successTxCount = snap.size;
-      compute();
-    }, (err) => console.warn('Stats subscription error:', err.code)),
-    onSnapshot(activeListingsQ, (snap) => {
-      activeListingsCount = snap.size;
-      compute();
-    }, (err) => console.warn('Stats subscription error:', err.code)),
-    onSnapshot(approvedSellersQ, (snap) => {
-      approvedSellersCount = snap.size;
-      compute();
-    }, (err) => console.warn('Stats subscription error:', err.code)),
-  ];
-
-  return () => watches.forEach((unsub) => unsub());
+  return onSnapshot(STATS_REF, (snap) => {
+    const data = snap.exists() ? snap.data() : {};
+    callback({
+      totalSalesCompleted: data.totalSalesCompleted || 0,
+      transactionsProcessed: data.transactionsProcessed || 0,
+      totalAccountsListed: data.totalAccountsListed || 0,
+      registeredSellers: data.registeredSellers || 0,
+    });
+  }, (err) => console.warn('Stats subscription error:', err.code));
 };
 
 export const incrementListingCount = () =>
-  updateDoc(STATS_REF, { totalAccountsListed: increment(1) });
+  setDoc(STATS_REF, { totalAccountsListed: increment(1) }, { merge: true });
 
 export const decrementListingCount = () =>
-  updateDoc(STATS_REF, { totalAccountsListed: increment(-1) });
+  setDoc(STATS_REF, { totalAccountsListed: increment(-1) }, { merge: true });
 
 export const incrementSellerCount = () =>
-  updateDoc(STATS_REF, { registeredSellers: increment(1) });
+  setDoc(STATS_REF, { registeredSellers: increment(1) }, { merge: true });
 
 export const decrementSellerCount = () =>
-  updateDoc(STATS_REF, { registeredSellers: increment(-1) });
+  setDoc(STATS_REF, { registeredSellers: increment(-1) }, { merge: true });
