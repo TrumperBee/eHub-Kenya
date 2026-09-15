@@ -1,6 +1,7 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, signOut } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, googleProvider } from './firebase';
+import { registerNewUserCount } from './statsService';
 
 export const createUserDocument = async (uid, data) => {
   await setDoc(doc(db, 'users', uid), {
@@ -22,6 +23,10 @@ export const createUserDocument = async (uid, data) => {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+  // One-time, idempotent community-size bump (guarded by the statsCounted flag
+  // in the same user doc). Never blocks signup if the stats write fails — the
+  // backend reconciliation recomputes totalUsers from the users collection.
+  registerNewUserCount(uid).catch(() => {});
 };
 
 export const getUserDocument = async (uid) => {

@@ -1,6 +1,5 @@
 import { db } from './firebase';
 import { collection, query, where, getDocs, getDoc, doc, setDoc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
-import { incrementSellerCount, decrementSellerCount } from './statsService';
 
 export const getUserById = async (uid) => {
   const snap = await getDoc(doc(db, 'users', uid));
@@ -55,7 +54,6 @@ export const approveSeller = async (userId) => {
     read: false,
     createdAt: serverTimestamp(),
   });
-  incrementSellerCount();
 };
 
 export const removeSeller = async (userId) => {
@@ -71,7 +69,6 @@ export const removeSeller = async (userId) => {
     updatedAt: serverTimestamp(),
   }));
   await Promise.all(updates);
-  decrementSellerCount();
 };
 
 export const rejectApplication = async (userId, reason) => {

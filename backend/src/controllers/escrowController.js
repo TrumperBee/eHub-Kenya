@@ -1,4 +1,5 @@
 const { admin, adminDb } = require('../services/firebaseAdmin');
+const { reconcileAsync } = require('../services/statsRecoService');
 const {
   sendSellerCredentialsSubmittedEmail,
   sendBuyerCredentialsReadyEmail,
@@ -106,9 +107,7 @@ async function release(req, res) {
       });
     }
 
-    await adminDb.doc('stats/global').set({
-      totalSalesCompleted: admin.firestore.FieldValue.increment(1),
-    }, { merge: true });
+    reconcileAsync(); // order completed -> sales/transactions counters refresh
 
     const messagesRef = orderRef.collection('messages');
     await messagesRef.add({
@@ -395,9 +394,7 @@ async function resolve(req, res) {
           totalSales: admin.firestore.FieldValue.increment(1),
         }).catch(() => {});
       }
-      await adminDb.doc('stats/global').set({
-        totalSalesCompleted: admin.firestore.FieldValue.increment(1),
-      }, { merge: true }).catch(() => {});
+      reconcileAsync();
     } else {
       if (order.listingId) {
         await adminDb.collection('listings').doc(order.listingId).update({
@@ -407,6 +404,7 @@ async function resolve(req, res) {
           soldAt: admin.firestore.FieldValue.delete(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         }).catch(() => {});
+        reconcileAsync(); // listing re-listed -> available counter refreshes
       }
     }
 

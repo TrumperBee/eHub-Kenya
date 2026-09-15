@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, getDocs, getCountFromServer, limit } from 'firebase/firestore';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 import { db } from '../../services/firebase';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { getPendingApplications } from '../../services/usersService';
-import { ORDER_STATUS } from '../../utils/constants';
+import { ORDER_STATUS, BACKEND_URL } from '../../utils/constants';
+import { useAuth } from '../../context/AuthContext';
 import { formatKES, formatDate } from '../../utils/formatters';
 import { Link } from 'react-router-dom';
-import { Users, ShoppingBag, FileText, DollarSign, Clock, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Users, ShoppingBag, FileText, DollarSign, Clock, AlertTriangle, ArrowRight, RefreshCw } from 'lucide-react';
 
 export default function AdminDashboardPage() {
+  const { currentUser } = useAuth();
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeListings: 0,
@@ -20,6 +24,30 @@ export default function AdminDashboardPage() {
   const [recentOrders, setRecentOrders] = useState([]);
   const [recentApps, setRecentApps] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [reconciling, setReconciling] = useState(false);
+
+  const handleReconcileStats = async () => {
+    if (!currentUser) return;
+    setReconciling(true);
+    try {
+      const idToken = await currentUser.getIdToken();
+      const { data } = await axios.post(
+        `${BACKEND_URL}/api/stats/reconcile`,
+        {},
+        { headers: { Authorization: `Bearer ${idToken}` } }
+      );
+      toast.success('Homepage statistics recalculated from live data.');
+      setStats(prev => ({
+        ...prev,
+        totalUsers: data.stats.totalUsers,
+        activeListings: data.stats.totalAccountsListed,
+      }));
+    } catch (err) {
+      toast.error(err?.response?.data?.error || 'Failed to recalculate stats');
+    } finally {
+      setReconciling(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchStats() {
@@ -72,7 +100,18 @@ export default function AdminDashboardPage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <h2 className="font-heading text-xl font-bold text-konami-text">Overview</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-heading text-xl font-bold text-konami-text">Overview</h2>
+          <button
+            onClick={handleReconcileStats}
+            disabled={reconciling}
+            className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-60"
+            style={{ borderColor: '#003BFF', color: '#003BFF' }}
+          >
+            <RefreshCw size={14} className={reconciling ? 'animate-spin' : ''} />
+            {reconciling ? 'Recalculating...' : 'Recalculate Homepage Stats'}
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {metricCards.map((card) => (

@@ -8,8 +8,10 @@ const escrowRoutes = require('./src/routes/escrow.routes');
 const aiRoutes = require('./src/routes/ai.routes');
 const dropRoutes = require('./src/routes/drop.routes');
 const emailRoutes = require('./src/routes/email.routes');
+const statsRoutes = require('./src/routes/stats.routes');
 const errorHandler = require('./src/middleware/errorHandler');
 const { ALLOWED_ORIGINS } = require('./src/config');
+const { startStatsReconciler } = require('./src/services/statsRecoService');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -39,9 +41,11 @@ app.use('/api/escrow', escrowRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/drops', dropRoutes);
 app.use('/api/email', emailRoutes);
+app.use('/api/stats', statsRoutes);
 
 app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`eFootball Hub Kenya Backend running on port ${PORT}`);
+  startStatsReconciler();
 });

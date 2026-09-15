@@ -100,14 +100,18 @@ service cloud.firestore {
     // Public platform counters (read by everyone, written by backend Admin SDK
     // which bypasses rules). Client writes are limited to atomic counter fields
     // only — a full document overwrite is rejected.
+    // Public platform counters (read by everyone). All metrics are derived by
+    // the backend reconciliation service from source-of-truth data (listings,
+    // orders, users) and written with the Admin SDK, which bypasses these
+    // rules. The ONLY client write allowed is the idempotent one-time
+    // totalUsers increment made when a brand-new user registers (guarded by a
+    // statsCounted flag on the user's own doc). A full document overwrite or
+    // any other counter change from the browser is rejected.
     match /stats/{docId} {
       allow read: if true;
       allow write: if isLoggedIn() &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'totalAccountsListed',
-          'registeredSellers',
-          'totalSalesCompleted',
-          'transactionsProcessed',
+          'totalUsers',
         ]);
     }
 

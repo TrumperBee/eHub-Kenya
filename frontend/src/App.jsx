@@ -7,7 +7,6 @@ import { NotificationProvider } from './context/NotificationContext';
 import { FridayDropProvider } from './context/FridayDropContext';
 import { ADMIN_ROUTE } from './utils/constants';
 import { useAuth } from './context/AuthContext';
-import { seedStatsIfMissing } from './services/statsService';
 import { db } from './services/firebase';
 import { getEATDay, getEATYear, getWeekNumber, isDropLive } from './utils/fridayUtils';
 
@@ -70,10 +69,6 @@ function PageLayout({ children }) {
 
 function AppContent() {
   const { currentUser, userProfile, loading } = useAuth();
-
-  useEffect(() => {
-    seedStatsIfMissing();
-  }, []);
 
   useEffect(() => {
     if (!currentUser) return;

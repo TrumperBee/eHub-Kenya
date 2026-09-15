@@ -6,6 +6,7 @@ const {
   sendBuyerPaymentConfirmedEmail,
   sendSellerPaymentReceivedEmail,
 } = require('../services/emailService');
+const { reconcileAsync } = require('../services/statsRecoService');
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'ochiengv250@gmail.com';
 
@@ -149,6 +150,7 @@ try {
     // Note: the Paystack transaction itself is initialized by the react-paystack
     // popup in the browser using this same reference. Initializing here would
     // cause a "Duplicate Transaction Reference" error when the popup runs.
+    if (orderCreated) reconcileAsync(); // listing reserve changed (available--)
     res.json({
       success: true,
       reference,
@@ -197,6 +199,7 @@ async function cancelPendingOrder(orderId) {
 
   if (order.listingId && order.buyerId) {
     await releaseListingReservation(orderId, order.listingId, order.buyerId);
+    reconcileAsync(); // listing may have returned to 'active'
   }
 
   return true;
@@ -303,9 +306,8 @@ async function processSuccessfulPayment(reference) {
     });
   }
 
-  await adminDb.doc('stats/global').set({
-    transactionsProcessed: admin.firestore.FieldValue.increment(1),
-  }, { merge: true });
+  // Payment verified — recompute the derived counters from source-of-truth.
+  reconcileAsync();
 
   const messagesRef = adminDb.collection(`orders/${orderId}/messages`);
   await messagesRef.add({
