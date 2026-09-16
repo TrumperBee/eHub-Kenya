@@ -136,13 +136,20 @@ function CredentialsList({ deliveries, isSeller }) {
 function SellerDeliveryForm({ order }) {
   const [accountEmail, setAccountEmail] = useState('');
   const [accountPassword, setAccountPassword] = useState('');
+  const [reveal, setReveal] = useState(false);
   const [confirmOk, setConfirmOk] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   const handleSubmit = async () => {
     if (!accountEmail.trim()) {
       setError('Enter the eFootball account email.');
+      return;
+    }
+    if (!EMAIL_RE.test(accountEmail.trim())) {
+      setError('Enter a valid email address.');
       return;
     }
     if (!accountPassword.trim()) {
@@ -158,7 +165,7 @@ function SellerDeliveryForm({ order }) {
     try {
       await submitDelivery(order.id, {
         accountEmail: accountEmail.trim(),
-        accountPassword: accountPassword.trim(),
+        accountPassword: accountPassword,
       });
       toast.success('Account details submitted to the buyer.');
       setAccountEmail('');
@@ -191,13 +198,24 @@ function SellerDeliveryForm({ order }) {
         <p className="text-xs text-konami-text-muted mb-1 flex items-center gap-1.5">
           <KeyRound size={13} /> eFootball Account Password
         </p>
-        <input
-          type="password"
-          value={accountPassword}
-          onChange={(e) => { setAccountPassword(e.target.value); setError(''); }}
-          placeholder="Account password"
-          className="w-full px-3 py-2.5 bg-konami-light-gray border border-konami-mid-gray rounded-xl text-konami-text text-sm outline-none focus:border-konami-blue transition-colors"
-        />
+        <div className="relative">
+          <input
+            type={reveal ? 'text' : 'password'}
+            value={accountPassword}
+            onChange={(e) => { setAccountPassword(e.target.value); setError(''); }}
+            placeholder="Account password"
+            autoComplete="new-password"
+            className="w-full px-3 py-2.5 pr-10 bg-konami-light-gray border border-konami-mid-gray rounded-xl text-konami-text text-sm outline-none focus:border-konami-blue transition-colors"
+          />
+          <button
+            type="button"
+            onClick={() => setReveal((r) => !r)}
+            aria-label={reveal ? 'Hide password' : 'Show password'}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-konami-text-muted hover:text-konami-text transition-colors"
+          >
+            {reveal ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        </div>
       </div>
 
       <label className="flex items-start gap-2 text-sm text-konami-text-dim cursor-pointer">
