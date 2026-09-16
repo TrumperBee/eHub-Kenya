@@ -1,5 +1,6 @@
 const { admin, adminDb } = require('../services/firebaseAdmin');
 const { reconcileAsync } = require('../services/statsRecoService');
+const { canonicalStatus, assertValidTransition } = require('../services/orderStateMachine');
 const {
   sendSellerCredentialsSubmittedEmail,
   sendBuyerCredentialsReadyEmail,
@@ -11,26 +12,17 @@ const {
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'ochiengv250@gmail.com';
 
-const RELEASABLE_STATUSES = [
-  'payment_confirmed',
-  'in_transfer',
-  'awaiting_seller_delivery',
-  'credentials_submitted',
-];
+// Canonical eligibility for each actor action. Legacy statuses are read through
+// canonicalStatus() (old orders keep working), and every write below is also
+// guarded by assertValidTransition() so the state machine is the single source
+// of truth for what can happen next.
+const canRelease = (status) => canonicalStatus(status) === 'credentials_submitted';
 
-const DISPUTABLE_STATUSES = [
-  'payment_confirmed',
-  'in_transfer',
-  'awaiting_seller_delivery',
-  'credentials_submitted',
-];
+const canDispute = (status) =>
+  ['awaiting_seller_delivery', 'credentials_submitted'].includes(canonicalStatus(status));
 
-const DELIVERABLE_STATUSES = [
-  'payment_confirmed',
-  'in_transfer',
-  'awaiting_seller_delivery',
-  'credentials_submitted',
-];
+const canDeliver = (status) =>
+  ['awaiting_seller_delivery', 'credentials_submitted'].includes(canonicalStatus(status));
 
 async function createNotification({ userId, title, message, type, orderId }) {
   try {
@@ -80,9 +72,11 @@ async function release(req, res) {
       return res.status(403).json({ success: false, error: 'Only the buyer can release escrow' });
     }
 
-    if (!RELEASABLE_STATUSES.includes(order.status)) {
+    if (!canRelease(order.status)) {
       return res.status(400).json({ success: false, error: 'Order is not in a releasable state' });
     }
+
+    assertValidTransition(order.status, 'completed');
 
     await orderRef.update({
       status: 'completed',
@@ -164,9 +158,11 @@ async function dispute(req, res) {
       return res.status(400).json({ success: false, error: 'A dispute is already open for this order' });
     }
 
-    if (!DISPUTABLE_STATUSES.includes(order.status)) {
+    if (!canDispute(order.status)) {
       return res.status(400).json({ success: false, error: 'Order cannot be disputed in its current state' });
     }
+
+    assertValidTransition(order.status, 'disputed');
 
     // First-class dispute state: never leaves escrow status contradictory,
     // and every field that surfaces on the admin dashboard is written atomically.
@@ -260,9 +256,11 @@ async function submitDelivery(req, res) {
       return res.status(403).json({ success: false, error: 'Only the seller can submit account details' });
     }
 
-    if (!DELIVERABLE_STATUSES.includes(order.status)) {
+    if (!canDeliver(order.status)) {
       return res.status(400).json({ success: false, error: 'This order cannot accept account details in its current state' });
     }
+
+    assertValidTransition(order.status, 'credentials_submitted');
 
     const deliveryRef = orderRef.collection('delivery').doc();
     await deliveryRef.set({
@@ -317,13 +315,8 @@ async function submitDelivery(req, res) {
  * The manual payment action itself (Paystack payout/reversal) stays with the
  * admin, exactly as today — this endpoint records the resolution.
  */
-const RESOLVABLE_STATUSES = [
-  'payment_confirmed',
-  'in_transfer',
-  'awaiting_seller_delivery',
-  'credentials_submitted',
-  'disputed',
-];
+const canResolve = (status) =>
+  ['awaiting_seller_delivery', 'credentials_submitted', 'disputed'].includes(canonicalStatus(status));
 
 async function resolve(req, res) {
   try {
@@ -349,7 +342,7 @@ async function resolve(req, res) {
     const order = orderSnap.data();
     const isDisputed = order.status === 'disputed';
 
-    if (!RESOLVABLE_STATUSES.includes(order.status)) {
+    if (!canResolve(order.status)) {
       return res.status(400).json({ success: false, error: 'Order cannot be resolved in its current state' });
     }
 
@@ -358,6 +351,10 @@ async function resolve(req, res) {
     const orderStatus = isRelease ? 'completed' : 'refunded';
     const escrowStatus = isRelease ? 'released' : 'refunded';
     const resolvedAt = new Date().toISOString();
+
+    // Documented admin-only arcs: awaiting_seller_delivery|credentials_submitted
+    // -> completed/refunded, and disputed -> completed/refunded.
+    assertValidTransition(order.status, orderStatus, { admin: true });
 
     const patch = {
       status: orderStatus,

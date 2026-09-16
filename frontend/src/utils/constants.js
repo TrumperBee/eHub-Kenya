@@ -14,16 +14,9 @@ export const PLATFORMS = {
   both:    { label: 'Both',    icon: 'smartphone' },
 };
 
-export const ORDER_STATUS = {
-  pending_payment:         { label: 'Payment Pending',            color: 'text-yellow-400' },
-  payment_confirmed:       { label: 'Payment Received',             color: 'text-blue-400'   },
-  awaiting_seller_delivery:{ label: 'Awaiting Seller Delivery',     color: 'text-yellow-400' },
-  in_transfer:             { label: 'Account Transfer',             color: 'text-purple-400' },
-  credentials_submitted:   { label: 'Account Details Submitted',    color: 'text-purple-400' },
-  completed:               { label: 'Completed',                    color: 'text-green-400'  },
-  disputed:                { label: 'Disputed',                     color: 'text-red-400'    },
-  refunded:                { label: 'Refunded',                     color: 'text-gray-400'   },
-  cancelled:               { label: 'Cancelled',                    color: 'text-gray-500'   },
-};
+// Status labels/colors are owned by ONE file: utils/orderMachine.js (ORDER_STATES).
+// Re-exporting here means every page that treats ORDER_STATUS as a label map
+// reads the SAME object the machine gates — no second label truth can drift.
+export { ORDER_STATUS, ORDER_STATES } from './orderMachine.js';
 
 export const BACKEND_URL = import.meta.env?.VITE_BACKEND_URL || 'http://localhost:5000';

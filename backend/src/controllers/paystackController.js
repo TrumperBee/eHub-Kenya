@@ -7,19 +7,17 @@ const {
   sendSellerPaymentReceivedEmail,
 } = require('../services/emailService');
 const { reconcileAsync } = require('../services/statsRecoService');
+const { canonicalStatus, assertValidTransition } = require('../services/orderStateMachine');
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'ochiengv250@gmail.com';
 
 // Statuses that mean the payment has already been successfully processed.
 // Shared by the callback, webhook and on-demand verify paths so every entry
-// point agrees on idempotency.
-const PROCESSED_STATUSES = [
-  'payment_confirmed',
-  'in_transfer',
-  'awaiting_seller_delivery',
-  'credentials_submitted',
-  'completed',
-];
+// point agrees on idempotency. Canonical paid states only; legacy statuses are
+// normalized through canonicalStatus().
+function isProcessedPaid(status) {
+  return ['awaiting_seller_delivery', 'credentials_submitted', 'completed'].includes(canonicalStatus(status));
+}
 
 async function createNotification({ userId, title, message, type, orderId }) {
   try {
@@ -202,6 +200,8 @@ async function cancelPendingOrder(orderId) {
   const order = orderSnap.data();
   if (order.status !== 'pending_payment') return false;
 
+  assertValidTransition(order.status, 'cancelled');
+
   await orderRef.update({
     status: 'cancelled',
     paymentStatus: 'abandoned',
@@ -290,8 +290,10 @@ async function processSuccessfulPayment(reference) {
     if (!snap.exists) return;
 
     const current = snap.data();
-    if (PROCESSED_STATUSES.includes(current.status)) return;
+    if (isProcessedPaid(current.status)) return;
     if (current.status !== 'pending_payment') return;
+
+    assertValidTransition(current.status, 'awaiting_seller_delivery');
 
     tx.update(orderRef, {
       status: 'awaiting_seller_delivery',
@@ -320,7 +322,7 @@ async function processSuccessfulPayment(reference) {
   if (!state) {
     const freshSnap = await orderRef.get();
     const fresh = freshSnap.exists ? freshSnap.data() : null;
-    if (fresh && PROCESSED_STATUSES.includes(fresh.status)) {
+    if (fresh && isProcessedPaid(fresh.status)) {
       const emailOrder = { ...fresh, id: orderId, paymentChannel: fresh.paymentChannel || null };
       safeSideEffect('buyer payment email (retry)', () => sendBuyerPaymentConfirmedEmail(emailOrder));
       safeSideEffect('seller payment email (retry)', () => sendSellerPaymentReceivedEmail(emailOrder));
@@ -427,7 +429,7 @@ async function verifyPayment(req, res) {
     }
 
     // Already paid — nothing to re-verify.
-    if (order.paymentStatus === 'paid' || PROCESSED_STATUSES.includes(order.status)) {
+    if (order.paymentStatus === 'paid' || isProcessedPaid(order.status)) {
       return res.json({
         success: true,
         status: order.status,

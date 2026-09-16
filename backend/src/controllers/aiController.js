@@ -1,6 +1,12 @@
 const { GoogleGenAI } = require('@google/genai');
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const apiKey = process.env.GEMINI_API_KEY;
+
+if (!apiKey) {
+  console.warn('[aiController] GEMINI_API_KEY is not set — AI chat requests will return a friendly unavailable message.');
+}
+
+const ai = new GoogleGenAI({ apiKey });
 
 const SYSTEM_PROMPT = `
 You are EHub AI, the official assistant for eFootball Hub Kenya — Kenya's first dedicated eFootball account marketplace. You are friendly, knowledgeable, and concise. You speak like a helpful teammate, not a corporate bot. You understand both the platform and the eFootball game deeply.
@@ -224,6 +230,12 @@ const chat = async (req, res) => {
     }
 
     const recentMessages = messages.slice(-10);
+
+    for (const m of recentMessages) {
+      if (!m || typeof m.role !== 'string' || typeof m.content !== 'string' || !m.content.trim()) {
+        return res.status(400).json({ error: 'Each message must have a string role and non-empty text content' });
+      }
+    }
 
     const history = recentMessages.slice(0, -1).map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
