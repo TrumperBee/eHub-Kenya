@@ -45,6 +45,16 @@ export const releaseEscrow = async (orderId) => {
   return data;
 };
 
+export const revealOrderCredentials = async (orderId) => {
+  const idToken = await auth.currentUser.getIdToken();
+  const { data } = await api.post(
+    '/api/escrow/credentials/reveal',
+    { orderId },
+    { headers: { Authorization: `Bearer ${idToken}` } }
+  );
+  return data;
+};
+
 export const submitDelivery = async (orderId, { accountEmail, accountPassword }) => {
   const idToken = await auth.currentUser.getIdToken();
   const { data } = await api.post(

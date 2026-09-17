@@ -10,6 +10,12 @@ const {
   sendDisputeResolvedEmail,
 } = require('../services/emailService');
 
+const {
+  VERIFICATION_WINDOW_MS,
+  verificationDeadlineAfter,
+  verificationStatusAt,
+} = require('../services/verificationWindow');
+
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'ochiengv250@gmail.com';
 
 // Canonical eligibility for each actor action. Legacy statuses are read through
@@ -217,7 +223,101 @@ async function dispute(req, res) {
 
     return res.json({ success: true });
   } catch (err) {
-    console.error('Escrow dispute error:', err);
+    console.error('Delivery submission error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * POST /api/escrow/credentials/reveal — BUYER starts the 30-minute verification
+ * window. SERVER-AUTHORITATIVE and IDEMPOTENT:
+ *
+ *  • Only the assigned buyer may reveal (403 otherwise).
+ *  • The window only begins from `credentials_submitted` (credentials exist).
+ *  • First reveal WINS: if the order already has a verificationDeadline, the
+ *    EXISTING boundaries are returned verbatim — never restarted, never
+ *    extended, never re-derived from a client/provided clock.
+ *  • The reveal instant + deadline are computed from the SERVER clock only and
+ *    written atomically in ONE transaction.
+ *
+ * SCOPE GUARD (Phase-4 contract): this handler ONLY records the window. It does
+ * NOT and MUST NOT alter order.status, escrowStatus, verificationStatus write
+ * for auto-release, or trigger escrow release / payout / completion — that is
+ * Phase 5 and is out of scope here (stay on the roadmap).
+ */
+async function revealCredentials(req, res) {
+  try {
+    const { orderId } = req.body;
+    const userId = req.user.uid;
+
+    if (!orderId) {
+      return res.status(400).json({ success: false, error: 'orderId is required' });
+    }
+
+    const orderRef = adminDb.collection('orders').doc(orderId);
+    const orderSnap = await orderRef.get();
+
+    if (!orderSnap.exists) {
+      return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+
+    const order = orderSnap.data();
+
+    if (order.buyerId !== userId) {
+      return res.status(403).json({ success: false, error: 'Only the assigned buyer can reveal account details' });
+    }
+
+    if (canonicalStatus(order.status) !== 'credentials_submitted') {
+      return res.status(400).json({ success: false, error: 'Account details are not available yet — credentials must be submitted first' });
+    }
+
+    // First-reveal-wins, idempotent, transactionally atomic. A concurrent or
+    // repeated reveal returns the EXISTING window; the deadline is NEVER moved.
+    let reveal;
+    const nowMs = Date.now();
+
+    await adminDb.runTransaction(async (tx) => {
+      const snap = await tx.get(orderRef);
+      const latest = snap.data();
+      if (latest && latest.verificationDeadline) {
+        const deadlineMs = latest.verificationDeadline.toMillis
+          ? latest.verificationDeadline.toMillis()
+          : latest.verificationDeadline;
+        const revealedMs = latest.credentialsRevealedAt
+          ? (latest.credentialsRevealedAt.toMillis
+              ? latest.credentialsRevealedAt.toMillis()
+              : latest.credentialsRevealedAt)
+          : deadlineMs - VERIFICATION_WINDOW_MS;
+        reveal = {
+          credentialsRevealedAt: revealedMs,
+          verificationDeadline: deadlineMs,
+        };
+        return;
+      }
+      reveal = verificationDeadlineAfter(nowMs);
+      await tx.update(orderRef, {
+        credentialsRevealedAt: admin.firestore.Timestamp.fromMillis(reveal.credentialsRevealedAt),
+        verificationDeadline: admin.firestore.Timestamp.fromMillis(reveal.verificationDeadline),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    });
+
+    const status = verificationStatusAt(
+      {
+        credentialsRevealedAt: reveal.credentialsRevealedAt,
+        verificationDeadline: reveal.verificationDeadline,
+      },
+      Date.now()
+    );
+
+    return res.json({
+      success: true,
+      credentialsRevealedAt: reveal.credentialsRevealedAt,
+      verificationDeadline: reveal.verificationDeadline,
+      verificationStatus: status,
+    });
+  } catch (err) {
+    console.error('Credentials reveal error:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 }
@@ -480,4 +580,4 @@ function formatAmount(amount) {
   return `KES ${Number(amount || 0).toLocaleString('en-KE')}`;
 }
 
-module.exports = { release, dispute, submitDelivery, resolve };
+module.exports = { release, dispute, submitDelivery, resolve, revealCredentials };

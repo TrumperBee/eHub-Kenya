@@ -8,7 +8,7 @@ import { useOrder } from '../../hooks/useOrders';
 import { ORDER_STATUS, BACKEND_URL } from '../../utils/constants';
 import { formatKES, formatDate } from '../../utils/formatters';
 import { canViewOrder } from '../../utils/orderAccess';
-import { releaseEscrow, submitDelivery, verifyOrderPayment } from '../../services/paymentService';
+import { releaseEscrow, submitDelivery, verifyOrderPayment, revealOrderCredentials } from '../../services/paymentService';
 import { subscribeToDeliveries } from '../../services/ordersService';
 import { buyerCanConfirm, buyerCanDispute, sellerCanDeliver, isPaidStatus } from '../../utils/orderMachine';
 import { buyerGuide, sellerGuide } from '../../utils/orderGuide';
@@ -88,10 +88,32 @@ function stepIndexFor(status) {
   return -1;
 }
 
-function CredentialsList({ deliveries, isSeller }) {
-  const [reveal, setReveal] = useState(false);
+function CredentialsList({ deliveries, isSeller, orderId, revealed = null, deadline = null, onReveal }) {
+  const [reveal, setReveal] = useState(Boolean(revealed));
   const [confirmReveal, setConfirmReveal] = useState(false);
+  const [revealError, setRevealError] = useState('');
+  const [verificationDeadline, setVerificationDeadline] = useState(deadline);
+  const [nowMs, setNowMs] = useState(Date.now());
+
+  const [revealPending, setRevealPending] = useState(false);
+
+  useEffect(() => {
+    if (!verificationDeadline) return undefined;
+    const tick = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, [verificationDeadline]);
+
   const latest = deliveries && deliveries.length > 0 ? deliveries[0] : null;
+
+  const remainingMs = verificationDeadline ? Math.max(0, verificationDeadline - nowMs) : 0;
+  const expired = verificationDeadline ? nowMs >= verificationDeadline : false;
+
+  const formatCountdown = (ms) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const mm = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+    const ss = String(totalSeconds % 60).padStart(2, '0');
+    return `${mm}:${ss}`;
+  };
 
   const copyValue = async (value, label) => {
     try {
@@ -99,6 +121,22 @@ function CredentialsList({ deliveries, isSeller }) {
       toast.success(`${label} copied to clipboard`);
     } catch {
       toast.error(`Could not copy the ${label.toLowerCase()} automatically — long-press or tap it to select and copy manually.`);
+    }
+  };
+
+  const handleReveal = async () => {
+    setRevealPending(true);
+    setRevealError('');
+    try {
+      const result = await onReveal(orderId);
+      setVerificationDeadline(result.verificationDeadline);
+      setReveal(true);
+      setNowMs(Date.now());
+    } catch (err) {
+      setRevealError(err.message || 'Could not reveal account details right now. Please try again.');
+      setConfirmReveal(false);
+    } finally {
+      setRevealPending(false);
     }
   };
 
@@ -591,7 +629,7 @@ export default function OrderDetailPage() {
                         <KeyRound size={15} className="shrink-0" /> View Account Details
                       </summary>
                       <div className="mt-3">
-                        <CredentialsList deliveries={deliveries} isSeller={false} />
+                        <CredentialsList deliveries={deliveries} isSeller={false} orderId={order.id} onReveal={revealOrderCredentials} />
                       </div>
                     </details>
                   )}
