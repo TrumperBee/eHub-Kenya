@@ -576,8 +576,24 @@ async function resolve(req, res) {
   }
 }
 
+async function releaseMaturedOrders(req, res) {
+  try {
+    const { runMaturedReleasePass } = require('../services/escrowAutoRelease');
+
+    if (!req.user || req.user.email !== ADMIN_EMAIL) {
+      return res.status(403).json({ success: false, error: 'Admin only' });
+    }
+
+    const result = await runMaturedReleasePass({ limit: 100 });
+    return res.json({ success: true, ...result });
+  } catch (err) {
+    console.error('Matured release pass error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
 function formatAmount(amount) {
   return `KES ${Number(amount || 0).toLocaleString('en-KE')}`;
 }
 
-module.exports = { release, dispute, submitDelivery, resolve, revealCredentials };
+module.exports = { release, dispute, submitDelivery, resolve, revealCredentials, releaseMaturedOrders };
