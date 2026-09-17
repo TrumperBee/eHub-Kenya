@@ -18,9 +18,10 @@ import ChatWindow from '../../components/chat/ChatWindow';
 import ReviewForm from '../../components/reviews/ReviewForm';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import {
-  Shield, MessageSquare, CheckCircle, Mail, KeyRound, Eye, EyeOff,
+  Shield, MessageSquare, CheckCircle, Mail, KeyRound, Eye, EyeOff, Copy,
   Send, Upload, AlertTriangle, Lock, ShoppingBag, Loader, RefreshCw,
 } from 'lucide-react';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import toast from 'react-hot-toast';
 
 const PAYMENT_STATUS = {
@@ -89,7 +90,17 @@ function stepIndexFor(status) {
 
 function CredentialsList({ deliveries, isSeller }) {
   const [reveal, setReveal] = useState(false);
+  const [confirmReveal, setConfirmReveal] = useState(false);
   const latest = deliveries && deliveries.length > 0 ? deliveries[0] : null;
+
+  const copyValue = async (value, label) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`${label} copied to clipboard`);
+    } catch {
+      toast.error(`Could not copy the ${label.toLowerCase()} automatically — long-press or tap it to select and copy manually.`);
+    }
+  };
 
   if (!latest) return null;
 
@@ -108,27 +119,58 @@ function CredentialsList({ deliveries, isSeller }) {
         <p className="text-xs text-konami-text-muted mb-1 flex items-center gap-1.5">
           <KeyRound size={13} /> Account Password
         </p>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 px-3 py-2.5 bg-konami-light-gray border border-konami-mid-gray rounded-xl text-sm text-konami-text break-all font-mono">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex-1 min-w-0 px-3 py-2.5 bg-konami-light-gray border border-konami-mid-gray rounded-xl text-sm text-konami-text break-all font-mono">
             {reveal ? latest.accountPassword : '••••••••••••'}
           </div>
-          <button
-            onClick={() => setReveal((r) => !r)}
-            className="btn-secondary px-3 py-2.5 text-sm shrink-0 flex items-center gap-1.5"
-            aria-label={reveal ? 'Hide password' : 'Reveal password'}
-          >
-            {reveal ? <EyeOff size={15} /> : <Eye size={15} />}
-            {reveal ? 'Hide' : 'Reveal'}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {reveal && (
+              <button
+                onClick={() => copyValue(latest.accountPassword, 'Password')}
+                type="button"
+                className="btn-secondary px-3 py-2.5 text-sm shrink-0 flex items-center gap-1.5"
+                aria-label="Copy account password"
+              >
+                <Copy size={15} /> Copy
+              </button>
+            )}
+            <button
+              onClick={() => {
+                if (reveal) {
+                  setReveal(false);
+                } else {
+                  setConfirmReveal(true);
+                }
+              }}
+              className="btn-secondary px-3 py-2.5 text-sm shrink-0 flex items-center gap-1.5"
+              aria-label={reveal ? 'Hide password' : 'Show password'}
+            >
+              {reveal ? <EyeOff size={15} /> : <Eye size={15} />}
+              {reveal ? 'Hide' : 'Show'}
+            </button>
+          </div>
         </div>
       </div>
 
       {!isSeller && (
-        <p className="text-xs text-konami-text-muted flex items-start gap-1.5">
+        <p className="text-xs text-konami-text-muted mb-1 flex items-start gap-1.5">
           <AlertTriangle size={13} className="shrink-0 mt-0.5" />
           Change the password as soon as you log in. Login details are stored privately on this order — never in the public chat or reviews.
         </p>
       )}
+
+      <ConfirmDialog
+        open={confirmReveal}
+        title="Before revealing your password"
+        message="Once you access this account, change the account email and password to secure it under your control. After revealing, the password is only visible to you here. Keep this order page open and never share the password in the public chat."
+        confirmLabel="Continue & Show Password"
+        onConfirm={() => {
+          setReveal(true);
+          setConfirmReveal(false);
+        }}
+        onCancel={() => setConfirmReveal(false)}
+        variant="default"
+      />
     </div>
   );
 }
