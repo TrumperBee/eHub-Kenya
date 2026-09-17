@@ -596,4 +596,4 @@ function formatAmount(amount) {
   return `KES ${Number(amount || 0).toLocaleString('en-KE')}`;
 }
 
-module.exports = { release, dispute, submitDelivery, resolve, revealCredentials, releaseMaturedOrders };
+module.exports = { release, dispute, submitDelivery, resolve, revealCredentials, releaseMatured: releaseMaturedOrders, releaseMaturedOrders };
