@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { MessageSquare, X as XIcon, ChevronDown, ArrowRight, Bot } from 'lucide-react';
 import { sendMessageToAI } from '../../services/aiService';
 
@@ -18,6 +19,8 @@ const QUICK_SUGGESTIONS = [
 
 export default function AIAssistant() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
@@ -40,7 +43,14 @@ export default function AIAssistant() {
   useEffect(() => {
     const saved = localStorage.getItem('ehub_ai_position');
     if (saved) {
-      try { setPosition(JSON.parse(saved)); } catch {}
+      try {
+        const p = JSON.parse(saved);
+        const maxX = Math.max(0, window.innerWidth - 56);
+        const maxY = Math.max(0, window.innerHeight - 56);
+        const x = Math.min(Math.max(0, Number(p.x) || 0), maxX);
+        const y = Math.min(Math.max(0, Number(p.y) || 0), maxY);
+        setPosition({ x, y });
+      } catch {}
     }
   }, []);
 
@@ -54,6 +64,10 @@ export default function AIAssistant() {
 
   const toggleChat = () => {
     if (!isOpen) {
+      if (!currentUser) {
+        navigate('/login', { state: { from: location.pathname } });
+        return;
+      }
       setIsOpen(true);
       setHasOpenedChat(true);
       setHasUnread(false);
@@ -170,7 +184,7 @@ export default function AIAssistant() {
 
   const panelPos = isOpen ? chatPanelStyle() : {};
 
-  if (hideOnPaths.includes(location.pathname) || isAdminPath) return null;
+  
 
   return (
     <>
@@ -183,6 +197,7 @@ export default function AIAssistant() {
           height: 56,
           zIndex: 40,
           cursor: isDragging ? 'grabbing' : 'grab',
+          boxShadow: '0 4px 20px rgba(0,59,255,0.5)',
         }}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
@@ -193,7 +208,6 @@ export default function AIAssistant() {
         onTouchEnd={handleTouchEnd}
         onClick={handleButtonClick}
         className={`rounded-full border-2 border-[#FFF100] bg-[#003BFF] flex items-center justify-center select-none transition-transform ${isDragging ? 'scale-110' : 'hover:scale-105'} ${!hasOpenedChat ? 'animate-pulse-blue' : ''}`}
-        style={{ boxShadow: '0 4px 20px rgba(0,59,255,0.5)' }}
       >
         {isOpen ? <XIcon size={22} className="text-white" /> : <MessageSquare size={22} className="text-white" />}
         {hasUnread && !isOpen && (
