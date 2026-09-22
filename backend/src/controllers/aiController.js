@@ -333,10 +333,10 @@ const chat = async (req, res) => {
     const latestMessage = recentMessages[recentMessages.length - 1].content;
 
     const chatSession = await ai.chats.create({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.6-flash',
       config: {
         systemInstruction: SYSTEM_PROMPT,
-        temperature: 0.6,
+        temperature: 0.5,
         maxOutputTokens: 300,
       },
       history,
