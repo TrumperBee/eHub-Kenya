@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /hub-command-af29x
+Disallow: /hub-command-af29x/
+Disallow: /account
+Disallow: /orders
+Disallow: /transfer-room
+Disallow: /saved
+Disallow: /setup-username
+
+Sitemap: https://ehubkenya.vercel.app/sitemap.xml
