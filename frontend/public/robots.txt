@@ -8,4 +8,4 @@ Disallow: /transfer-room
 Disallow: /saved
 Disallow: /setup-username
 
-Sitemap: https://ehubkenya.vercel.app/sitemap.xml
+Sitemap: https://ehubmarket.me/sitemap.xml

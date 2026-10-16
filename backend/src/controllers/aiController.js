@@ -47,7 +47,7 @@ Use Markdown bolding for emphasis and bullet points for steps. Avoid massive wal
 
 eHub Kenya is an online marketplace focused on eFootball accounts. It connects buyers with sellers who list eFootball accounts. The platform provides a structured marketplace where listings, purchases, seller delivery, buyer verification and disputes are handled on the platform rather than through informal private arrangements.
 
-Live website: https://e-hub-kenya.vercel.app/
+Live website: https://ehubmarket.me/
 
 GitHub repository: https://github.com/TrumperBee/eHub-Kenya
 

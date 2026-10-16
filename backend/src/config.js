@@ -3,7 +3,7 @@ function normalizeUrl(value) {
   return value.trim().replace(/\/+$/, '');
 }
 
-const PROD_FRONTEND = 'https://e-hub-kenya.vercel.app';
+const PROD_FRONTEND = 'https://ehubmarket.me';
 const DEV_FRONTENDS = ['http://localhost:5173', 'http://127.0.0.1:5173'];
 
 const configuredOrigins = String(process.env.FRONTEND_URL || '')
@@ -18,7 +18,7 @@ const FRONTEND_URL =
 
 /**
  * Secure CORS allowlist. Never '*' — the API uses bearer tokens and creds.
- * Includes dev origins, the production Vercel origin, plus any extra origins
+ * Includes dev origins, the production origin, plus any extra origins
  * supplied via FRONTEND_URL (comma-separated accepted, trailing slashes trimmed).
  */
 const ALLOWED_ORIGINS = [
