@@ -46,9 +46,9 @@ export default function LoginPage() {
         navigate(redirectPath);
       }
     } catch (err) {
-      if (err.code !== 'auth/popup-closed-by-user') {
-        setError(err.message.replace('Firebase: ', '').replace(/\(.*\)/, '').trim() || 'Google login failed');
-      }
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
+      const detail = (err.message || '').replace('Firebase: ', '').trim();
+      setError(detail || 'Google login failed. Please use email and password.');
     } finally {
       setLoading(false);
     }

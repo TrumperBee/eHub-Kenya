@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Zap, Shield, MessageCircle, CheckCircle, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import PasswordInput from '../../components/common/PasswordInput';
-import { validateUsernameFormat, isUsernameTaken, generateSuggestions, checkUsername } from '../../utils/usernameUtils';
+import { validateUsernameFormat, generateSuggestions, checkUsername } from '../../utils/usernameUtils';
 
 export default function RegisterPage() {
   const { register, loginWithGoogle } = useAuth();
@@ -22,6 +22,29 @@ export default function RegisterPage() {
   const debounceRef = useRef(null);
 
   const update = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const runUsernameCheck = async (value) => {
+    try {
+      const result = await checkUsername(value);
+      if (result.valid) {
+        setUsernameAvailable(value);
+        setUsernameTaken(false);
+      } else if (result.error === 'taken') {
+        setUsernameTaken(value);
+        setUsernameAvailable(null);
+      } else {
+        setUsernameError(result.error);
+      }
+    } catch {
+      // Never leave the form stuck on "checking..." if the lookup fails
+      // (offline, blocked request, rules error). Otherwise the submit button
+      // stays permanently disabled and the form appears broken.
+      setUsernameError('Could not verify username availability. Please try again.');
+      setUsernameAvailable(null);
+    } finally {
+      setUsernameChecking(false);
+    }
+  };
 
   const handleUsernameChange = (e) => {
     const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
@@ -45,19 +68,7 @@ export default function RegisterPage() {
     }
 
     setUsernameChecking(true);
-    debounceRef.current = setTimeout(async () => {
-      const result = await checkUsername(value);
-      setUsernameChecking(false);
-      if (result.valid) {
-        setUsernameAvailable(value);
-        setUsernameTaken(false);
-      } else if (result.error === 'taken') {
-        setUsernameTaken(value);
-        setUsernameAvailable(null);
-      } else {
-        setUsernameError(result.error);
-      }
-    }, 600);
+    debounceRef.current = setTimeout(() => runUsernameCheck(value), 600);
   };
 
   const validate = () => {
@@ -118,9 +129,9 @@ export default function RegisterPage() {
         navigate(redirectPath);
       }
     } catch (err) {
-      if (err.code !== 'auth/popup-closed-by-user') {
-        setError(err.message.replace('Firebase: ', '').replace(/\(.*\)/, '').trim() || 'Google sign-in failed');
-      }
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
+      const detail = (err.message || '').replace('Firebase: ', '').trim();
+      setError(detail || 'Google sign-in failed. Please use email and password.');
     } finally {
       setLoading(false);
     }
@@ -239,19 +250,7 @@ export default function RegisterPage() {
                               setForm(prev => ({ ...prev, username: suggestion }));
                               setUsernameTaken(false);
                               setUsernameChecking(true);
-                              setTimeout(async () => {
-                                const result = await checkUsername(suggestion);
-                                setUsernameChecking(false);
-                                if (result.valid) {
-                                  setUsernameAvailable(suggestion);
-                                  setUsernameTaken(false);
-                                } else if (result.error === 'taken') {
-                                  setUsernameTaken(suggestion);
-                                  setUsernameAvailable(null);
-                                } else {
-                                  setUsernameError(result.error);
-                                }
-                              }, 100);
+                              setTimeout(() => runUsernameCheck(suggestion), 100);
                             }}
                             className="px-3 py-1 bg-white border border-[#003BFF] rounded-full text-[#003BFF] text-xs font-heading font-bold hover:bg-[#003BFF] hover:text-white transition-colors"
                           >
