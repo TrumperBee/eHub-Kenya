@@ -66,6 +66,14 @@ function zetupayFailureResponse(err) {
     case 'ZETUPAY_RATE_LIMITED':
       return [429, 'Too many M-Pesa requests. Wait a moment and try again.', err.code];
     case 'ZETUPAY_VALIDATION_FAILED':
+      // A channelId rejection is our configuration, not the buyer's input.
+      if (/channelid/i.test(String(err.providerMessage || ''))) {
+        return [
+          503,
+          'M-Pesa payments are unavailable: the ZetuPay collection channel is not configured correctly. Please contact support.',
+          'ZETUPAY_CHANNEL_INVALID',
+        ];
+      }
       return [400, 'M-Pesa rejected the payment details. Check the number and try again.', err.code];
     case 'ZETUPAY_PAYMENT_EXPIRED':
       return [409, 'This payment request expired. Please start a new one.', err.code];

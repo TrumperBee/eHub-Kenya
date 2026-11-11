@@ -21,7 +21,6 @@ const REQUEST_TIMEOUT_MS = 20000;
 // outage waiting to happen.
 const baseUrl = () => BASE_URL;
 const secretKey = () => (process.env.ZETUPAY_SECRET_KEY || '').trim();
-const channelId = () => (process.env.ZETUPAY_CHANNEL_ID || '').trim();
 
 if (!secretKey()) {
   console.warn('[zetupay] ZETUPAY_SECRET_KEY is not set — payments will fail');
@@ -77,6 +76,87 @@ const providerMessageFrom = (err) => {
   return data.message || data.error || data.detail || null;
 };
 
+// --- Collection channel resolution -----------------------------------------
+// channelId must be the numeric id of an active collection channel (e.g.
+// "1214"), not its name. A bad value makes ZetuPay reject the whole payment
+// with a 400, so we normalise it and fall back to the wallet's only active
+// channel instead of letting a config typo block checkout.
+const CHANNEL_CACHE_TTL_MS = 5 * 60 * 1000;
+let channelCache = { at: 0, channels: null };
+
+const normalizeChannelId = (raw) => {
+  if (raw == null) return null;
+  const value = String(raw)
+    .trim()
+    .replace(/^['"]+|['"]+$/g, '')
+    .replace(/^#/, '')
+    .trim();
+  return /^\d{1,10}$/.test(value) ? value : null;
+};
+
+async function getActiveChannels() {
+  if (Date.now() - channelCache.at < CHANNEL_CACHE_TTL_MS) {
+    return channelCache.channels;
+  }
+  try {
+    const res = await axios.get(`${baseUrl()}/collection-channels`, {
+      headers: authHeaders(),
+      params: { active: true, pageSize: 100 },
+      timeout: 8000,
+    });
+    const list = res?.data?.data;
+    channelCache = { at: Date.now(), channels: Array.isArray(list) ? list : null };
+  } catch (err) {
+    console.warn(
+      '[zetupay] could not list collection channels:',
+      providerMessageFrom(err) || err?.message || err?.code
+    );
+    // Short negative cache so a failing lookup doesn't add latency to retries.
+    channelCache = { at: Date.now(), channels: null };
+  }
+  return channelCache.channels;
+}
+
+async function resolveChannelId() {
+  const rawConfigured = (process.env.ZETUPAY_CHANNEL_ID || '').trim();
+  const configured = normalizeChannelId(rawConfigured);
+  if (rawConfigured && !configured) {
+    console.warn(
+      '[zetupay] ignoring ZETUPAY_CHANNEL_ID: it must be the numeric collection ' +
+      'channel id (e.g. 1214), not the channel name'
+    );
+  }
+
+  const channels = await getActiveChannels();
+  const active = (channels || []).filter((c) => c && c.active !== false);
+
+  if (configured) {
+    if (!channels || active.some((c) => String(c.id) === configured)) return configured;
+    console.warn(
+      `[zetupay] ZETUPAY_CHANNEL_ID=${configured} is not an active collection ` +
+      'channel for this wallet; falling back'
+    );
+  }
+
+  if (active.length === 1) {
+    const only = String(active[0].id);
+    console.log(
+      `[zetupay] using the only active collection channel ${only} ` +
+      `(${active[0].name || 'unnamed'})`
+    );
+    return only;
+  }
+
+  if (active.length > 1) {
+    console.warn(
+      '[zetupay] several active collection channels — set ZETUPAY_CHANNEL_ID ' +
+      'to choose which one receives payments'
+    );
+  }
+
+  return null;
+}
+
 // Last known provider connectivity, surfaced on /api/health so a deployment can
 // be diagnosed from a browser without digging through server logs.
 let connectivity = null;
@@ -96,15 +176,23 @@ async function checkConnectivity() {
   }
 
   try {
-    const res = await axios.get(`${baseUrl()}/collection-channels?pageSize=1`, {
+    const res = await axios.get(`${baseUrl()}/collection-channels`, {
       headers: authHeaders(),
+      params: { pageSize: 100 },
       timeout: 10000,
     });
+    const list = Array.isArray(res?.data?.data) ? res.data.data : [];
+    const active = list.filter((c) => c && c.active !== false);
+    // Seed the resolver's cache so resolving the channel costs no extra request.
+    channelCache = { at: Date.now(), channels: list };
     connectivity = {
       configured: true,
       ok: true,
       baseUrl: baseUrl(),
       status: res.status,
+      // Surfaced so a channel misconfiguration is visible without log access.
+      channels: active.map((c) => ({ id: String(c.id), name: c.name || null, type: c.type || null })),
+      channelId: await resolveChannelId(),
       elapsedMs: Date.now() - started,
       checkedAt,
     };
@@ -165,9 +253,10 @@ const initiateStkPush = async ({ phone, amount, orderId, buyerId }) => {
     currency: 'KES',
   };
   if (buyerId) payload.identifier = String(buyerId).slice(0, 100);
-  // Only send a collection channel when one is explicitly configured. Sending
-  // one for a wallet that settles with ZetuPay is rejected with 403.
-  if (channelId()) payload.channelId = channelId();
+  // Route to the configured collection channel, or the wallet's only active
+  // one. A malformed env value is ignored instead of failing the payment.
+  const resolvedChannelId = await resolveChannelId();
+  if (resolvedChannelId) payload.channelId = resolvedChannelId;
 
   const headers = {
     ...authHeaders(),
