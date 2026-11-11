@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buyerGuide, sellerGuide, payoutLabelFor, GUIDE_TONES } from './orderGuide.js';
 
-test('buyer: pending payment tells buyer to pay via Paystack', () => {
+test('buyer: pending payment tells buyer to pay via M-Pesa', () => {
   const g = buyerGuide({ status: 'pending_payment' });
   assert.equal(g.title, 'PAYMENT PENDING');
   assert.equal(g.whatHappened, 'Your order has been created, but payment has not been completed.');
-  assert.equal(g.next, 'Complete your payment through Paystack to continue.');
+  assert.equal(g.next, 'Complete your payment through M-Pesa to continue.');
   assert.equal(g.whoActs, 'You');
   assert.equal(g.ctaLabel, 'Continue to Pay');
 });

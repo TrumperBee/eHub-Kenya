@@ -43,7 +43,7 @@ export default function AdminOrdersPage() {
     try {
       await resolveOrder(order.id, 'refund');
       setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'refunded', escrowStatus: 'refunded' } : o));
-      toast.success('Order marked refunded. Complete the refund in the Paystack dashboard.');
+      toast.success('Order marked refunded. Complete the refund in the ZetuPay dashboard.');
     } catch {
       toast.error('Failed to refund order');
     } finally {
@@ -122,15 +122,15 @@ export default function AdminOrdersPage() {
                       <tr key={`${order.id}-expanded`}>
                         <td colSpan={11} className="px-4 py-3 bg-gray-50">
                           <div className="text-xs text-konami-text-dim space-y-1">
-                            <p><span className="text-konami-text-muted">Payment Reference:</span> {order.paymentReference || '-'}</p>
-                            <p><span className="text-konami-text-muted">Payment Provider:</span> {order.paymentProvider || 'Paystack'}</p>
+                            <p><span className="text-konami-text-muted">Payment Reference:</span> {order.paymentReference || order.zetupayReference || '-'}</p>
+                            <p><span className="text-konami-text-muted">Payment Provider:</span> {order.paymentProvider || 'zetupay'}</p>
                             <p><span className="text-konami-text-muted">Payment Status:</span> {order.paymentStatus || '-'}</p>
-                            <p><span className="text-konami-text-muted">Paystack Tx ID:</span> {order.paymentTransactionId || '-'}</p>
+                            <p><span className="text-konami-text-muted">ZetuPay Tx ID:</span> {order.paymentTransactionId || order.zetupayTransactionId || '-'}</p>
                             {order.disputeReason && <p><span className="text-konami-text-muted">Dispute Reason:</span> {order.disputeReason}</p>}
                             <p><span className="text-konami-text-muted">Contact Phone:</span> {order.paymentPhone || '-'}</p>
                             {isDisputed && order.paymentReference && (
                               <p className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
-                                Refunds are done manually in Paystack: dashboard.paystack.com → Transactions → search reference <span className="font-mono">"{order.paymentReference}"</span> → Issue Refund. Then mark the order Refunded.
+                                Refunds are done manually in ZetuPay: search reference <span className="font-mono">"{order.paymentReference || order.zetupayReference}"</span>, issue the refund, then mark the order Refunded.
                               </p>
                             )}
                           </div>
@@ -177,7 +177,7 @@ export default function AdminOrdersPage() {
               )}
               {pendingAction.order.paymentReference && (
                 <p className="mt-2 text-xs text-konami-text-muted">
-                  Complete the {pendingAction.type === 'refund' ? 'refund' : 'payout'} manually: Paystack dashboard → search reference{' '}
+                  Complete the {pendingAction.type === 'refund' ? 'refund' : 'payout'} manually: ZetuPay dashboard → search reference{' '}
                   <span className="font-mono">"{pendingAction.order.paymentReference}"</span>
                 </p>
               )}

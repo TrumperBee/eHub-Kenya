@@ -133,7 +133,7 @@ export default function EarningsTab({ profile }) {
       <div className="rounded-xl p-5 mb-6" style={{ background: '#F0FDF4', borderLeft: '4px solid #22C55E' }}>
         <h3 className="font-heading text-xs font-bold uppercase mb-2" style={{ color: '#15803D' }}><CreditCard size={14} className="inline" /> HOW PAYOUTS WORK</h3>
         <div className="text-sm leading-relaxed space-y-1" style={{ color: '#374151' }}>
-          <p>Payments are processed through Paystack and held by eHub until an order completes:</p>
+          <p>Payments are processed through ZetuPay (M-Pesa) and held by eHub until an order completes:</p>
           <ol className="list-decimal pl-4 space-y-0.5">
             <li>When a buyer pays, the funds are held securely while the order is in progress (Payout Pending).</li>
             <li>Once you transfer the account and the buyer confirms delivery, escrow is released and the payout becomes <strong>Eligible</strong> — the admin sends it manually, typically within 24-48 hours after confirmation.</li>

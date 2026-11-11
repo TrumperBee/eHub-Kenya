@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
           <p className="text-white/80 text-sm mb-8">We will never share your email. Reset links expire quickly for your security.</p>
           <div className="space-y-4">
             {[
-              { icon: <Lock size={18} />, text: 'Secure Paystack payments' },
+              { icon: <Lock size={18} />, text: 'Secure M-Pesa payments' },
               { icon: <Zap size={18} />, text: 'Instant account delivery' },
               { icon: <Shield size={18} />, text: 'Escrow protection on every order' },
               { icon: <MessageCircle size={18} />, text: 'Real-time chat with sellers' },

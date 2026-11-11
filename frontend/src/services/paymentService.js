@@ -4,36 +4,29 @@ import { BACKEND_URL } from '../utils/constants';
 
 const api = axios.create({ baseURL: BACKEND_URL });
 
-export const initializePaystackPayment = async ({ listingId, amount }) => {
+// ZetuPay (M-Pesa STK Push) — initiate a payment request for a listing.
+export const initiateStkPush = async ({ listingId, phone }) => {
   const idToken = await auth.currentUser.getIdToken();
-  const buyerEmail = auth.currentUser.email;
   const { data } = await api.post(
-    '/api/payment/initialize',
-    { listingId, buyerEmail, amount },
+    '/api/payment/stk-push',
+    { listingId, phone },
     { headers: { Authorization: `Bearer ${idToken}` } }
   );
   return data;
 };
 
-export const cancelPayment = async (orderId) => {
+// Read the current payment/order status for an order the user participates in.
+export const getOrderStatus = async (orderId) => {
   const idToken = await auth.currentUser.getIdToken();
-  const { data } = await api.post(
-    '/api/payment/cancel',
-    { orderId },
-    { headers: { Authorization: `Bearer ${idToken}` } }
-  );
+  const { data } = await api.get(`/api/payment/order-status/${orderId}`, {
+    headers: { Authorization: `Bearer ${idToken}` },
+  });
   return data;
 };
 
-export const verifyOrderPayment = async (orderId) => {
-  const idToken = await auth.currentUser.getIdToken();
-  const { data } = await api.post(
-    '/api/payment/verify',
-    { orderId },
-    { headers: { Authorization: `Bearer ${idToken}` } }
-  );
-  return data;
-};
+// Backwards-compatible name used by OrderDetailPage — the payment provider
+// confirms charges via webhook, so this simply reads the order status.
+export const verifyOrderPayment = getOrderStatus;
 
 export const releaseEscrow = async (orderId) => {
   const idToken = await auth.currentUser.getIdToken();

@@ -12,7 +12,7 @@ import TierBadge from '../../components/listings/TierBadge';
 import PlayerBadge from '../../components/listings/PlayerBadge';
 import ReviewCard from '../../components/reviews/ReviewCard';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import PayNowButton from '../../components/checkout/PayNowButton';
+import BuyNowButton from '../../components/checkout/BuyNowButton';
 import SaveButton from '../../components/listings/SaveButton';
 import CommentSection from '../../components/comments/CommentSection';
 import { toggleSaveListing, subscribeSavedListingIds } from '../../services/savedListingsService';
@@ -66,7 +66,7 @@ export default function ListingDetailPage() {
         }
       }
     });
-    return () => { document.title = 'eFootball Hub Kenya - Buy & Sell eFootball Accounts with Paystack'; };
+    return () => { document.title = 'eFootball Hub Kenya - Buy & Sell eFootball Accounts Safely'; };
   }, [id]);
 
   if (loading) return <div className="pt-[68px]"><LoadingSpinner fullScreen /></div>;
@@ -109,7 +109,7 @@ export default function ListingDetailPage() {
 
   const howItWorksSteps = [
     'Find your desired account and click "Buy Now"',
-    'Pay securely via Paystack — mobile money, card, or bank transfer',
+    'Pay securely via M-Pesa STK Push — approve the prompt on your phone',
     'Your payment is held in escrow until you confirm delivery',
     'The seller submits the eFootball account login details in your order',
     'Confirm delivery to release funds to the seller',
@@ -385,9 +385,9 @@ export default function ListingDetailPage() {
                   </div>
                 ) : (
                   <div className="mb-4">
-                    <PayNowButton listing={listing} effectivePrice={effectivePrice} />
+                    <BuyNowButton listing={listing} effectivePrice={effectivePrice} />
                     <p className="text-white/40 text-[11px] text-center mt-2">
-                      Secured by Paystack · All payment methods handled in secure checkout
+                      Secured by ZetuPay · M-Pesa STK Push
                     </p>
                   </div>
                 )}

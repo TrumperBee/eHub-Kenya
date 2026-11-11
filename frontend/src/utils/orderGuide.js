@@ -47,7 +47,7 @@ export function buyerGuide(order = {}) {
         tone: GUIDE_TONES.pending,
         title: 'PAYMENT PENDING',
         whatHappened: 'Your order has been created, but payment has not been completed.',
-        next: 'Complete your payment through Paystack to continue.',
+        next: 'Complete your payment through M-Pesa to continue.',
         whoActs: 'You',
         ctaLabel: 'Continue to Pay',
       };

@@ -1,7 +1,7 @@
 import { Lock, CreditCard, CheckCircle, Shield } from 'lucide-react';
 
 const badges = [
-  { icon: <CreditCard size={36} />, title: 'Paystack Secured', desc: 'Payments protected by Paystack, Africa\'s leading payment platform' },
+  { icon: <CreditCard size={36} />, title: 'M-Pesa Secured', desc: 'Payments protected by ZetuPay via M-Pesa STK Push' },
   { icon: <Lock size={36} />, title: 'Escrow Protected', desc: 'Funds held until you confirm delivery' },
   { icon: <CheckCircle size={36} />, title: 'Verified Sellers', desc: 'Every seller approved by admin' },
   { icon: <Shield size={36} />, title: 'Buyer Guarantee', desc: 'Full refund if seller fails to deliver' },

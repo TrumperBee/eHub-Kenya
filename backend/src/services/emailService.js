@@ -178,7 +178,7 @@ async function sendBuyerPaymentConfirmedEmail(order) {
     const title = `Payment Confirmed — ${order.listingTitle || 'your purchase'}`;
     const bodyHtml =
       bodyP(`Hi ${esc(order.buyerDisplayName || 'there')},`) +
-      bodyP(`Your payment of ${bodyStrong(formatKES(order.amount))} for "${esc(order.listingTitle || 'your purchase')}" has been confirmed via ${esc(order.paymentChannel || 'Paystack')}.`) +
+      bodyP(`Your payment of ${bodyStrong(formatKES(order.amount))} for "${esc(order.listingTitle || 'your purchase')}" has been confirmed via ${esc(order.paymentChannel || 'M-Pesa')}.`) +
       bodyP(`The seller has been notified and will now submit the account login details on your order page.`) +
       bodyBox(
         bodyStrong(`NEXT STEP:`)+` Open your order to track delivery progress. Once the seller submits the account details, sign in to verify the account and confirm delivery.`

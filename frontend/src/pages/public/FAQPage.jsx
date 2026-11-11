@@ -5,8 +5,8 @@ const categories = [
   {
     title: 'Buying',
     questions: [
-      { q: 'How do I buy an account?', a: 'Browse listings, click "Buy Now" on your preferred account, pay securely through the Paystack checkout (choose your method there — mobile money, card, or bank transfer), then the seller sends the account login details inside your order and you verify and confirm delivery.' },
-      { q: 'Is my payment secure?', a: 'Yes. Payments are processed by Paystack, Africa\'s leading payment platform, and held in escrow until you confirm delivery of the account.' },
+      { q: 'How do I buy an account?', a: 'Browse listings, click "Buy Now" on your preferred account, pay securely via M-Pesa STK Push (approve the prompt on your phone), then the seller sends the account login details inside your order and you verify and confirm delivery.' },
+      { q: 'Is my payment secure?', a: 'Yes. Payments are processed by ZetuPay via M-Pesa STK Push and held in escrow until you confirm delivery of the account.' },
       { q: 'What if I don\'t receive the account?', a: 'If the seller doesn\'t deliver within 24 hours, you can raise a dispute and our team will investigate.' },
       { q: 'Can I get a refund?', a: 'If the seller fails to deliver or the account doesn\'t match the listing description, you are eligible for a full refund.' },
       { q: 'How do I confirm delivery?', a: 'Once you receive the account credentials and verify they work, go to your order and click "Confirm Delivery" to release the funds to the seller.' },
@@ -25,9 +25,9 @@ const categories = [
   {
     title: 'Payments',
     questions: [
-      { q: 'What payment methods are accepted?', a: 'Paystack handles all payment methods securely — mobile money, Visa/Mastercard cards, and bank transfers. You choose your method inside the Paystack checkout at the time of payment.' },
+      { q: 'What payment methods are accepted?', a: 'M-Pesa is the accepted payment method. At checkout you enter your M-Pesa number and approve the STK Push prompt on your phone.' },
       { q: 'How does the escrow system work?', a: 'When you pay, funds are held securely in escrow. They are only released to the seller once you confirm delivery of the account.' },
-      { q: 'How long does payment take?', a: 'Mobile money and card payments via Paystack are confirmed within seconds. Bank transfer approval times vary slightly.' },
+      { q: 'How long does payment take?', a: 'M-Pesa STK Push payments via ZetuPay are confirmed within seconds once you approve the prompt.' },
       { q: 'What if my payment fails?', a: 'If a payment fails or is cancelled, no money is taken. You can simply try again from the listing page. If you were charged but the order did not update, contact support.' },
       { q: 'Are there any hidden fees?', a: 'No hidden fees. The price you see is the price you pay. There are no extra charges on top of the listed price.' },
     ],

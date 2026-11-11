@@ -515,7 +515,7 @@ export default function AccountPage() {
                     onChange={e => setPhoneNumber(e.target.value)}
                     className="input-field"
                   />
-                  <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>Used for order contact. Payment happens securely in the Paystack checkout.</p>
+                  <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>Used for order contact. Payment happens securely via M-Pesa STK Push on your phone.</p>
                 </div>
 
                 <button

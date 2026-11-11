@@ -88,7 +88,7 @@ function buildPdf() {
     doc.fontSize(10.5).fillColor(DARK).font('Helvetica').text(
       '• Never email, call, or message buyers outside the order with your personal details or the account password.\n' +
       '• Account login details belong in the private order page only — never in the public order chat, reviews, or anywhere else.\n' +
-      '• Never share your eHub password, Paystack details, or payout phone with anyone, including buyers and eHub staff.\n' +
+      '• Never share your eHub password, M-Pesa details, or payout phone with anyone, including buyers and eHub staff.\n' +
       '• Keep your payout phone number current so admin can pay you without delays.'
     );
 

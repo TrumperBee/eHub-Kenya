@@ -1,7 +1,7 @@
 const steps = [
   { number: '01', title: 'BROWSE', desc: 'Find your perfect account' },
   { number: '02', title: 'BUY NOW', desc: 'Select and click Buy Now' },
-  { number: '03', title: 'PAY SECURELY', desc: 'Checkout via Paystack, escrow protected' },
+  { number: '03', title: 'PAY SECURELY', desc: 'Checkout via M-Pesa, escrow protected' },
   { number: '04', title: 'RECEIVE ACCOUNT', desc: 'Seller sends login details via your order' },
   { number: '05', title: 'CONFIRM & DONE', desc: 'Verify login, funds released' },
 ];

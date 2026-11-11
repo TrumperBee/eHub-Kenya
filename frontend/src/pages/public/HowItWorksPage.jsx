@@ -3,7 +3,7 @@ import { Search, ShoppingBag, CreditCard, MessageSquare, CheckCircle } from 'luc
 const steps = [
   { icon: Search, title: 'Browse Accounts', desc: 'Find the account that matches your budget and squad goals. Filter by tier, price, and more on the Browse page.' },
   { icon: ShoppingBag, title: 'Click Buy Now', desc: 'Select your perfect account and click Buy Now. Your order is created instantly.' },
-  { icon: CreditCard, title: 'Pay Securely', desc: 'Checkout is handled securely by Paystack, Africa\'s leading payment platform. Choose your payment method inside the Paystack checkout — your payment is held in escrow until you confirm delivery.' },
+  { icon: CreditCard, title: 'Pay Securely', desc: 'Checkout is handled securely by ZetuPay via M-Pesa STK Push. Approve the prompt on your phone — your payment is held in escrow until you confirm delivery.' },
   { icon: MessageSquare, title: 'Receive Your Account', desc: 'The seller submits the account login details privately inside your order. No passwords are ever shared in chat.' },
   { icon: CheckCircle, title: 'Confirm & Done', desc: 'Mark the account as received — payment is released to the seller. Transaction complete.' },
 ];
@@ -12,7 +12,7 @@ const faqs = [
   { q: 'Is my money safe?', a: 'Yes. Every payment is held in escrow until you confirm delivery. The seller only gets paid after you confirm you have received and verified the account.' },
   { q: 'What if the seller doesn\'t deliver?', a: 'If the seller fails to deliver the account within 24 hours, you can raise a dispute. Our team will investigate and issue a full refund if the seller is at fault.' },
   { q: 'How long does transfer take?', a: 'Most sellers complete the transfer within 24 hours. The chat system allows you to communicate directly with the seller for real-time updates.' },
-  { q: 'What payment methods are accepted?', a: 'Paystack powers all payments securely. Inside the Paystack checkout you can pay with mobile money, Visa/Mastercard, or bank transfer — you choose your method at the time of payment.' },
+  { q: 'What payment methods are accepted?', a: 'M-Pesa STK Push powers all payments securely. At checkout you enter your M-Pesa number and approve the prompt on your phone — your payment is held in escrow until you confirm delivery.' },
 ];
 
 export default function HowItWorksPage() {

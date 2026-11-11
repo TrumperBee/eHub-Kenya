@@ -349,26 +349,41 @@ export default function OrderDetailPage() {
     return unsub;
   }, [id]);
 
-  // Self-heal: react-paystack's popup never redirects to the merchant callback
-  // URL, so the ONLY server notification for popup payments is the Paystack
-  // webhook. If that webhook isn't wired up (or fires late), the order would
-  // otherwise sit in pending_payment forever while Paystack shows success.
-  // When we arrive via ?payment=success, ask the backend to verify the charge
-  // once (idempotent even if the webhook already confirmed the payment).
+  // Self-heal: ZetuPay confirms M-Pesa payments via webhook, and the order
+  // snapshot updates in real time once it fires. If the webhook is late, poll
+  // the order-status endpoint for a short while so the buyer sees the payment
+  // confirmed instead of staring at pending_payment.
   useEffect(() => {
     if (!paymentSuccess || autoVerifiedRef.current) return;
     if (!order || order.status !== 'pending_payment') return;
     if (order.paymentStatus === 'paid' || isPaidStatus(order.status)) return;
     autoVerifiedRef.current = true;
     let cancelled = false;
-    verifyOrderPayment(id)
-      .then(() => {
-        if (!cancelled) toast.success('Payment confirmed. The seller has been notified.');
-      })
-      .catch((err) => {
+    let retryTimer = null;
+    let attempts = 0;
+
+    const poll = async () => {
+      attempts += 1;
+      try {
+        const data = await verifyOrderPayment(id);
+        if (cancelled) return;
+        if (data?.status && data.status !== 'pending_payment') {
+          toast.success('Payment confirmed. The seller has been notified.');
+          return;
+        }
+      } catch (err) {
         console.error('Auto payment verification failed:', err);
-      });
-    return () => { cancelled = true; };
+      }
+      if (!cancelled && attempts < 10) {
+        retryTimer = setTimeout(poll, 3000);
+      }
+    };
+
+    poll();
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
   }, [paymentSuccess, order, id]);
 
   if (loading) return <div className="pt-16"><LoadingSpinner fullScreen /></div>;
@@ -377,7 +392,7 @@ export default function OrderDetailPage() {
   if (!canViewOrder(order, currentUser)) return <DeniedScreen />;
 
   // Firestore order state is the single source of truth for what this page shows.
-  // The ?payment=success URL param is only a redirect signal from Paystack/popup:
+  // The ?payment=success URL param is only a redirect signal from the payment flow:
   // while the backend has not yet confirmed the charge, we show a transient
   // "Confirming your payment" state instead of claiming payment is confirmed.
   const isPaid = order.paymentStatus === 'paid' || isPaidStatus(order.status);
@@ -495,7 +510,7 @@ export default function OrderDetailPage() {
             <div className="flex-1">
               <p className="font-heading font-bold text-sm uppercase">Confirming your payment</p>
               <p className="text-white/80 text-xs">
-                Paystack says the payment went through. We're verifying it now — this page updates automatically once confirmed.
+                Your M-Pesa payment was approved. We're confirming it now — this page updates automatically once confirmed.
               </p>
             </div>
             <button
@@ -618,9 +633,9 @@ export default function OrderDetailPage() {
                 <OrderStatePanel guide={isConfirming ? {
                   tone: 'waiting',
                   title: 'CONFIRMING PAYMENT',
-                  whatHappened: 'Paystack accepted your payment. We are verifying it now — this can take a few seconds.',
+                  whatHappened: 'M-Pesa accepted your payment. We are confirming it now — this can take a few seconds.',
                   next: 'This page updates automatically once confirmed. No need to pay again.',
-                  whoActs: 'eHub × Paystack',
+                  whoActs: 'eHub × ZetuPay',
                   ctaLabel: 'Check payment status',
                 } : buyerGuide(order)}>
                   {order.status === 'credentials_submitted' && deliveries.length > 0 && (
