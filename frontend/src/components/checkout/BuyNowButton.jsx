@@ -32,6 +32,7 @@ export default function BuyNowButton({ listing, effectivePrice }) {
 
   // Clean up the poll timer on unmount.
   useEffect(() => {
+    cancelled.current = false;
     return () => {
       cancelled.current = true;
       if (pollTimer.current) clearTimeout(pollTimer.current);

@@ -72,7 +72,10 @@ const initiateStkPush = async ({ phone, amount, orderId, description }) => {
 const verifyWebhookSignature = (rawBody, signature) => {
   if (!rawBody || !signature) return false;
 
-  const provided = String(signature).trim().toLowerCase();
+  const provided = String(signature)
+    .trim()
+    .replace(/^sha256=/i, '')
+    .toLowerCase();
   if (!provided) return false;
 
   const hmac = crypto.createHmac('sha256', SECRET || '');
