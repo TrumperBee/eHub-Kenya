@@ -1,4 +1,4 @@
-const { adminDb } = require('../services/firebaseAdmin');
+const { admin, adminDb } = require('../services/firebaseAdmin');
 const {
   initiateStkPush,
   getPaymentStatus,
