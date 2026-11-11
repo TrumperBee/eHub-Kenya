@@ -13,6 +13,7 @@ const reviewRoutes = require('./src/routes/review.routes');
 const errorHandler = require('./src/middleware/errorHandler');
 const { ALLOWED_ORIGINS } = require('./src/config');
 const { startStatsReconciler } = require('./src/services/statsRecoService');
+const { checkConnectivity, getConnectivity } = require('./src/services/zetupayService');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -34,7 +35,13 @@ app.use(express.json({
 app.use(morgan('dev'));
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'eFootball Hub Kenya Backend' });
+  res.json({
+    status: 'ok',
+    message: 'eFootball Hub Kenya Backend',
+    // Last known ZetuPay reachability, checked at boot. Useful for diagnosing
+    // payment failures without access to server logs.
+    payments: getConnectivity() || { checked: false },
+  });
 });
 
 app.use('/api/payment', paymentRoutes);
@@ -50,4 +57,11 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`eFootball Hub Kenya Backend running on port ${PORT}`);
   startStatsReconciler();
+  checkConnectivity().then((c) => {
+    if (c.ok) {
+      console.log(`[zetupay] connectivity OK (HTTP ${c.status}, ${c.elapsedMs}ms)`);
+    } else {
+      console.error('[zetupay] connectivity FAILED:', JSON.stringify(c));
+    }
+  });
 });

@@ -11,15 +11,23 @@ const axios = require('axios');
  * The Secret Key must only ever be used server-side — ZetuPay rejects STK Push
  * requests that come from a browser.
  */
-const DEFAULT_BASE_URL = 'https://pay.zetupay.co.ke/api/v1';
+const BASE_URL = 'https://pay.zetupay.co.ke/api/v1';
 const WEBHOOK_TOLERANCE_SECONDS = 300; // documented replay window
 const MAX_STK_AMOUNT = 250000; // documented upper bound for STK Push
-const REQUEST_TIMEOUT_MS = 30000;
+const REQUEST_TIMEOUT_MS = 20000;
 
-// Read config at call time, not module load, so env changes/restarts are safe.
-const baseUrl = () => (process.env.ZETUPAY_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, '');
+// The base URL is fixed by ZetuPay's docs. It is intentionally NOT configurable
+// via env: a stale override (e.g. the old api.zetupay.co.ke host) is a silent
+// outage waiting to happen.
+const baseUrl = () => BASE_URL;
 const secretKey = () => (process.env.ZETUPAY_SECRET_KEY || '').trim();
 const channelId = () => (process.env.ZETUPAY_CHANNEL_ID || '').trim();
+
+if (!secretKey()) {
+  console.warn('[zetupay] ZETUPAY_SECRET_KEY is not set — payments will fail');
+} else {
+  console.log(`[zetupay] API base ${BASE_URL} | key ${secretKey().slice(0, 8)}…`);
+}
 
 class ZetupayError extends Error {
   constructor(message, { status, providerMessage, code } = {}) {
@@ -38,6 +46,9 @@ const authHeaders = () => {
   }
   return {
     Authorization: `Bearer ${key}`,
+    // ZetuPay also accepts the key in x-secret-key; send both so a proxy that
+    // strips Authorization cannot break payments.
+    'x-secret-key': key,
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
@@ -65,6 +76,55 @@ const providerMessageFrom = (err) => {
   if (typeof data === 'string') return data.slice(0, 300);
   return data.message || data.error || data.detail || null;
 };
+
+// Last known provider connectivity, surfaced on /api/health so a deployment can
+// be diagnosed from a browser without digging through server logs.
+let connectivity = null;
+
+async function checkConnectivity() {
+  const started = Date.now();
+  const checkedAt = new Date().toISOString();
+  const key = secretKey();
+  if (!key) {
+    connectivity = {
+      configured: false,
+      ok: false,
+      checkedAt,
+      error: 'ZETUPAY_SECRET_KEY is not set',
+    };
+    return connectivity;
+  }
+
+  try {
+    const res = await axios.get(`${baseUrl()}/collection-channels?pageSize=1`, {
+      headers: authHeaders(),
+      timeout: 10000,
+    });
+    connectivity = {
+      configured: true,
+      ok: true,
+      baseUrl: baseUrl(),
+      status: res.status,
+      elapsedMs: Date.now() - started,
+      checkedAt,
+    };
+  } catch (err) {
+    connectivity = {
+      configured: true,
+      ok: false,
+      baseUrl: baseUrl(),
+      status: err?.response?.status || null,
+      // e.g. "getaddrinfo ENOTFOUND pay.zetupay.co.ke", "ETIMEDOUT",
+      // or ZetuPay's own message (for 401/402/...)
+      error: providerMessageFrom(err) || (err?.response ? null : err?.message) || err?.code || 'unknown',
+      elapsedMs: Date.now() - started,
+      checkedAt,
+    };
+  }
+  return connectivity;
+}
+
+const getConnectivity = () => connectivity;
 
 /**
  * Trigger an M-Pesa STK Push.
@@ -109,30 +169,54 @@ const initiateStkPush = async ({ phone, amount, orderId, buyerId }) => {
   // one for a wallet that settles with ZetuPay is rejected with 403.
   if (channelId()) payload.channelId = channelId();
 
+  const headers = {
+    ...authHeaders(),
+    // Unique per order: a network retry returns the original payment instead of
+    // sending the customer a second prompt (keys last 24h).
+    'Idempotency-Key': reference,
+  };
+
+  const shouldRetry = (err) => {
+    const status = err?.response?.status;
+    // No HTTP response (DNS/socket/timeout) or a provider-side 5xx: safe to
+    // retry because the Idempotency-Key makes the request idempotent.
+    if (!status) return true;
+    return status >= 500 && status !== 501;
+  };
+
   let res;
-  try {
-    res = await axios.post(`${baseUrl()}/payment/stk-push`, payload, {
-      headers: {
-        ...authHeaders(),
-        // Unique per order: a network retry returns the original payment
-        // instead of sending the customer a second prompt (keys last 24h).
-        'Idempotency-Key': reference,
-      },
-      timeout: REQUEST_TIMEOUT_MS,
-    });
-  } catch (err) {
+  let lastErr;
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      res = await axios.post(`${baseUrl()}/payment/stk-push`, payload, {
+        headers,
+        timeout: REQUEST_TIMEOUT_MS,
+      });
+      break;
+    } catch (err) {
+      lastErr = err;
+      if (attempt === 2 || !shouldRetry(err)) break;
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+
+  if (!res) {
+    const err = lastErr || {};
     const status = err?.response?.status || null;
     // Keep the network/DNS detail for the log when there is no HTTP response.
-    const providerMessage = providerMessageFrom(err) || (err?.response ? null : err?.message);
+    const providerMessage = providerMessageFrom(err) || (err?.response ? null : err?.message) || err?.code || null;
     const code =
-      status === 401 ? 'ZETUPAY_AUTH_FAILED'
+      status === 400 ? 'ZETUPAY_VALIDATION_FAILED'
+      : status === 401 ? 'ZETUPAY_AUTH_FAILED'
       : status === 402 ? 'ZETUPAY_NO_PLAN'
       : status === 403 ? 'ZETUPAY_FORBIDDEN'
       : status === 404 ? 'ZETUPAY_CHANNEL_NOT_FOUND'
       : status === 409 ? 'ZETUPAY_IDEMPOTENCY_CONFLICT'
+      : status === 410 ? 'ZETUPAY_PAYMENT_EXPIRED'
       : status === 422 ? 'ZETUPAY_NOT_SET_UP'
       : status === 429 ? 'ZETUPAY_RATE_LIMITED'
       : status === 502 ? 'ZETUPAY_MPESA_REJECTED'
+      : status === 500 ? 'ZETUPAY_SERVER_ERROR'
       : (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') ? 'ZETUPAY_TIMEOUT'
       : 'ZETUPAY_REQUEST_FAILED';
     throw new ZetupayError(providerMessage || 'ZetuPay request failed', {
@@ -273,6 +357,8 @@ module.exports = {
   verifyWebhookSignature,
   normalizePhone,
   isValidMpesaPhone,
+  checkConnectivity,
+  getConnectivity,
   ZetupayError,
   MAX_STK_AMOUNT,
 };

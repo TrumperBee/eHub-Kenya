@@ -65,6 +65,12 @@ function zetupayFailureResponse(err) {
       return [503, 'M-Pesa payments are not set up on our payment account yet. Please contact support.', err.code];
     case 'ZETUPAY_RATE_LIMITED':
       return [429, 'Too many M-Pesa requests. Wait a moment and try again.', err.code];
+    case 'ZETUPAY_VALIDATION_FAILED':
+      return [400, 'M-Pesa rejected the payment details. Check the number and try again.', err.code];
+    case 'ZETUPAY_PAYMENT_EXPIRED':
+      return [409, 'This payment request expired. Please start a new one.', err.code];
+    case 'ZETUPAY_SERVER_ERROR':
+      return [502, 'ZetuPay had a temporary server error. Please try again in a moment.', err.code];
     case 'ZETUPAY_IDEMPOTENCY_CONFLICT':
       return [409, 'A payment for this order is already in progress. Check your orders page before retrying.', err.code];
     case 'ZETUPAY_MPESA_REJECTED':
@@ -190,7 +196,8 @@ async function initiateStkPushPayment(req, res) {
       reason: err?.providerMessage || err?.message || 'Could not send the M-Pesa STK push',
     });
     const [status, message, code] = zetupayFailureResponse(err);
-    return res.status(status).json({ error: message, code });
+    const detail = err?.providerMessage ? String(err.providerMessage).slice(0, 200) : undefined;
+    return res.status(status).json({ error: message, code, detail });
   }
 
   const zetupayReference = stk.waveTransactionId || stk.paymentKey || null;

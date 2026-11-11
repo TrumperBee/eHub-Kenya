@@ -126,7 +126,10 @@ export default function BuyNowButton({ listing, effectivePrice }) {
     } catch (err) {
       const errorMessage = err?.response?.data?.error || 'Could not start payment. Please try again.';
       const errorCode = err?.response?.data?.code;
-      setError(errorCode ? `${errorMessage} (ref: ${errorCode})` : errorMessage);
+      const errorDetail = err?.response?.data?.detail;
+      let text = errorCode ? `${errorMessage} (ref: ${errorCode})` : errorMessage;
+      if (errorDetail) text += ` — ${errorDetail}`;
+      setError(text);
       setStep('phone');
     } finally {
       setSubmitting(false);
