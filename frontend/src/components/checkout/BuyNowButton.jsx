@@ -12,7 +12,8 @@ const POLL_TIMEOUT_MS = 2 * 60 * 1000;
 
 const isValidPhone = (value) => {
   const digits = String(value || '').replace(/\D/g, '');
-  return /^07\d{8}$/.test(digits) || /^2547\d{8}$/.test(digits) || /^7\d{8}$/.test(digits);
+  // Safaricom 07xx and 01xx numbers, local or 254-prefixed.
+  return /^(07|01)\d{8}$/.test(digits) || /^254(7|1)\d{8}$/.test(digits) || /^(7|1)\d{8}$/.test(digits);
 };
 
 export default function BuyNowButton({ listing, effectivePrice }) {
@@ -24,6 +25,7 @@ export default function BuyNowButton({ listing, effectivePrice }) {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState(null);
+  const [timedOut, setTimedOut] = useState(false);
 
   const pollTimer = useRef(null);
   const cancelled = useRef(false);
@@ -56,7 +58,13 @@ export default function BuyNowButton({ listing, effectivePrice }) {
 
   const pollStatus = async (idToPoll, deadline) => {
     if (cancelled.current) return;
+    // Timer callback, not render: checking the clock here is pure by design.
+    // eslint-disable-next-line react-hooks/purity
     if (Date.now() > deadline) {
+      // We could not confirm the outcome. The payment may still be processing
+      // (or the provider may be slow), so never tell the buyer it definitively
+      // failed or invite a second payment.
+      setTimedOut(true);
       setStep('failed');
       return;
     }
@@ -94,6 +102,7 @@ export default function BuyNowButton({ listing, effectivePrice }) {
 
   const handleSendRequest = async () => {
     setError('');
+    setTimedOut(false);
     if (!isValidPhone(phone)) {
       setError('Enter a valid M-Pesa number (e.g. 0712345678)');
       return;
@@ -133,6 +142,7 @@ export default function BuyNowButton({ listing, effectivePrice }) {
     setOrderId(null);
     setPhone('');
     setError('');
+    setTimedOut(false);
     setStep('idle');
   };
 
@@ -240,22 +250,38 @@ export default function BuyNowButton({ listing, effectivePrice }) {
     );
   }
 
-  // ---- Step: failed ----
+  // ---- Step: failed / unconfirmed ----
   return (
     <div
       className="w-full rounded-xl p-5 text-center space-y-3"
       style={{ background: 'rgba(200,16,46,0.15)', border: '1px solid rgba(200,16,46,0.4)' }}
     >
       <XCircle size={40} className="mx-auto" style={{ color: '#FF6B6B' }} />
-      <p className="font-heading font-bold text-white">Payment not completed</p>
-      <p className="text-white/60 text-xs">No money was deducted.</p>
-      <button
-        onClick={handleTryAgain}
-        className="w-full rounded-xl py-3 font-heading font-bold uppercase tracking-wide text-sm transition-all"
-        style={{ background: '#FFF100', color: '#111111' }}
-      >
-        Try Again
-      </button>
+      <p className="font-heading font-bold text-white">
+        {timedOut ? 'Still waiting for confirmation' : 'Payment not completed'}
+      </p>
+      <p className="text-white/60 text-xs">
+        {timedOut
+          ? 'If you entered your M-Pesa PIN, the payment may still be processing. Check your Orders page before paying again.'
+          : 'No money was deducted.'}
+      </p>
+      {timedOut ? (
+        <button
+          onClick={() => navigate('/orders')}
+          className="w-full rounded-xl py-3 font-heading font-bold uppercase tracking-wide text-sm transition-all"
+          style={{ background: '#FFF100', color: '#111111' }}
+        >
+          View My Orders
+        </button>
+      ) : (
+        <button
+          onClick={handleTryAgain}
+          className="w-full rounded-xl py-3 font-heading font-bold uppercase tracking-wide text-sm transition-all"
+          style={{ background: '#FFF100', color: '#111111' }}
+        >
+          Try Again
+        </button>
+      )}
     </div>
   );
 }

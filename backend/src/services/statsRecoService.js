@@ -1,5 +1,6 @@
 const { adminDb } = require('./firebaseAdmin');
 const { runMaturedReleasePass } = require('./escrowAutoRelease');
+const { reconcileStaleStkPayments } = require('./stkReconciler');
 
 // Source-of-truth definitions for the public homepage stats (documented in
 // backend/firestore.rules). Every metric is DERIVED from the actual data:
@@ -117,6 +118,9 @@ async function runReconcile() {
     // Phase-5: same in-process worker also auto-releases matured (expired,
     // undisputed, escrow-held) orders. Idempotent + dispute-frozen internally.
     await runMaturedReleasePass({ limit: 100 }).catch(() => {});
+    // Abandoned M-Pesa prompts send no webhook; settle stale pending payments
+    // so their listings don't stay reserved forever.
+    await reconcileStaleStkPayments().catch(() => {});
   } catch (err) {
     console.error(`[stats] reconciliation error at ${now().toISOString()}:`, err.message);
   } finally {

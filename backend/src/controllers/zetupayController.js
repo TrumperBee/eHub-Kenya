@@ -1,9 +1,18 @@
-const { admin, adminDb } = require('../services/firebaseAdmin');
-const { initiateStkPush, verifyWebhookSignature, normalizePhone } = require('../services/zetupayService');
-const { assertValidTransition } = require('../services/orderStateMachine');
+const { adminDb } = require('../services/firebaseAdmin');
+const {
+  initiateStkPush,
+  getPaymentStatus,
+  verifyWebhookSignature,
+  normalizePhone,
+  isValidMpesaPhone,
+  ZetupayError,
+  MAX_STK_AMOUNT,
+} = require('../services/zetupayService');
+const {
+  processSuccessfulPayment,
+  processFailedPayment,
+} = require('../services/paymentOutcomeService');
 const { getEATDateString } = require('../utils/fridayDropScheduler');
-
-const PHONE_RE = /^2547\d{8}$/;
 
 /**
  * A live Friday Drop (approved, bound to today's EAT date) overrides the price
@@ -29,59 +38,39 @@ async function resolveEffectivePrice(listingId) {
   }
 }
 
-async function createNotification({ userId, title, message, type, orderId }) {
-  try {
-    if (!userId) return;
-    await adminDb.collection('notifications').add({
-      userId,
-      title,
-      message,
-      type,
-      orderId: orderId || null,
-      read: false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-  } catch (err) {
-    console.error('ZetuPay notification error:', err.message);
-  }
-}
-
-// Fire-and-forget public counter bump. The background reconciler recomputes
-// these from source-of-truth on its next pass, so a failure here is harmless.
-function bumpStats() {
-  return adminDb
-    .doc('stats/global')
-    .set(
-      {
-        totalSalesCompleted: admin.firestore.FieldValue.increment(1),
-        transactionsProcessed: admin.firestore.FieldValue.increment(1),
-      },
-      { merge: true }
-    )
-    .catch((err) => console.error('ZetuPay stats increment failed:', err.message));
-}
-
 /**
- * Release a reservation back to 'active', but only when the listing is still
- * reserved by the same buyer — never clobber a newer reservation.
+ * Turn a ZetuPay client error into a status + message a buyer can act on.
+ * The provider's raw message is logged, never shown verbatim.
  */
-async function releaseReservation(listingId, buyerId) {
-  if (!listingId) return;
-  const listingRef = adminDb.doc(`listings/${listingId}`);
-  const snap = await listingRef.get();
-  if (!snap.exists) return;
-
-  const listing = snap.data();
-  const reservedBy = listing.reservedById || listing.reservedBy;
-  if (listing.status !== 'reserved' || (buyerId && reservedBy && reservedBy !== buyerId)) return;
-
-  await listingRef.update({
-    status: 'active',
-    reservedById: admin.firestore.FieldValue.delete(),
-    reservedBy: admin.firestore.FieldValue.delete(),
-    reservedAt: admin.firestore.FieldValue.delete(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
+function zetupayFailureResponse(err) {
+  if (!(err instanceof ZetupayError)) {
+    return [502, 'Could not send the M-Pesa request. Please try again.'];
+  }
+  switch (err.code) {
+    case 'INVALID_PHONE':
+      return [400, 'Enter a valid M-Pesa number (e.g. 0712345678)'];
+    case 'INVALID_AMOUNT':
+      return [400, err.message];
+    case 'ZETUPAY_NOT_CONFIGURED':
+      return [503, 'M-Pesa payments are not configured yet. Please contact support.'];
+    case 'ZETUPAY_AUTH_FAILED':
+    case 'ZETUPAY_NO_PLAN':
+    case 'ZETUPAY_FORBIDDEN':
+    case 'ZETUPAY_CHANNEL_NOT_FOUND':
+      return [503, 'M-Pesa payments are temporarily unavailable. Please contact support.'];
+    case 'ZETUPAY_NOT_SET_UP':
+      return [503, 'M-Pesa payments are not set up on our payment account yet. Please contact support.'];
+    case 'ZETUPAY_RATE_LIMITED':
+      return [429, 'Too many M-Pesa requests. Wait a moment and try again.'];
+    case 'ZETUPAY_IDEMPOTENCY_CONFLICT':
+      return [409, 'A payment for this order is already in progress. Check your orders page before retrying.'];
+    case 'ZETUPAY_MPESA_REJECTED':
+      return [502, 'M-Pesa did not accept the request. Check the number and try again.'];
+    case 'ZETUPAY_TIMEOUT':
+      return [504, 'M-Pesa took too long to respond. Check your phone, then your orders page before retrying.'];
+    default:
+      return [502, 'Could not send the M-Pesa request. Please try again.'];
+  }
 }
 
 /**
@@ -98,7 +87,7 @@ async function initiateStkPushPayment(req, res) {
   }
 
   const normalizedPhone = normalizePhone(phone);
-  if (!PHONE_RE.test(normalizedPhone)) {
+  if (!isValidMpesaPhone(normalizedPhone)) {
     return res.status(400).json({ error: 'Enter a valid M-Pesa number (e.g. 0712345678)' });
   }
 
@@ -166,24 +155,48 @@ async function initiateStkPushPayment(req, res) {
     return res.status(status).json({ error: message });
   }
 
+  // STK Push only accepts 1..250,000 KES. Fail early with a clear message and
+  // release the reservation instead of sending the provider a request it must
+  // reject.
+  const numericAmount = Math.round(Number(amountToCharge));
+  if (!Number.isFinite(numericAmount) || numericAmount < 1 || numericAmount > MAX_STK_AMOUNT) {
+    await processFailedPayment(orderId, { reason: 'Amount outside the M-Pesa STK Push limits' });
+    return res.status(400).json({
+      error: `This listing cannot be paid via M-Pesa. The allowed range is KES 1 to KES ${MAX_STK_AMOUNT.toLocaleString()}. Please contact support.`,
+    });
+  }
+
   // Transaction committed — now trigger the STK Push.
   let stk;
   try {
     stk = await initiateStkPush({
       phone: normalizedPhone,
-      amount: amountToCharge,
+      amount: numericAmount,
       orderId,
-      description: `eHub Kenya — ${listing.title || 'eFootball account'}`,
+      buyerId,
     });
   } catch (err) {
-    console.error('ZetuPay STK push failed:', err?.response?.data || err.message);
-    await processFailedPayment(orderId, { reason: 'Could not send the M-Pesa STK push' });
-    return res.status(502).json({ error: 'Could not send the M-Pesa request. Please try again.' });
+    console.error('ZetuPay STK push failed:', {
+      code: err?.code || null,
+      status: err?.status || null,
+      providerMessage: err?.providerMessage || null,
+      message: err?.message,
+    });
+    await processFailedPayment(orderId, {
+      reason: err?.providerMessage || err?.message || 'Could not send the M-Pesa STK push',
+    });
+    const [status, message] = zetupayFailureResponse(err);
+    return res.status(status).json({ error: message });
   }
 
-  const zetupayReference = stk?.reference || null;
+  const zetupayReference = stk.waveTransactionId || stk.paymentKey || null;
   await orderRef.update({
     zetupayReference,
+    // paymentKey is what the status endpoint takes; waveTransactionId is what
+    // the webhook reports. Store both so either path can reconcile.
+    zetupayPaymentKey: stk.paymentKey || null,
+    zetupayWaveTransactionId: stk.waveTransactionId || null,
+    zetupayCheckoutRequestId: stk.checkoutRequestId || null,
     paymentReference: zetupayReference,
     stkPushSentAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -199,8 +212,10 @@ async function initiateStkPushPayment(req, res) {
 
 /**
  * POST /api/payment/zetupay/callback (no auth)
- * Verifies the webhook signature, then applies the payment outcome. Always
+ * Verifies the signed webhook, then applies the payment outcome. Always
  * returns 200 so ZetuPay stops retrying (even on a bad signature).
+ *
+ * Header: x-zetupay-signature: t=<unix>,v1=<hex HMAC of "<t>.<rawBody>">
  */
 async function handleZetupayWebhook(req, res) {
   try {
@@ -208,20 +223,30 @@ async function handleZetupayWebhook(req, res) {
     const rawBody = req.rawBody || (Buffer.isBuffer(req.body) ? req.body : JSON.stringify(req.body || {}));
 
     if (!verifyWebhookSignature(rawBody, signature)) {
-      console.warn('ZetuPay webhook: invalid signature — acknowledging without processing');
+      console.warn('ZetuPay webhook: invalid or stale signature — acknowledging without processing');
       return res.status(200).json({ received: true });
     }
 
     const event = req.body || {};
-    const status = String(event.status || '').toUpperCase();
+
+    // Subscription events share the transaction callback URL and arrive as
+    // { event, data }. They are not payments.
+    if (event.event) {
+      return res.status(200).json({ received: true });
+    }
+
+    const status = String(event.status || '').toLowerCase();
     const orderId = event.reference;
 
-    if (orderId) {
-      if (status === 'SUCCESS') {
-        await processSuccessfulPayment(orderId, event);
-      } else if (status === 'FAILED' || status === 'CANCELLED') {
-        await processFailedPayment(orderId, event);
-      }
+    if (!orderId) {
+      console.warn('ZetuPay webhook: missing reference — ignoring');
+      return res.status(200).json({ received: true });
+    }
+
+    if (status === 'success') {
+      await processSuccessfulPayment(orderId, event);
+    } else if (['failed', 'cancelled', 'expired'].includes(status)) {
+      await processFailedPayment(orderId, event);
     }
   } catch (err) {
     console.error('ZetuPay webhook error:', err);
@@ -229,137 +254,57 @@ async function handleZetupayWebhook(req, res) {
   return res.status(200).json({ received: true });
 }
 
-/**
- * Internal: transition a paid order pending_payment -> awaiting_seller_delivery.
- * Idempotent via a Firestore transaction (a repeated webhook is a no-op).
- */
-async function processSuccessfulPayment(orderId, event = {}) {
-  if (!orderId) return;
-  const orderRef = adminDb.doc(`orders/${orderId}`);
-
-  let state = null;
-  await adminDb.runTransaction(async (tx) => {
-    const snap = await tx.get(orderRef);
-    if (!snap.exists) return;
-
-    const current = snap.data();
-    if (current.status !== 'pending_payment') return; // already handled / cancelled
-
-    assertValidTransition(current.status, 'awaiting_seller_delivery');
-
-    const data = event.data || {};
-    const transactionId =
-      event.transactionId ||
-      event.transaction_id ||
-      data.transactionId ||
-      data.transaction_id ||
-      event.id ||
-      data.id ||
-      current.zetupayReference ||
-      null;
-    const receipt =
-      event.mpesaReceiptNumber ||
-      event.mpesa_receipt_number ||
-      event.receipt ||
-      data.mpesaReceiptNumber ||
-      data.mpesa_receipt_number ||
-      data.receipt ||
-      null;
-
-    tx.update(orderRef, {
-      status: 'awaiting_seller_delivery',
-      paymentStatus: 'paid',
-      escrowStatus: 'held',
-      paidAt: admin.firestore.FieldValue.serverTimestamp(),
-      zetupayTransactionId: transactionId != null ? String(transactionId) : null,
-      paymentTransactionId: transactionId != null ? String(transactionId) : null,
-      mpesaReceiptNumber: receipt != null ? String(receipt) : null,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    state = { ...current, id: orderId };
-  });
-
-  if (!state) return;
-
-  if (state.listingId) {
-    await adminDb
-      .doc(`listings/${state.listingId}`)
-      .update({
-        status: 'sold',
-        soldAt: admin.firestore.FieldValue.serverTimestamp(),
-        soldTo: state.buyerId || null,
-        reservedById: admin.firestore.FieldValue.delete(),
-        reservedBy: admin.firestore.FieldValue.delete(),
-        reservedAt: admin.firestore.FieldValue.delete(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      })
-      .catch((err) => console.error('ZetuPay: mark listing sold failed:', err.message));
-  }
-
-  // Fire-and-forget side effects.
-  createNotification({
-    userId: state.buyerId,
-    title: 'Payment Confirmed',
-    message: `Your payment for "${state.listingTitle || 'the listing'}" was successful. The seller has been notified to transfer the account.`,
-    type: 'payment',
-    orderId,
-  });
-  createNotification({
-    userId: state.sellerId,
-    title: 'New Sale — Transfer Account Now',
-    message: `The buyer has paid for "${state.listingTitle || 'your listing'}". Submit the account details from your Orders page.`,
-    type: 'order',
-    orderId,
-  });
-  bumpStats();
-
-  return { orderId };
-}
+// Throttle provider status lookups: the client polls every 3s, but ZetuPay
+// recommends checking every 5s and rate-limits aggressive callers.
+const PROVIDER_CHECK_INTERVAL_MS = 4000;
+const lastProviderCheck = new Map();
 
 /**
- * Internal: mark a pending order payment_failed and release its reservation.
- * Skips orders that are no longer pending_payment.
+ * Failed and cancelled STK prompts send no webhook, so a pending order would
+ * stay pending (and its listing reserved) forever. While the client polls, ask
+ * ZetuPay for the authoritative status and apply a terminal outcome.
+ *
+ * Only explicit terminal statuses (failed / cancelled / expired) mark the order
+ * failed — a network hiccup must never cancel an order whose prompt could still
+ * succeed.
  */
-async function processFailedPayment(orderId, event = {}) {
-  if (!orderId) return;
-  const orderRef = adminDb.doc(`orders/${orderId}`);
+async function reconcileWithProvider(orderId, order) {
+  const paymentKey = order.zetupayPaymentKey;
+  if (!paymentKey) return order;
 
-  let state = null;
-  await adminDb.runTransaction(async (tx) => {
-    const snap = await tx.get(orderRef);
-    if (!snap.exists) return;
+  const now = Date.now();
+  const last = lastProviderCheck.get(orderId) || 0;
+  if (now - last < PROVIDER_CHECK_INTERVAL_MS) return order;
+  lastProviderCheck.set(orderId, now);
 
-    const current = snap.data();
-    if (current.status !== 'pending_payment') return;
-
-    tx.update(orderRef, {
-      status: 'payment_failed',
-      paymentStatus: 'failed',
-      failureReason: event.reason || event.message || 'Payment was not completed',
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  let payment;
+  try {
+    payment = await getPaymentStatus(paymentKey);
+  } catch (err) {
+    console.warn('ZetuPay status check failed:', {
+      orderId,
+      code: err?.code || null,
+      status: err?.status || null,
+      message: err?.message,
     });
-
-    state = { ...current, id: orderId };
-  });
-
-  if (!state) return;
-
-  if (state.listingId) {
-    await releaseReservation(state.listingId, state.buyerId).catch((err) =>
-      console.error('ZetuPay: release listing failed:', err.message)
-    );
+    return order;
   }
 
-  createNotification({
-    userId: state.buyerId,
-    title: 'Payment Failed — no money deducted',
-    message: `Your payment for "${state.listingTitle || 'the listing'}" was not completed and no money was deducted. You can try again.`,
-    type: 'payment',
-    orderId,
-  });
+  if (!payment) return order;
+  const providerStatus = String(payment.status || '').toLowerCase();
 
-  return { orderId };
+  if (providerStatus === 'success') {
+    await processSuccessfulPayment(orderId, payment);
+  } else if (['failed', 'cancelled', 'expired'].includes(providerStatus)) {
+    await processFailedPayment(orderId, {
+      reason: payment.resultDesc || `Payment ${providerStatus}`,
+    });
+  } else {
+    return order;
+  }
+
+  const refreshed = await adminDb.doc(`orders/${orderId}`).get();
+  return refreshed.exists ? refreshed.data() : order;
 }
 
 /**
@@ -376,9 +321,15 @@ async function getOrderStatus(req, res) {
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    const order = snap.data();
+    let order = snap.data();
     if (order.buyerId !== uid && order.sellerId !== uid) {
       return res.status(403).json({ error: 'You are not a participant in this order' });
+    }
+
+    if (order.status === 'pending_payment' && order.zetupayPaymentKey) {
+      order = await reconcileWithProvider(orderId, order);
+    } else {
+      lastProviderCheck.delete(orderId);
     }
 
     return res.json({
