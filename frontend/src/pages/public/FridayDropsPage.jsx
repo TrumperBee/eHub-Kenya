@@ -86,8 +86,14 @@ export default function FridayDropsPage() {
       <section className="py-14" style={{ background: '#F5F5F5' }}>
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-10">
-            <h2 className="font-heading text-2xl md:text-3xl font-extrabold uppercase" style={{ color: '#111111' }}>
-              {live ? '🔥 FRIDAY DROPS — LIVE NOW' : '🔥 NEXT FRIDAY DROP'}
+            <h2 className="font-heading text-2xl md:text-3xl font-extrabold uppercase flex items-center justify-center gap-3" style={{ color: '#111111' }}>
+              {live && (
+                <span className="relative flex h-3 w-3" aria-hidden="true">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ background: '#C8102E' }} />
+                  <span className="relative inline-flex rounded-full h-3 w-3" style={{ background: '#C8102E' }} />
+                </span>
+              )}
+              {live ? 'FRIDAY DROPS — LIVE NOW' : 'NEXT FRIDAY DROP'}
             </h2>
             <p className="text-sm mt-2" style={{ color: '#6B7280' }}>
               Hand-picked discounts refreshed every Friday

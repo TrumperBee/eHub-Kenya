@@ -256,7 +256,7 @@ async function sendSellerCredentialsSubmittedEmail(order) {
       bodyBox(`Keep an eye on the order chat. If the buyer hits any problem, answer in the private order chat — never outside the order page.`);
     return sendRaw({
       to: sellerEmail,
-      subject: `📩 Account Details Submitted`,
+      subject: `Account Details Submitted`,
       html: renderLayout({
         eyebrow: 'Order Update',
         title,
@@ -284,7 +284,7 @@ async function sendBuyerCredentialsReadyEmail(order) {
       bodyP(`Your eFootball password is ${bodyStrong('never')} included in this email or anywhere in public chat. If the account doesn't match the listing, raise a dispute from the order page.`);
     return sendRaw({
       to: order.buyerEmail,
-      subject: `🔐 Account Ready — Verify Now`,
+      subject: `Account Ready — Verify Now`,
       html: renderLayout({
         eyebrow: 'Order Update',
         title,
@@ -418,7 +418,7 @@ async function sendDisputeRaisedEmail(order) {
         bodyP(`The payment is ${bodyStrong('frozen in escrow')} while admin reviews the case. Reply in the private order chat with any evidence — the chat is the record admin reviews.`);
       return sendRaw({
         to: sellerEmail,
-        subject: `⚠️ Dispute Raised — Payment On Hold`,
+        subject: `Dispute Raised — Payment On Hold`,
         html: renderLayout({
           eyebrow: 'Dispute',
           title,
@@ -440,7 +440,7 @@ async function sendDisputeRaisedEmail(order) {
         bodyP(`No funds move while a dispute is open — admin will review the order chat and resolve it. You can add messages to the chat at any time; they're part of the case record.`);
       return sendRaw({
         to: order.buyerEmail,
-        subject: `🛡️ Dispute Submitted`,
+        subject: `Dispute Submitted`,
         html: renderLayout({
           eyebrow: 'Dispute',
           title,
@@ -499,7 +499,7 @@ async function sendDisputeResolvedEmail(order, { toRole, resolution }) {
     }
     return sendRaw({
       to: recipientEmail,
-      subject: `🛡️ Dispute Resolved`,
+      subject: `Dispute Resolved`,
       html: renderLayout({
         eyebrow: 'Dispute Resolved',
         title,
@@ -530,7 +530,7 @@ async function sendFridayDropEmail(drop, sellerEmail, { live }) {
         bodyP(`It will appear in the marketplace once approved by admin.`);
     return sendRaw({
       to: sellerEmail,
-      subject: live ? `🔥 Your Drop Is Live!` : `🔥 Friday Drop Scheduled`,
+      subject: live ? `Your Drop Is Live` : `Friday Drop Scheduled`,
       html: renderLayout({
         eyebrow: 'Friday Drops',
         title,
@@ -553,7 +553,7 @@ async function sendTestEmail(to) {
   return runWithIdempotency(key, async () => {
     return sendRaw({
       to,
-      subject: `✅ eHub Kenya test email`,
+      subject: `eHub Kenya test email`,
       html: renderLayout({
         eyebrow: 'Configuration Test',
         title: 'Email delivery is working',

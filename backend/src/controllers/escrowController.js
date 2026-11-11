@@ -203,7 +203,7 @@ async function dispute(req, res) {
 
     await createNotification({
       userId: order.sellerId,
-      title: '⚠️ DISPUTE RAISED',
+      title: 'DISPUTE RAISED',
       message: `A buyer has raised a dispute on Order #${shortId} for "${order.listingTitle || 'your listing'}". Reason: ${reason}. Your payout is currently on hold while the dispute is reviewed.`,
       type: 'alert',
       orderId,
@@ -526,7 +526,7 @@ async function resolve(req, res) {
     if (isRelease) {
       await createNotification({
         userId: order.sellerId,
-        title: isDisputed ? '✅ Payment Released' : 'Escrow Released',
+        title: isDisputed ? 'Payment Released' : 'Escrow Released',
         message: isDisputed
           ? `The dispute for "${order.listingTitle || 'your listing'}" was resolved in your favour. ${formatAmount(order.amount)} has been released to you. Complete the payout to your registered payout phone.`
           : `Escrow for "${order.listingTitle || 'your listing'}" (${formatAmount(order.amount)}) was released to you. Complete the payout to your registered payout phone.`,
@@ -545,7 +545,7 @@ async function resolve(req, res) {
     } else {
       await createNotification({
         userId: order.buyerId,
-        title: '✅ Refund Issued',
+        title: 'Refund Issued',
         message: `Your dispute for "${order.listingTitle || 'your order'}" was resolved in your favour. ${formatAmount(order.amount)} will be refunded back to your payment method.`,
         type: 'payment',
         orderId,

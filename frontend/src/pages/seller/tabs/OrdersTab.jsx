@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ChevronUp, ChevronDown, Store, Upload, MessageSquare, ArrowRight } from 'lucide-react';
+import { AlertTriangle, ChevronUp, ChevronDown, Store, Upload, MessageSquare, ArrowRight, ClipboardList } from 'lucide-react';
 import { getSellerOrders } from '../../../services/ordersService';
 import { formatKES, formatDate } from '../../../utils/formatters';
 import {
@@ -135,8 +135,8 @@ export default function OrdersTab({ profile, onTabChange }) {
       {!hasCompletedOrder && actionCount > 0 && firstActionOrder && (
         <div className="rounded-2xl p-5 mb-4" style={{ background: 'linear-gradient(135deg, #001E7A 0%, #003BFF 100%)', border: '1px solid #FFF100' }}>
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 text-xl" style={{ background: '#FFF100' }}>
-              🎯
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: '#FFF100', color: '#111111' }}>
+              <ClipboardList size={22} />
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-heading text-base font-extrabold uppercase" style={{ color: '#FFF100' }}>Your First Paid Order</p>

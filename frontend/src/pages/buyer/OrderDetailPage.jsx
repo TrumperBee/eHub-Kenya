@@ -142,7 +142,7 @@ function VerificationCountdown({ order }) {
         />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-konami-text">
-            ⚠ You have 30 minutes to verify this account. If you do not confirm or raise a dispute,
+            You have 30 minutes to verify this account. If you do not confirm or raise a dispute,
             payment will be automatically released to the seller.
           </p>
           {expired ? (
