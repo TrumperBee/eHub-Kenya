@@ -99,6 +99,14 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Dispute records mirror the dispute state of an order. Written only by the
+    // backend Admin SDK (which bypasses rules); readable by the super admin so
+    // the Command Center can list them without scanning every order.
+    match /disputes/{disputeId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // Public platform counters (read by everyone, written by backend Admin SDK
     // which bypasses rules). Client writes are limited to atomic counter fields
     // only — a full document overwrite is rejected.

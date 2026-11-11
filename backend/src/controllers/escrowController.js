@@ -140,11 +140,24 @@ async function release(req, res) {
 
 async function dispute(req, res) {
   try {
-    const { orderId, reason } = req.body;
+    const { orderId, reason, details } = req.body;
     const userId = req.user.uid;
 
-    if (!orderId || !reason) {
+    const disputeReason = String(reason || '').trim();
+    const disputeDetails = String(details || '').trim();
+
+    if (!orderId || !disputeReason) {
       return res.status(400).json({ success: false, error: 'orderId and reason are required' });
+    }
+
+    // The free-text explanation is what the admin reviews, so it must be
+    // specific. Older clients sent it as `reason`; accept that for compatibility.
+    const message =
+      disputeDetails || (disputeReason.length >= 20 ? disputeReason : '');
+    if (message.length < 20) {
+      return res
+        .status(400)
+        .json({ success: false, error: 'Please describe the issue in at least 20 characters.' });
     }
 
     const orderRef = adminDb.collection('orders').doc(orderId);
@@ -177,7 +190,8 @@ async function dispute(req, res) {
       paymentStatus: order.paymentStatus || 'paid',
       escrowStatus: 'held',
       disputeStatus: 'open',
-      disputeReason: reason,
+      disputeReason,
+      disputeDetails: message,
       disputedBy: userId,
       disputedAt: admin.firestore.FieldValue.serverTimestamp(),
       disputeUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -188,6 +202,31 @@ async function dispute(req, res) {
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
+    // Dedicated dispute record so the Command Center can read disputes without
+    // walking every order. The order document remains the source of truth.
+    await adminDb.collection('disputes').doc(orderId).set(
+      {
+        orderId,
+        buyerId: order.buyerId || null,
+        sellerId: order.sellerId || null,
+        listingId: order.listingId || null,
+        listingTitle: order.listingTitle || '',
+        buyerName: order.buyerDisplayName || '',
+        sellerName: order.sellerDisplayName || '',
+        amount: order.amount ?? null,
+        disputeReason,
+        disputeDetails: message,
+        disputeRaisedAt: admin.firestore.FieldValue.serverTimestamp(),
+        status: 'open',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    ).catch((err) => {
+      // Never block the buyer's dispute on an auxiliary index record.
+      console.error('Dispute record write error:', err);
+    });
+
     const shortId = orderId.slice(0, 8).toUpperCase();
 
     const messagesRef = orderRef.collection('messages');
@@ -196,15 +235,15 @@ async function dispute(req, res) {
       senderDisplayName: 'System',
       senderRole: 'system',
       messageType: 'system',
-      content: `Buyer has raised a dispute on Order #${shortId}: ${reason}. Escrow is frozen while the admin reviews the case.`,
-      text: `Buyer has raised a dispute on Order #${shortId}: ${reason}. Escrow is frozen while the admin reviews the case.`,
+      content: `Buyer has raised a dispute on Order #${shortId}: ${disputeReason}. Escrow is frozen while the admin reviews the case.`,
+      text: `Buyer has raised a dispute on Order #${shortId}: ${disputeReason}. Escrow is frozen while the admin reviews the case.`,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     await createNotification({
       userId: order.sellerId,
       title: 'DISPUTE RAISED',
-      message: `A buyer has raised a dispute on Order #${shortId} for "${order.listingTitle || 'your listing'}". Reason: ${reason}. Your payout is currently on hold while the dispute is reviewed.`,
+      message: `A buyer has raised a dispute on Order #${shortId} for "${order.listingTitle || 'your listing'}". Reason: ${disputeReason}. Your payout is currently on hold while the dispute is reviewed.`,
       type: 'alert',
       orderId,
     });
@@ -213,17 +252,17 @@ async function dispute(req, res) {
     await createNotification({
       userId: adminId,
       title: 'New Dispute',
-      message: `A buyer raised a dispute on Order #${shortId} for "${order.listingTitle || 'the listing'}". Reason: ${reason}. Open the Command Center → Disputes to review.`,
+      message: `A buyer raised a dispute on Order #${shortId} for "${order.listingTitle || 'the listing'}". Reason: ${disputeReason}. Open the Command Center → Disputes to review.`,
       type: 'alert',
       orderId,
     });
 
     // Trusted event: dispute opened. Never blocks the workflow.
-    await sendDisputeRaisedEmail({ ...order, id: orderId, disputeReason: reason });
+    await sendDisputeRaisedEmail({ ...order, id: orderId, disputeReason });
 
     return res.json({ success: true });
   } catch (err) {
-    console.error('Delivery submission error:', err);
+    console.error('Dispute submission error:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 }
@@ -421,6 +460,7 @@ const canResolve = (status) =>
 async function resolve(req, res) {
   try {
     const { orderId, resolution } = req.body;
+    const adminNote = String(req.body.adminNote || '').trim().slice(0, 2000);
     const actor = req.user;
 
     if (!orderId || !resolution) {
@@ -475,7 +515,26 @@ async function resolve(req, res) {
         resolvedByName: actor.name || 'Admin',
       });
     }
+    if (adminNote) patch.adminNote = adminNote;
     await orderRef.update(patch);
+
+    // Keep the dedicated dispute record in step with the order.
+    if (isDisputed) {
+      await adminDb.collection('disputes').doc(orderId).set(
+        {
+          status: 'resolved',
+          resolution: resolutionKey,
+          resolvedAt,
+          resolvedById: actor.uid || '',
+          resolvedByName: actor.name || 'Admin',
+          adminNote: adminNote || '',
+          orderStatus,
+          escrowStatus,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      ).catch((err) => console.error('Dispute record update error:', err));
+    }
 
     if (isRelease) {
       if (order.listingId) {

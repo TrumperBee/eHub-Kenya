@@ -58,11 +58,11 @@ export const submitDelivery = async (orderId, { accountEmail, accountPassword })
   return data;
 };
 
-export const resolveOrder = async (orderId, resolution) => {
+export const resolveOrder = async (orderId, resolution, adminNote = '') => {
   const idToken = await auth.currentUser.getIdToken();
   const { data } = await api.post(
     '/api/escrow/resolve',
-    { orderId, resolution },
+    { orderId, resolution, adminNote },
     { headers: { Authorization: `Bearer ${idToken}` } }
   );
   return data;

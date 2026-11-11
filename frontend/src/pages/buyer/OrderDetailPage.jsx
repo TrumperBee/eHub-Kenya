@@ -17,11 +17,19 @@ import ChatWindow from '../../components/chat/ChatWindow';
 import ReviewForm from '../../components/reviews/ReviewForm';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import {
-  Shield, MessageSquare, CheckCircle, Mail, KeyRound, Eye, EyeOff, Copy,
-  Send, Upload, AlertTriangle, Lock, ShoppingBag, Loader, RefreshCw, Star,
+  Shield, CheckCircle, Mail, KeyRound, Eye, EyeOff, Copy,
+  Send, Upload, AlertTriangle, Lock, ShoppingBag, Loader, RefreshCw, Star, X,
 } from 'lucide-react';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import toast from 'react-hot-toast';
+
+const DISPUTE_REASONS = [
+  'Wrong account details',
+  'Account already changed',
+  'Account does not match listing',
+  'Seller not responding',
+  'Other',
+];
 
 const PAYMENT_STATUS = {
   paid:     { label: 'Paid',     color: 'text-green-600' },
@@ -102,15 +110,17 @@ const toMillis = (value) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-function VerificationCountdown({ order }) {
+function VerificationCountdown({ order, paused = false }) {
   // eslint-disable-next-line react-hooks/purity -- initial clock value; refined on mount
   const [nowMs, setNowMs] = useState(Date.now());
-
   // Isolated 1-second tick so only this box re-renders, never the page/chat.
+  // Paused while the buyer is filing a dispute, so the clock freezes instead of
+  // implying they are running out of time while they type.
   useEffect(() => {
+    if (paused) return undefined;
     const tick = setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(tick);
-  }, []);
+  }, [paused]);
 
   const paidAtMs = toMillis(order?.paidAt) ?? toMillis(order?.createdAt);
   const deadlineMs =
@@ -410,6 +420,7 @@ export default function OrderDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showDisputeForm, setShowDisputeForm] = useState(false);
+  const [disputeType, setDisputeType] = useState('');
   const [disputeReason, setDisputeReason] = useState('');
   const [disputeError, setDisputeError] = useState('');
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -501,9 +512,21 @@ export default function OrderDetailPage() {
     }
   };
 
+  const closeDispute = () => {
+    if (actionLoading) return;
+    setShowDisputeForm(false);
+    setDisputeType('');
+    setDisputeReason('');
+    setDisputeError('');
+  };
+
   const handleDispute = async () => {
     if (order.status === 'disputed') {
       toast.error('A dispute is already open for this order.');
+      return;
+    }
+    if (!disputeType) {
+      setDisputeError('Select what went wrong.');
       return;
     }
     if (disputeReason.trim().length < 20) {
@@ -513,16 +536,21 @@ export default function OrderDetailPage() {
     setActionLoading(true);
     try {
       const token = await currentUser.getIdToken();
-      await axios.post(`${BACKEND_URL}/api/escrow/dispute`, { orderId: id, reason: disputeReason.trim() }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.post(
+        `${BACKEND_URL}/api/escrow/dispute`,
+        { orderId: id, reason: disputeType, details: disputeReason.trim() },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setShowDisputeForm(false);
+      setDisputeType('');
       setDisputeReason('');
       setDisputeError('');
-      toast.success('Dispute raised. Admin has been notified.');
+      toast.success('Dispute submitted. The admin will review within 24 hours.');
     } catch (err) {
       console.error('Dispute error:', err);
-      toast.error('Failed to raise dispute');
+      const message = err?.response?.data?.error || 'Failed to raise dispute';
+      setDisputeError(message);
+      toast.error(message);
     } finally {
       setActionLoading(false);
     }
@@ -703,10 +731,17 @@ export default function OrderDetailPage() {
                     </details>
                   )}
 
-                  {order.status === 'disputed' && order.disputeReason && (
+                  {order.status === 'disputed' && (order.disputeReason || order.disputeDetails) && (
                     <div className="p-3 rounded-xl" style={{ background: '#FEE2E2', border: '1px solid #FECACA' }}>
-                      <p className="text-xs font-semibold mb-1" style={{ color: '#B91C1C' }}>Your reason</p>
-                      <p className="text-xs italic" style={{ color: '#374151' }}>"{order.disputeReason}"</p>
+                      <p className="text-xs font-semibold mb-1" style={{ color: '#B91C1C' }}>
+                        {order.disputeReason || 'Your reason'}
+                      </p>
+                      {order.disputeDetails && (
+                        <p className="text-xs italic" style={{ color: '#374151' }}>"{order.disputeDetails}"</p>
+                      )}
+                      <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>
+                        The admin will review this within 24 hours. Escrow is frozen until then.
+                      </p>
                     </div>
                   )}
 
@@ -733,49 +768,35 @@ export default function OrderDetailPage() {
                         </button>
                       </div>
                     </div>
-                  ) : showDisputeForm ? (
-                    <div className="bg-white rounded-xl p-4 space-y-3 border border-konami-mid-gray">
-                      <ContextHint tone="red" title="What to tell eHub">
-                        Describe the problem: what you expected, what happened instead, and any screenshot details. Clear context speeds up the review.
-                      </ContextHint>
-                      <textarea
-                        value={disputeReason}
-                        onChange={(e) => { setDisputeReason(e.target.value); setDisputeError(''); }}
-                        placeholder="Describe the issue (min 20 characters)..."
-                        className="w-full px-3 py-2 bg-konami-light-gray border border-konami-mid-gray rounded-xl text-konami-text text-sm outline-none focus:border-konami-blue transition-colors resize-none min-h-[80px]"
-                      />
-                      {disputeError && <p className="text-xs" style={{ color: '#C8102E' }}>{disputeError}</p>}
-                      <div className="flex gap-2">
-                        <button onClick={handleDispute} disabled={actionLoading} className="btn-primary flex-1 text-sm py-2.5 bg-konami-red hover:bg-konami-red-hover">
-                          {actionLoading ? 'Submitting...' : 'Submit Dispute'}
-                        </button>
-                        <button onClick={() => { setShowDisputeForm(false); setDisputeReason(''); setDisputeError(''); }} className="btn-secondary text-sm py-2.5">
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
                   ) : (
                     <>
-                      {isBuyer && canConfirmReceipt && <VerificationCountdown order={order} />}
+                      {isBuyer && canConfirmReceipt && (
+                        <VerificationCountdown order={order} paused={showDisputeForm} />
+                      )}
 
                       {(canConfirmReceipt || canDispute) && (
                         <div className="flex flex-col gap-2">
-                          {canConfirmReceipt && (
-                            <button onClick={() => setShowConfirm(true)} className="btn-primary w-full text-sm py-3 flex items-center justify-center gap-2">
-                              <Shield size={16} />
-                              Confirm Delivery
-                            </button>
-                          )}
-                          {canDispute && (
-                            <>
-                              {order.status === 'awaiting_seller_delivery' && (
-                                <p className="text-xs text-konami-text-muted pt-1">Need help? You can raise a dispute while you wait.</p>
-                              )}
-                              <button onClick={() => setShowDisputeForm(true)} className="w-full text-sm py-3 rounded-xl border border-konami-red/30 text-konami-red hover:bg-konami-red/5 transition-colors flex items-center justify-center gap-2">
-                                <MessageSquare size={16} />
-                                {order.status === 'credentials_submitted' || order.status === 'in_transfer' ? 'Report a Problem' : 'Raise a Dispute'}
+                          <div className={canConfirmReceipt && canDispute ? 'grid grid-cols-1 sm:grid-cols-2 gap-2' : ''}>
+                            {canConfirmReceipt && (
+                              <button onClick={() => setShowConfirm(true)} className="btn-primary w-full text-sm py-3 flex items-center justify-center gap-2">
+                                <Shield size={16} />
+                                Confirm Delivery
                               </button>
-                            </>
+                            )}
+                            {canDispute && (
+                              <button
+                                onClick={() => { setShowDisputeForm(true); setDisputeError(''); }}
+                                className="w-full border-2 border-red-400 text-red-400 font-heading font-bold uppercase rounded-xl px-6 py-3 hover:bg-red-400/10 transition-colors flex items-center justify-center gap-2"
+                              >
+                                <AlertTriangle size={16} />
+                                Raise a Dispute
+                              </button>
+                            )}
+                          </div>
+                          {canDispute && order.status === 'awaiting_seller_delivery' && (
+                            <p className="text-xs text-konami-text-muted">
+                              Need help? You can raise a dispute while you wait for the seller.
+                            </p>
                           )}
                         </div>
                       )}
@@ -797,6 +818,103 @@ export default function OrderDetailPage() {
                             <button onClick={() => setShowReviewForm(false)} className="text-xs text-konami-text-muted hover:text-konami-text">Cancel</button>
                           </div>
                           <ReviewForm onSubmit={handleSubmitReview} loading={reviewLoading} />
+                        </div>
+                      )}
+
+                      {showDisputeForm && (
+                        <div
+                          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+                          role="dialog"
+                          aria-modal="true"
+                          aria-labelledby="dispute-modal-title"
+                          onClick={closeDispute}
+                        >
+                          <div
+                            className="bg-white rounded-2xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-2.5">
+                                <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#FEE2E2', color: '#C8102E' }}>
+                                  <AlertTriangle size={18} />
+                                </span>
+                                <div>
+                                  <h3 id="dispute-modal-title" className="font-heading text-lg font-bold text-konami-text">
+                                    What went wrong?
+                                  </h3>
+                                  <p className="text-xs text-konami-text-muted">
+                                    The admin reviews every dispute within 24 hours.
+                                  </p>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={closeDispute}
+                                disabled={actionLoading}
+                                aria-label="Close dispute form"
+                                className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-konami-text-muted hover:text-konami-text disabled:opacity-60"
+                              >
+                                <X size={18} />
+                              </button>
+                            </div>
+
+                            <div>
+                              <label htmlFor="dispute-type" className="block text-xs font-semibold text-konami-text-muted mb-1.5">
+                                Reason
+                              </label>
+                              <select
+                                id="dispute-type"
+                                value={disputeType}
+                                onChange={(e) => { setDisputeType(e.target.value); setDisputeError(''); }}
+                                className="w-full bg-konami-light-gray border border-konami-mid-gray rounded-xl px-3 py-2.5 text-sm text-konami-text outline-none focus:border-konami-blue transition-colors"
+                              >
+                                <option value="">Select a reason</option>
+                                {DISPUTE_REASONS.map((option) => (
+                                  <option key={option} value={option}>{option}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label htmlFor="dispute-details" className="block text-xs font-semibold text-konami-text-muted mb-1.5">
+                                What happened?
+                              </label>
+                              <textarea
+                                id="dispute-details"
+                                value={disputeReason}
+                                onChange={(e) => { setDisputeReason(e.target.value); setDisputeError(''); }}
+                                rows={4}
+                                placeholder="Explain what you expected, what happened instead, and anything else the admin should know."
+                                className="w-full bg-konami-light-gray border border-konami-mid-gray rounded-xl px-3 py-2.5 text-sm text-konami-text outline-none focus:border-konami-blue transition-colors resize-none"
+                              />
+                              <p className="text-xs text-konami-text-muted mt-1">
+                                {disputeReason.trim().length < 20
+                                  ? `${20 - disputeReason.trim().length} more character${20 - disputeReason.trim().length === 1 ? '' : 's'} needed`
+                                  : 'Ready to submit'}
+                              </p>
+                            </div>
+
+                            {disputeError && <p className="text-xs" style={{ color: '#C8102E' }}>{disputeError}</p>}
+
+                            <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                              <button
+                                type="button"
+                                onClick={closeDispute}
+                                disabled={actionLoading}
+                                className="flex-1 py-3 rounded-xl text-sm font-semibold border border-konami-mid-gray text-konami-text-dim hover:bg-konami-light-gray transition-colors disabled:opacity-60"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleDispute}
+                                disabled={actionLoading}
+                                className="flex-1 py-3 rounded-xl text-sm font-heading font-bold uppercase tracking-wide bg-[#FFF100] text-gray-900 hover:bg-yellow-300 transition-colors disabled:opacity-60"
+                              >
+                                {actionLoading ? 'Submitting...' : 'Submit Dispute'}
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </>
