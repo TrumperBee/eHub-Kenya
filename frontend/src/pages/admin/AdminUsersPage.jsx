@@ -8,7 +8,6 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
     getAllUsers().then(setUsers).finally(() => setLoading(false));
   }, []);
 

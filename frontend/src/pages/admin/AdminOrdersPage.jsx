@@ -8,15 +8,44 @@ import { formatKES, formatDate } from '../../utils/formatters';
 import { ChevronDown, ChevronUp, CheckCircle, RotateCcw, X } from 'lucide-react';
 import { resolveOrder } from '../../services/paymentService';
 
-export default function AdminOrdersPage() {
+const FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'pending', label: 'Pending' },
+  { id: 'awaiting', label: 'Awaiting Delivery' },
+  { id: 'disputed', label: 'Disputed' },
+  { id: 'completed', label: 'Completed' },
+];
+
+const matchesFilter = (order, filterId) => {
+  const status = order.status;
+  switch (filterId) {
+    case 'pending':
+      return ['pending_payment', 'payment_pending'].includes(status);
+    case 'awaiting':
+      return [
+        'awaiting_seller_delivery',
+        'credentials_submitted',
+        'payment_confirmed',
+        'in_transfer',
+      ].includes(status);
+    case 'disputed':
+      return status === 'disputed';
+    case 'completed':
+      return status === 'completed';
+    default:
+      return true;
+  }
+};
+
+export default function AdminOrdersPage({ embedded = false }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
   const [pendingAction, setPendingAction] = useState(null);
   const [acting, setActing] = useState(false);
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
-    setLoading(true);
     getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc')))
       .then(snap => setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
       .finally(() => setLoading(false));
@@ -52,16 +81,52 @@ export default function AdminOrdersPage() {
     }
   };
 
-  return (
-    <AdminLayout>
-      <h2 className="font-heading text-xl font-bold text-konami-text mb-6">All Orders</h2>
+  const filtered = orders.filter((order) => matchesFilter(order, filter));
+  const countFor = (id) => orders.filter((order) => matchesFilter(order, id)).length;
+
+  const content = (
+    <>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div>
+          <h2 className="font-heading text-lg font-bold text-konami-text">All Orders</h2>
+          <p className="text-xs text-konami-text-muted mt-0.5">
+            {orders.length} orders · escrow actions are final and notify both parties.
+          </p>
+        </div>
+        <div className="flex gap-1 bg-konami-light-gray rounded-lg p-1 flex-wrap">
+          {FILTERS.map((item) => {
+            const count = countFor(item.id);
+            const isDisputedChip = item.id === 'disputed';
+            const active = filter === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setFilter(item.id)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                  active
+                    ? isDisputedChip
+                      ? 'bg-red-600 text-white shadow-sm'
+                      : 'bg-white text-konami-blue shadow-sm'
+                    : isDisputedChip && count > 0
+                      ? 'text-red-600 hover:bg-red-50'
+                      : 'text-konami-text-muted hover:text-konami-text'
+                }`}
+              >
+                {item.label}{count > 0 ? ` (${count})` : ''}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {loading ? (
         <div className="flex justify-center py-12">
           <div className="w-8 h-8 border-2 border-transparent border-t-konami-blue rounded-full animate-spin" style={{ borderRightColor: '#003BFF' }} />
         </div>
-      ) : orders.length === 0 ? (
-        <p className="text-konami-text-muted text-sm">No orders yet.</p>
+      ) : filtered.length === 0 ? (
+        <p className="text-konami-text-muted text-sm">
+          {orders.length === 0 ? 'No orders yet.' : 'No orders match this filter.'}
+        </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -81,14 +146,26 @@ export default function AdminOrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-konami-mid-gray">
-              {orders.map((order) => {
+              {filtered.map((order) => {
                 const cfg = ORDER_STATUS[order.status] || {};
                 const isExpanded = expanded === order.id;
                 const isDisputed = order.status === 'disputed';
+                const canRelease = [
+                  'disputed',
+                  'payment_confirmed',
+                  'awaiting_seller_delivery',
+                  'credentials_submitted',
+                ].includes(order.status);
                 return (
                   <React.Fragment key={order.id}>
-                    <tr className="hover:bg-konami-light-gray transition-colors">
-                      <td className="py-3 text-sm font-mono text-konami-text-dim">{order.id?.slice(0, 8)}...</td>
+                    <tr
+                      className={`transition-colors ${
+                        isDisputed
+                          ? 'bg-red-50 hover:bg-red-100/70 border-l-4 border-l-konami-red'
+                          : 'hover:bg-konami-light-gray'
+                      }`}
+                    >
+                      <td className={`py-3 text-sm font-mono ${isDisputed ? 'pl-2 text-konami-red font-semibold' : 'text-konami-text-dim'}`}>{order.id?.slice(0, 8)}...</td>
                       <td className="py-3 text-sm text-konami-text">{order.buyerDisplayName || '-'}</td>
                       <td className="py-3 text-sm text-konami-text">{order.sellerDisplayName || '-'}</td>
                       <td className="py-3 text-sm text-konami-text-dim max-w-[150px] truncate">{order.listingTitle || '-'}</td>
@@ -96,7 +173,7 @@ export default function AdminOrdersPage() {
                       <td className="py-3 text-sm font-mono text-konami-text-dim">{order.paymentReference || '-'}</td>
                       <td className="py-3 text-sm text-konami-text-dim capitalize">{order.paymentChannel ? order.paymentChannel.replace('_', ' ') : '-'}</td>
                       <td className="py-3">
-                        <span className={`text-xs ${cfg.color || 'text-konami-text-dim'}`}>{cfg.label || order.status}</span>
+                        <span className={`text-xs font-semibold ${isDisputed ? 'text-konami-red' : cfg.color || 'text-konami-text-dim'}`}>{cfg.label || order.status}</span>
                       </td>
                       <td className="py-3 text-sm text-konami-text-dim">{order.escrowStatus || '-'}</td>
                       <td className="py-3 text-sm text-konami-text-dim">{formatDate(order.createdAt)}</td>
@@ -105,7 +182,7 @@ export default function AdminOrdersPage() {
                           <button onClick={() => setExpanded(isExpanded ? null : order.id)} className="px-2 py-1 text-xs bg-konami-light-gray text-konami-text-dim rounded-lg border border-konami-mid-gray hover:text-konami-text transition-colors">
                             {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                           </button>
-                          {(isDisputed || order.status === 'payment_confirmed') && (
+                          {canRelease && (
                             <button onClick={() => setPendingAction({ order, type: 'release' })} className="px-2 py-1 text-xs bg-green-600/20 text-green-500 rounded-lg border border-green-400/30 hover:bg-green-600/30 transition-colors">
                               Release
                             </button>
@@ -204,6 +281,8 @@ export default function AdminOrdersPage() {
           </div>
         </div>
       )}
-    </AdminLayout>
+    </>
   );
+
+  return embedded ? content : <AdminLayout>{content}</AdminLayout>;
 }

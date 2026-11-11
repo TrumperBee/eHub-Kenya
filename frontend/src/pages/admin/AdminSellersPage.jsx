@@ -13,7 +13,6 @@ export default function AdminSellersPage() {
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
     getAllSellers().then(setSellers).finally(() => setLoading(false));
   }, []);
 

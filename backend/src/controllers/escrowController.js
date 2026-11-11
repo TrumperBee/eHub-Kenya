@@ -88,6 +88,7 @@ async function release(req, res) {
       status: 'completed',
       escrowStatus: 'released',
       buyerConfirmedReceipt: true,
+      completedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
@@ -501,6 +502,9 @@ async function resolve(req, res) {
       escrowStatus,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
+    if (orderStatus === 'completed') {
+      patch.completedAt = admin.firestore.FieldValue.serverTimestamp();
+    }
     if (isDisputed) {
       Object.assign(patch, {
         disputeStatus: 'resolved',

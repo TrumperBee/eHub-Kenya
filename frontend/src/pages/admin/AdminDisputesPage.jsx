@@ -73,7 +73,7 @@ function statusOf(order) {
   return 'open';
 }
 
-export default function AdminDisputesPage() {
+export default function AdminDisputesPage({ embedded = false }) {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
@@ -344,8 +344,8 @@ export default function AdminDisputesPage() {
 
   const reasonFor = (order) => order.disputeReason || order.disputeDetails || 'No reason provided';
 
-  return (
-    <AdminLayout>
+  const content = (
+    <>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h2 className="font-heading text-xl font-bold text-konami-text">Disputes</h2>
@@ -691,6 +691,8 @@ export default function AdminDisputesPage() {
           </div>
         </div>
       )}
-    </AdminLayout>
+    </>
   );
+
+  return embedded ? content : <AdminLayout>{content}</AdminLayout>;
 }

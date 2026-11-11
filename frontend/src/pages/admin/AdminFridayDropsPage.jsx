@@ -22,7 +22,7 @@ const STATUS_STYLE = {
   expired: { label: 'EXPIRED', color: '#6B7280', bg: '#F3F4F6' },
 };
 
-export default function AdminFridayDropsPage() {
+export default function AdminFridayDropsPage({ embedded = false }) {
   const [drops, setDrops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
@@ -87,8 +87,8 @@ export default function AdminFridayDropsPage() {
     { label: 'Discount Value Live', value: formatKES(totalDiscountValue), icon: <Tag size={18} />, color: '#D4AF37' },
   ];
 
-  return (
-    <AdminLayout>
+  const content = (
+    <>
       <h2 className="font-heading text-xl font-bold text-konami-text mb-6">Friday Drops</h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -224,6 +224,8 @@ export default function AdminFridayDropsPage() {
           </table>
         </div>
       )}
-    </AdminLayout>
+    </>
   );
+
+  return embedded ? content : <AdminLayout>{content}</AdminLayout>;
 }
