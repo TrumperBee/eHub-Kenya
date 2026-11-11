@@ -17,8 +17,9 @@ service cloud.firestore {
 
       match /reviews/{reviewId} {
         allow read: if true;
-        allow create: if isLoggedIn();
-        allow update, delete: if false;
+        // Reviews are written only by the backend, which verifies a completed
+        // order first. Clients must not be able to post or edit reviews directly.
+        allow create, update, delete: if false;
       }
 
       match /savedListings/{listingId} {
@@ -39,8 +40,9 @@ service cloud.firestore {
 
       match /reviews/{reviewId} {
         allow read: if true;
-        allow create: if isLoggedIn();
-        allow update, delete: if false;
+        // Reviews are written only by the backend, which verifies a completed
+        // order first. Clients must not be able to post or edit reviews directly.
+        allow create, update, delete: if false;
       }
 
       match /comments/{commentId} {

@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Star, X } from 'lucide-react';
-import { collection, query, where, orderBy, getDocs, doc, getDoc, setDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
+import { submitSellerReview } from '../../services/reviewService';
 import toast from 'react-hot-toast';
 
 const ratingLabels = ['', 'Terrible', 'Poor', 'Average', 'Good', 'Excellent'];
 
-export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, userProfile, onClose, onSuccess }) {
+export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, onClose, onSuccess }) {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [existingReview, setExistingReview] = useState(null);
-  const [isVerifiedPurchase, setIsVerifiedPurchase] = useState(false);
 
   useEffect(() => {
     if (!sellerId || !currentUser) return;
@@ -36,17 +36,6 @@ export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, u
     };
 
     checkExistingReview();
-
-    // Check if user has completed orders with this seller (for verified purchase badge)
-    const q = query(
-      collection(db, 'orders'),
-      where('buyerId', '==', currentUser.uid),
-      where('sellerId', '==', sellerId),
-      where('status', '==', 'completed'),
-    );
-    getDocs(q).then(snap => {
-      setIsVerifiedPurchase(snap.docs.length > 0);
-    });
   }, [sellerId, currentUser]);
 
   const handleSubmit = async (e) => {
@@ -62,90 +51,18 @@ export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, u
 
     setSubmitting(true);
     try {
-      // We need a listingId - find one from a completed order
-      let listingId = null;
-      const ordersQuery = query(
-        collection(db, 'orders'),
-        where('buyerId', '==', currentUser.uid),
-        where('sellerId', '==', sellerId),
-        where('status', '==', 'completed'),
-        orderBy('createdAt', 'desc'),
-      );
-      const ordersSnap = await getDocs(ordersQuery);
-      if (ordersSnap.docs.length > 0) {
-        listingId = ordersSnap.docs[0].data().listingId;
-      }
-
-      const reviewData = {
-        buyerId: currentUser.uid,
-        buyerDisplayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Anonymous',
-        buyerUsername: userProfile?.username || currentUser.email?.split('@')[0] || 'anonymous',
-        buyerPhotoURL: currentUser.photoURL || null,
+      // Written by the backend so it can verify a completed order and update
+      // the seller's aggregate rating (which clients may not do directly).
+      await submitSellerReview({
+        sellerId,
         rating,
         comment: comment.trim(),
-        createdAt: serverTimestamp(),
-        isVerifiedPurchase: false, // Will be set below
-      };
-
-      // Check if user has completed orders for verified badge
-      const ordersQuery2 = query(
-        collection(db, 'orders'),
-        where('buyerId', '==', currentUser.uid),
-        where('sellerId', '==', sellerId),
-        where('status', '==', 'completed'),
-      );
-      const ordersSnap2 = await getDocs(ordersQuery2);
-      if (ordersSnap2.docs.length > 0) {
-        reviewData.isVerifiedPurchase = true;
-      }
-
-      // If we have a listingId, also add listingTitle
-      if (listingId) {
-        const listingSnap = await getDoc(doc(db, 'listings', listingId));
-        if (listingSnap.exists()) {
-          reviewData.listingId = listingId;
-          reviewData.listingTitle = listingSnap.data().title || 'Account';
-        }
-      }
-
-      await runTransaction(db, async (transaction) => {
-        // Write to both locations with currentUser.uid as doc ID
-        transaction.set(doc(db, 'users', sellerId, 'reviews', currentUser.uid), reviewData);
-        if (listingId) {
-          transaction.set(doc(db, 'listings', listingId, 'reviews', currentUser.uid), reviewData);
-        }
-
-        // Update seller's aggregate rating
-        const sellerRef = doc(db, 'users', sellerId);
-        const sellerSnap = await transaction.get(sellerRef);
-        if (sellerSnap.exists()) {
-          const sellerData = sellerSnap.data();
-          const currentRating = sellerData.sellerRating || 0;
-          const totalRatings = sellerData.sellerTotalRatings || 0;
-          
-          let newRating, newTotalRatings;
-          if (existingReview) {
-            // Updating existing review - adjust rating
-            const oldRating = existingReview.rating || 0;
-            newRating = ((currentRating * totalRatings) - oldRating + rating) / totalRatings;
-            newTotalRatings = totalRatings;
-          } else {
-            // New review
-            newRating = ((currentRating * totalRatings) + rating) / (totalRatings + 1);
-            newTotalRatings = totalRatings + 1;
-          }
-          
-          transaction.update(sellerRef, {
-            sellerRating: newRating,
-            sellerTotalRatings: newTotalRatings,
-          });
-        }
       });
 
       toast.success(existingReview ? 'Review updated successfully' : 'Review posted successfully');
       onSuccess();
     } catch (err) {
-      toast.error(err.message || 'Failed to submit review. Try again.');
+      toast.error(err?.response?.data?.error || 'Failed to submit review. Try again.');
     } finally {
       setSubmitting(false);
     }

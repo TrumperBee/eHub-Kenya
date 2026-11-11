@@ -36,12 +36,23 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleClick = (e) => {
+      // The mobile notifications sheet has its own backdrop; the desktop
+      // outside-click handler must not close it on the initial mousedown.
+      if (window.innerWidth < 768) return;
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false);
       if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
+
+  useEffect(() => {
+    if (notifOpen) {
+      document.body.style.overflow = 'hidden';
+    } else if (!drawerOpen) {
+      document.body.style.overflow = '';
+    }
+  }, [notifOpen, drawerOpen]);
 
   useEffect(() => {
     setDrawerOpen(false);
@@ -78,6 +89,34 @@ export default function Navbar() {
     else if (n.type === 'drop') navigate(n.link || '/friday-drops');
     setNotifOpen(false);
   };
+
+  // Shared between the desktop dropdown and the mobile bottom sheet.
+  const renderNotificationList = () => (
+    notifications.length === 0 ? (
+      <p className="text-sm text-center py-6" style={{ color: 'rgba(255,255,255,0.4)' }}>No notifications yet.</p>
+    ) : (
+      notifications.map((n) => (
+        <button
+          key={n.id}
+          onClick={() => handleNotifClick(n)}
+          className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-white/10 transition-colors"
+          style={!n.read ? { background: 'rgba(255,241,0,0.05)' } : {}}
+        >
+          <span className="text-base shrink-0 mt-0.5">
+            {n.type === 'payment' ? <Wallet size={16} /> : n.type === 'order' ? <ShoppingBag size={16} /> : n.type === 'chat' ? <MessageCircle size={16} /> : n.type === 'approval' ? <CheckCircle size={16} /> : n.type === 'drop' ? <Flame size={16} /> : <Bell size={16} />}
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-white truncate">{n.title}</p>
+            <p className="text-xs line-clamp-2 mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>{n.message}</p>
+            <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>{formatRelativeTime(n.createdAt)}</p>
+          </div>
+          {!n.read && (
+            <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ background: '#FFF100' }} />
+          )}
+        </button>
+      ))
+    )
+  );
 
   const getInitials = (name) => {
     if (!name) return '?';
@@ -184,30 +223,7 @@ export default function Navbar() {
                         </button>
                       )}
                     </div>
-                    {notifications.length === 0 ? (
-                      <p className="text-sm text-center py-6" style={{ color: 'rgba(255,255,255,0.4)' }}>No notifications yet.</p>
-                    ) : (
-                      notifications.map((n) => (
-                        <button
-                          key={n.id}
-                          onClick={() => handleNotifClick(n)}
-                          className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-white/10 transition-colors"
-                          style={!n.read ? { background: 'rgba(255,241,0,0.05)' } : {}}
-                        >
-                          <span className="text-base shrink-0 mt-0.5">
-                            {n.type === 'payment' ? <Wallet size={16} /> : n.type === 'order' ? <ShoppingBag size={16} /> : n.type === 'chat' ? <MessageCircle size={16} /> : n.type === 'approval' ? <CheckCircle size={16} /> : n.type === 'drop' ? <Flame size={16} /> : <Bell size={16} />}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-white truncate">{n.title}</p>
-                            <p className="text-xs line-clamp-2 mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>{n.message}</p>
-                            <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>{formatRelativeTime(n.createdAt)}</p>
-                          </div>
-                          {!n.read && (
-                            <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ background: '#FFF100' }} />
-                          )}
-                        </button>
-                      ))
-                    )}
+                    {renderNotificationList()}
                   </div>
                 )}
               </div>
@@ -343,17 +359,17 @@ export default function Navbar() {
             <DrawerNavItem icon={<Package size={18} />} label="My Orders" href="/orders" />
             <DrawerNavItem icon={<User size={18} />} label="My Account" href="/account" />
             <DrawerNavItem icon={<Bookmark size={18} />} label="Favourites" href="/saved" />
-            <Link
-              to={location.pathname}
-              onClick={() => setNotifOpen(true)}
-              className="flex items-center gap-3.5 mx-2 px-4 rounded-lg transition-colors min-h-[52px] text-white hover:bg-white/10"
+            <button
+              type="button"
+              onClick={() => { closeDrawer(); setNotifOpen(true); }}
+              className="flex items-center gap-3.5 mx-2 px-4 rounded-lg transition-colors min-h-[52px] text-white hover:bg-white/10 text-left"
             >
               <span style={{ fontSize: 18, width: 20, textAlign: 'center', flexShrink: 0 }}><Bell size={18} /></span>
               <span className="font-heading text-sm font-bold uppercase tracking-wide flex-1">Notifications</span>
               {unreadCount > 0 && (
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: '#FFF100', color: '#111' }}>{unreadCount}</span>
               )}
-            </Link>
+            </button>
           </>
         )}
 
@@ -428,6 +444,38 @@ export default function Navbar() {
           )}
         </div>
       </div>
+
+      {/* Mobile notifications sheet — the drawer item opens this on phones */}
+      {notifOpen && currentUser && (
+        <div className="md:hidden fixed inset-0 z-[10000] flex items-end">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setNotifOpen(false)} />
+          <div
+            className="relative w-full max-h-[80vh] rounded-t-3xl flex flex-col overflow-hidden animate-fade-in"
+            style={{ background: '#001E7A', borderTop: '3px solid #FFF100' }}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
+              <p className="text-sm font-heading font-bold text-white">NOTIFICATIONS</p>
+              <div className="flex items-center gap-3">
+                {unreadCount > 0 && (
+                  <button onClick={markAllAsRead} className="text-xs font-medium" style={{ color: '#FFF100' }}>
+                    Mark all as read
+                  </button>
+                )}
+                <button
+                  onClick={() => setNotifOpen(false)}
+                  className="p-1 rounded-lg text-white/70 hover:text-white"
+                  aria-label="Close notifications"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="overflow-y-auto py-1">
+              {renderNotificationList()}
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

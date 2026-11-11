@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { doc, setDoc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../services/firebase';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useOrder } from '../../hooks/useOrders';
@@ -10,6 +8,7 @@ import { formatKES, formatDate } from '../../utils/formatters';
 import { canViewOrder } from '../../utils/orderAccess';
 import { releaseEscrow, submitDelivery, verifyOrderPayment, revealOrderCredentials } from '../../services/paymentService';
 import { subscribeToDeliveries } from '../../services/ordersService';
+import { submitSellerReview } from '../../services/reviewService';
 import { buyerCanConfirm, buyerCanDispute, sellerCanDeliver, isPaidStatus } from '../../utils/orderMachine';
 import { buyerGuide, sellerGuide } from '../../utils/orderGuide';
 import OrderStatePanel from '../../components/orders/OrderStatePanel';
@@ -330,7 +329,7 @@ export default function OrderDetailPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const paymentSuccess = searchParams.get('payment') === 'success';
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser } = useAuth();
   const { order, loading, error } = useOrder(id);
   const [deliveries, setDeliveries] = useState([]);
   const [actionLoading, setActionLoading] = useState(false);
@@ -468,34 +467,14 @@ export default function OrderDetailPage() {
   };
 
   const handleSubmitReview = async ({ rating, comment }) => {
-    if (!order.listingId) return;
     setReviewLoading(true);
     try {
-      const reviewRef = doc(db, 'listings', order.listingId, 'reviews', id);
-      await setDoc(reviewRef, {
-        rating,
-        comment,
-        buyerId: currentUser.uid,
-        buyerDisplayName: userProfile?.displayName || currentUser.displayName || 'Anonymous',
-        createdAt: serverTimestamp(),
-      });
-
-      const sellerRef = doc(db, 'users', order.sellerId);
-      const sellerSnap = await getDoc(sellerRef);
-      if (sellerSnap.exists()) {
-        const sellerData = sellerSnap.data();
-        const currentRating = sellerData.sellerRating || 0;
-        const totalRatings = sellerData.sellerTotalRatings || 0;
-        const newAvg = ((currentRating * totalRatings) + rating) / (totalRatings + 1);
-        await updateDoc(sellerRef, {
-          sellerRating: Math.round(newAvg * 10) / 10,
-          sellerTotalRatings: totalRatings + 1,
-        });
-      }
-
+      await submitSellerReview({ orderId: id, rating, comment });
+      toast.success('Review posted successfully');
       setShowReviewForm(false);
     } catch (err) {
       console.error('Review error:', err);
+      toast.error(err?.response?.data?.error || 'Could not post your review. Please try again.');
     } finally {
       setReviewLoading(false);
     }

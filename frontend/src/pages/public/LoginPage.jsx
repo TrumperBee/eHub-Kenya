@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Zap, Shield, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import PasswordInput from '../../components/common/PasswordInput';
+import { loginErrorMessage, googleAuthErrorMessage } from '../../utils/authErrors';
 
 export default function LoginPage() {
   const { login, loginWithGoogle } = useAuth();
@@ -29,7 +30,7 @@ export default function LoginPage() {
       await login(email, password);
       navigate(redirectPath);
     } catch (err) {
-      setError(err.message.replace('Firebase: ', '').replace(/\(.*\)/, '').trim() || 'Login failed');
+      setError(loginErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -47,8 +48,7 @@ export default function LoginPage() {
       }
     } catch (err) {
       if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
-      const detail = (err.message || '').replace('Firebase: ', '').trim();
-      setError(detail || 'Google login failed. Please use email and password.');
+      setError(googleAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }

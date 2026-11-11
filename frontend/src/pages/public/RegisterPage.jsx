@@ -4,6 +4,7 @@ import { Lock, Zap, Shield, MessageCircle, CheckCircle, X, Loader2 } from 'lucid
 import { useAuth } from '../../context/AuthContext';
 import PasswordInput from '../../components/common/PasswordInput';
 import { validateUsernameFormat, generateSuggestions, checkUsername } from '../../utils/usernameUtils';
+import { googleAuthErrorMessage } from '../../utils/authErrors';
 
 export default function RegisterPage() {
   const { register, loginWithGoogle } = useAuth();
@@ -101,7 +102,6 @@ export default function RegisterPage() {
       navigate(redirectPath);
     } catch (err) {
       const code = err.code || '';
-      const msg = err.message.replace('Firebase: ', '').trim();
       if (code === 'auth/email-already-in-use') {
         setError('This email is already registered. Try logging in instead.');
       } else if (code === 'auth/operation-not-allowed') {
@@ -111,7 +111,7 @@ export default function RegisterPage() {
       } else if (code === 'auth/invalid-email') {
         setError('Invalid email address.');
       } else {
-        setError(msg || 'Registration failed. Check your details and try again.');
+        setError('Registration failed. Check your details and try again.');
       }
     } finally {
       setLoading(false);
@@ -130,8 +130,7 @@ export default function RegisterPage() {
       }
     } catch (err) {
       if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
-      const detail = (err.message || '').replace('Firebase: ', '').trim();
-      setError(detail || 'Google sign-in failed. Please use email and password.');
+      setError(googleAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
