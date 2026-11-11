@@ -18,7 +18,7 @@ import ReviewForm from '../../components/reviews/ReviewForm';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import {
   Shield, MessageSquare, CheckCircle, Mail, KeyRound, Eye, EyeOff, Copy,
-  Send, Upload, AlertTriangle, Lock, ShoppingBag, Loader, RefreshCw,
+  Send, Upload, AlertTriangle, Lock, ShoppingBag, Loader, RefreshCw, Star,
 } from 'lucide-react';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import toast from 'react-hot-toast';
@@ -87,32 +87,96 @@ function stepIndexFor(status) {
   return -1;
 }
 
-function CredentialsList({ deliveries, isSeller, orderId, revealed = null, deadline = null, onReveal }) {
+// --- 30-minute buyer verification window -----------------------------------
+// The authoritative deadline is written server-side on the first credential
+// reveal (`reveal + 30:00`, never restarted). Before that reveal, the expected
+// window is shown from the moment payment was confirmed (`paidAt + 30:00`).
+const VERIFICATION_WINDOW_MS = 30 * 60 * 1000;
+
+const toMillis = (value) => {
+  if (value == null) return null;
+  if (typeof value === 'number') return value;
+  if (typeof value.toMillis === 'function') return value.toMillis();
+  if (typeof value.toDate === 'function') return value.toDate().getTime();
+  const parsed = new Date(value).getTime();
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+function VerificationCountdown({ order }) {
+  // eslint-disable-next-line react-hooks/purity -- initial clock value; refined on mount
+  const [nowMs, setNowMs] = useState(Date.now());
+
+  // Isolated 1-second tick so only this box re-renders, never the page/chat.
+  useEffect(() => {
+    const tick = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, []);
+
+  const paidAtMs = toMillis(order?.paidAt) ?? toMillis(order?.createdAt);
+  const deadlineMs =
+    toMillis(order?.verificationDeadline) ??
+    (paidAtMs != null ? paidAtMs + VERIFICATION_WINDOW_MS : null);
+  if (deadlineMs == null) return null;
+
+  const remainingMs = Math.max(0, deadlineMs - nowMs);
+  const expired = remainingMs === 0;
+  const urgent = !expired && remainingMs <= 5 * 60 * 1000;
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const countdown = `${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(
+    totalSeconds % 60
+  ).padStart(2, '0')}`;
+  const released =
+    order?.status === 'completed' ||
+    String(order?.escrowStatus || '').toLowerCase() === 'released';
+
+  return (
+    <div
+      className={`rounded-xl p-4 border ${
+        expired ? 'border-[#C8102E]/40 bg-[#C8102E]/5' : 'border-[#FFF100]/40 bg-[#FFF100]/5'
+      }`}
+    >
+      <div className="flex items-start gap-2">
+        <AlertTriangle
+          size={16}
+          className={`shrink-0 mt-0.5 ${expired ? 'text-konami-red' : 'text-[#8A7D00]'}`}
+        />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-konami-text">
+            ⚠ You have 30 minutes to verify this account. If you do not confirm or raise a dispute,
+            payment will be automatically released to the seller.
+          </p>
+          {expired ? (
+            <p className="mt-2 font-heading text-lg font-extrabold uppercase tracking-wide text-konami-red">
+              Time expired — {released ? 'payment released' : 'payment will be released to the seller'}
+            </p>
+          ) : (
+            <p className="mt-2 flex items-baseline gap-2">
+              <span
+                className={`font-heading text-2xl font-extrabold tabular-nums tracking-wide ${
+                  urgent ? 'text-konami-red' : 'text-konami-text'
+                }`}
+              >
+                {countdown}
+              </span>
+              <span className="text-[11px] font-bold uppercase tracking-wide text-konami-text-muted">
+                remaining to confirm
+              </span>
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CredentialsList({ deliveries, isSeller, orderId, revealed = null, onReveal }) {
   const [reveal, setReveal] = useState(Boolean(revealed));
   const [confirmReveal, setConfirmReveal] = useState(false);
   const [revealError, setRevealError] = useState('');
-  const [verificationDeadline, setVerificationDeadline] = useState(deadline);
-  const [nowMs, setNowMs] = useState(Date.now());
 
   const [revealPending, setRevealPending] = useState(false);
 
-  useEffect(() => {
-    if (!verificationDeadline) return undefined;
-    const tick = setInterval(() => setNowMs(Date.now()), 1000);
-    return () => clearInterval(tick);
-  }, [verificationDeadline]);
-
   const latest = deliveries && deliveries.length > 0 ? deliveries[0] : null;
-
-  const remainingMs = verificationDeadline ? Math.max(0, verificationDeadline - nowMs) : 0;
-  const expired = verificationDeadline ? nowMs >= verificationDeadline : false;
-
-  const formatCountdown = (ms) => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const mm = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-    const ss = String(totalSeconds % 60).padStart(2, '0');
-    return `${mm}:${ss}`;
-  };
 
   const copyValue = async (value, label) => {
     try {
@@ -127,12 +191,16 @@ function CredentialsList({ deliveries, isSeller, orderId, revealed = null, deadl
     setRevealPending(true);
     setRevealError('');
     try {
-      const result = await onReveal(orderId);
-      setVerificationDeadline(result.verificationDeadline);
+      // The server records the 30-minute window on the order document, which
+      // streams back here in real time — nothing to keep in local state.
+      await onReveal(orderId);
       setReveal(true);
-      setNowMs(Date.now());
     } catch (err) {
-      setRevealError(err.message || 'Could not reveal account details right now. Please try again.');
+      setRevealError(
+        err?.response?.data?.error ||
+          err?.message ||
+          'Could not reveal account details right now. Please try again.'
+      );
       setConfirmReveal(false);
     } finally {
       setRevealPending(false);
@@ -165,10 +233,10 @@ function CredentialsList({ deliveries, isSeller, orderId, revealed = null, deadl
               <button
                 onClick={() => copyValue(latest.accountPassword, 'Password')}
                 type="button"
-                className="btn-secondary px-3 py-2.5 text-sm shrink-0 flex items-center gap-1.5"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-konami-blue bg-white px-3 py-1.5 text-xs font-medium text-konami-blue transition-colors hover:bg-konami-blue hover:text-white"
                 aria-label="Copy account password"
               >
-                <Copy size={15} /> Copy
+                <Copy size={14} /> Copy
               </button>
             )}
             <button
@@ -179,11 +247,12 @@ function CredentialsList({ deliveries, isSeller, orderId, revealed = null, deadl
                   setConfirmReveal(true);
                 }
               }}
-              className="btn-secondary px-3 py-2.5 text-sm shrink-0 flex items-center gap-1.5"
+              disabled={revealPending}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-konami-blue bg-white px-3 py-1.5 text-xs font-medium text-konami-blue transition-colors hover:bg-konami-blue hover:text-white disabled:opacity-60"
               aria-label={reveal ? 'Hide password' : 'Show password'}
             >
-              {reveal ? <EyeOff size={15} /> : <Eye size={15} />}
-              {reveal ? 'Hide' : 'Show'}
+              {reveal ? <EyeOff size={14} /> : <Eye size={14} />}
+              {revealPending ? 'Loading…' : reveal ? 'Hide' : 'Show'}
             </button>
           </div>
         </div>
@@ -196,14 +265,20 @@ function CredentialsList({ deliveries, isSeller, orderId, revealed = null, deadl
         </p>
       )}
 
+      {revealError && (
+        <p className="text-xs text-konami-red">{revealError}</p>
+      )}
+
       <ConfirmDialog
         open={confirmReveal}
         title="Before revealing your password"
         message="Once you access this account, change the account email and password to secure it under your control. After revealing, the password is only visible to you here. Keep this order page open and never share the password in the public chat."
         confirmLabel="Continue & Show Password"
         onConfirm={() => {
-          setReveal(true);
           setConfirmReveal(false);
+          // Starts the server-side 30-minute verification window (first reveal
+          // wins) so the buyer countdown and auto-release use the same deadline.
+          handleReveal();
         }}
         onCancel={() => setConfirmReveal(false)}
         variant="default"
@@ -681,6 +756,8 @@ export default function OrderDetailPage() {
                     </div>
                   ) : (
                     <>
+                      {isBuyer && canConfirmReceipt && <VerificationCountdown order={order} />}
+
                       {(canConfirmReceipt || canDispute) && (
                         <div className="flex flex-col gap-2">
                           {canConfirmReceipt && (
@@ -704,7 +781,11 @@ export default function OrderDetailPage() {
                       )}
 
                       {canReview && !showReviewForm && (
-                        <button onClick={() => setShowReviewForm(true)} className="btn-secondary w-full text-sm py-3">
+                        <button
+                          onClick={() => setShowReviewForm(true)}
+                          className="w-full inline-flex items-center justify-center gap-2 bg-[#FFF100] text-gray-900 font-heading font-bold uppercase tracking-wide rounded-xl px-6 py-3 hover:bg-yellow-300 transition-colors"
+                        >
+                          <Star size={18} className="fill-gray-900" />
                           Leave a Review
                         </button>
                       )}
