@@ -124,7 +124,9 @@ export default function BuyNowButton({ listing, effectivePrice }) {
       setStep('waiting');
       startPolling(data.orderId);
     } catch (err) {
-      setError(err?.response?.data?.error || 'Could not start payment. Please try again.');
+      const errorMessage = err?.response?.data?.error || 'Could not start payment. Please try again.';
+      const errorCode = err?.response?.data?.code;
+      setError(errorCode ? `${errorMessage} (ref: ${errorCode})` : errorMessage);
       setStep('phone');
     } finally {
       setSubmitting(false);

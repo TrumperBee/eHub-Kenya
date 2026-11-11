@@ -44,32 +44,35 @@ async function resolveEffectivePrice(listingId) {
  */
 function zetupayFailureResponse(err) {
   if (!(err instanceof ZetupayError)) {
-    return [502, 'Could not send the M-Pesa request. Please try again.'];
+    return [502, 'Could not send the M-Pesa request. Please try again.', 'ZETUPAY_REQUEST_FAILED'];
   }
   switch (err.code) {
     case 'INVALID_PHONE':
-      return [400, 'Enter a valid M-Pesa number (e.g. 0712345678)'];
+      return [400, 'Enter a valid M-Pesa number (e.g. 0712345678)', err.code];
     case 'INVALID_AMOUNT':
-      return [400, err.message];
+      return [400, err.message, err.code];
     case 'ZETUPAY_NOT_CONFIGURED':
-      return [503, 'M-Pesa payments are not configured yet. Please contact support.'];
+      return [503, 'M-Pesa payments are not configured yet. Please contact support.', err.code];
     case 'ZETUPAY_AUTH_FAILED':
+      return [503, 'M-Pesa payments are unavailable: ZetuPay rejected our credentials. Please contact support.', err.code];
     case 'ZETUPAY_NO_PLAN':
+      return [503, 'M-Pesa payments are unavailable: the ZetuPay wallet has no service tokens or active plan. Please contact support.', err.code];
     case 'ZETUPAY_FORBIDDEN':
+      return [503, 'M-Pesa payments are unavailable: ZetuPay blocked the request (wallet suspended or channel mismatch). Please contact support.', err.code];
     case 'ZETUPAY_CHANNEL_NOT_FOUND':
-      return [503, 'M-Pesa payments are temporarily unavailable. Please contact support.'];
+      return [503, 'M-Pesa payments are unavailable: the configured ZetuPay collection channel was not found. Please contact support.', err.code];
     case 'ZETUPAY_NOT_SET_UP':
-      return [503, 'M-Pesa payments are not set up on our payment account yet. Please contact support.'];
+      return [503, 'M-Pesa payments are not set up on our payment account yet. Please contact support.', err.code];
     case 'ZETUPAY_RATE_LIMITED':
-      return [429, 'Too many M-Pesa requests. Wait a moment and try again.'];
+      return [429, 'Too many M-Pesa requests. Wait a moment and try again.', err.code];
     case 'ZETUPAY_IDEMPOTENCY_CONFLICT':
-      return [409, 'A payment for this order is already in progress. Check your orders page before retrying.'];
+      return [409, 'A payment for this order is already in progress. Check your orders page before retrying.', err.code];
     case 'ZETUPAY_MPESA_REJECTED':
-      return [502, 'M-Pesa did not accept the request. Check the number and try again.'];
+      return [502, 'M-Pesa did not accept the request. Check the number and try again.', err.code];
     case 'ZETUPAY_TIMEOUT':
-      return [504, 'M-Pesa took too long to respond. Check your phone, then your orders page before retrying.'];
+      return [504, 'M-Pesa took too long to respond. Check your phone, then your orders page before retrying.', err.code];
     default:
-      return [502, 'Could not send the M-Pesa request. Please try again.'];
+      return [502, 'Could not send the M-Pesa request. Please try again.', err.code];
   }
 }
 
@@ -163,6 +166,7 @@ async function initiateStkPushPayment(req, res) {
     await processFailedPayment(orderId, { reason: 'Amount outside the M-Pesa STK Push limits' });
     return res.status(400).json({
       error: `This listing cannot be paid via M-Pesa. The allowed range is KES 1 to KES ${MAX_STK_AMOUNT.toLocaleString()}. Please contact support.`,
+      code: 'AMOUNT_OUT_OF_RANGE',
     });
   }
 
@@ -185,8 +189,8 @@ async function initiateStkPushPayment(req, res) {
     await processFailedPayment(orderId, {
       reason: err?.providerMessage || err?.message || 'Could not send the M-Pesa STK push',
     });
-    const [status, message] = zetupayFailureResponse(err);
-    return res.status(status).json({ error: message });
+    const [status, message, code] = zetupayFailureResponse(err);
+    return res.status(status).json({ error: message, code });
   }
 
   const zetupayReference = stk.waveTransactionId || stk.paymentKey || null;
