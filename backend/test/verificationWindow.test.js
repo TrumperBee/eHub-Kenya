@@ -10,6 +10,8 @@ const assert = require('node:assert/strict');
 const {
   VERIFICATION_WINDOW_MS,
   verificationDeadlineAfter,
+  verificationStartMs,
+  verificationDeadlineMs,
   verificationStatusAt,
   remainingMsAt,
 } = require('../src/services/verificationWindow');
@@ -50,4 +52,39 @@ test('remainingMsAt is display-only and clamps at 0', () => {
   assert.equal(remainingMsAt(deadline, T0), 30 * 60 * 1000);
   assert.equal(remainingMsAt(deadline, T0 + 1000), 30 * 60 * 1000 - 1000);
   assert.equal(remainingMsAt(deadline, deadline + 1), 0); // clamped, never negative
+});
+
+// --- Trigger semantics: the window starts on the first "Show Password" ------
+
+test('payment confirmation alone never starts the window', () => {
+  const paidOrder = { paidAt: T0 - 60 * 60 * 1000 };
+  assert.equal(verificationStartMs(paidOrder), null);
+  assert.equal(verificationDeadlineMs(paidOrder), null);
+  assert.equal(verificationStatusAt(paidOrder, T0 + 24 * 60 * 60 * 1000), 'not_started');
+});
+
+test('first reveal writes verificationStartedAt and derives the deadline', () => {
+  const order = { verificationStartedAt: T0 };
+  assert.equal(verificationStartMs(order), T0);
+  assert.equal(verificationDeadlineMs(order), verificationDeadlineAfter(T0));
+  assert.equal(verificationStatusAt(order, T0 + 1), 'active');
+  assert.equal(verificationStatusAt(order, verificationDeadlineAfter(T0)), 'expired');
+});
+
+test('legacy orders with only credentialsRevealedAt keep their window', () => {
+  const order = { credentialsRevealedAt: T0 };
+  assert.equal(verificationStartMs(order), T0);
+  assert.equal(verificationDeadlineMs(order), verificationDeadlineAfter(T0));
+});
+
+test('a legacy order that only stored a deadline resolves start as deadline minus 30 minutes', () => {
+  const deadline = verificationDeadlineAfter(T0);
+  const order = { verificationDeadline: deadline };
+  assert.equal(verificationStartMs(order), T0);
+  assert.equal(verificationDeadlineMs(order), deadline);
+});
+
+test('a stored deadline can never release earlier than start + 30 minutes', () => {
+  const order = { verificationStartedAt: T0, verificationDeadline: T0 + 5 * 60 * 1000 };
+  assert.equal(verificationDeadlineMs(order), T0 + 30 * 60 * 1000);
 });

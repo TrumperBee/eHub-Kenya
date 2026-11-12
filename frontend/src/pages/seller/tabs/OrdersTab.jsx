@@ -229,7 +229,7 @@ export default function OrdersTab({ profile, onTabChange }) {
       ) : (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-full">
               <thead>
                 <tr className="border-b border-gray-200 text-left">
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#6B7280' }}>Listing</th>

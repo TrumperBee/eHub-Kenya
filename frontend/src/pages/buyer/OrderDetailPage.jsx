@@ -15,10 +15,9 @@ import OrderStatePanel from '../../components/orders/OrderStatePanel';
 import ContextHint from '../../components/common/ContextHint';
 import ChatWindow from '../../components/chat/ChatWindow';
 import ReviewForm from '../../components/reviews/ReviewForm';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
 import {
   Shield, CheckCircle, Mail, KeyRound, Eye, EyeOff, Copy,
-  Send, Upload, AlertTriangle, Lock, ShoppingBag, Loader, RefreshCw, Star, X,
+  Send, Upload, AlertTriangle, Lock, ShoppingBag, Loader, RefreshCw, Star, X, Clock,
 } from 'lucide-react';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import toast from 'react-hot-toast';
@@ -72,7 +71,7 @@ function NotFoundScreen() {
           <Link to="/orders" className="btn-primary inline-flex items-center justify-center gap-2 text-sm">
             My Orders
           </Link>
-          <Link to="/browse" className="btn-secondary text-sm">
+          <Link to="/browse" className="btn-outline text-sm text-center">
             Browse Listings
           </Link>
         </div>
@@ -96,9 +95,10 @@ function stepIndexFor(status) {
 }
 
 // --- 30-minute buyer verification window -----------------------------------
-// The authoritative deadline is written server-side on the first credential
-// reveal (`reveal + 30:00`, never restarted). Before that reveal, the expected
-// window is shown from the moment payment was confirmed (`paidAt + 30:00`).
+// The authoritative start is written server-side on the buyer's FIRST
+// "Show Password" click (`verificationStartedAt`), and the deadline is always
+// `start + 30:00` — never `paidAt + 30`, and never restarted. Before that first
+// reveal the window has not started, so no countdown is shown.
 const VERIFICATION_WINDOW_MS = 30 * 60 * 1000;
 
 const toMillis = (value) => {
@@ -114,19 +114,42 @@ function VerificationCountdown({ order, paused = false }) {
   // eslint-disable-next-line react-hooks/purity -- initial clock value; refined on mount
   const [nowMs, setNowMs] = useState(Date.now());
   // Isolated 1-second tick so only this box re-renders, never the page/chat.
-  // Paused while the buyer is filing a dispute, so the clock freezes instead of
-  // implying they are running out of time while they type.
+  // Paused while the buyer opens the confirm dialog or the dispute form, so the
+  // display freezes instead of implying time is running out while they act.
   useEffect(() => {
     if (paused) return undefined;
     const tick = setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(tick);
   }, [paused]);
 
-  const paidAtMs = toMillis(order?.paidAt) ?? toMillis(order?.createdAt);
+  const storedDeadlineMs = toMillis(order?.verificationDeadline);
+  const startedMs =
+    toMillis(order?.verificationStartedAt) ??
+    toMillis(order?.credentialsRevealedAt) ??
+    (storedDeadlineMs != null ? storedDeadlineMs - VERIFICATION_WINDOW_MS : null);
   const deadlineMs =
-    toMillis(order?.verificationDeadline) ??
-    (paidAtMs != null ? paidAtMs + VERIFICATION_WINDOW_MS : null);
-  if (deadlineMs == null) return null;
+    storedDeadlineMs != null && startedMs != null
+      ? Math.max(storedDeadlineMs, startedMs + VERIFICATION_WINDOW_MS)
+      : storedDeadlineMs ?? (startedMs != null ? startedMs + VERIFICATION_WINDOW_MS : null);
+
+  // The buyer has not clicked "Show Password" yet: the clock has not started.
+  if (startedMs == null || deadlineMs == null) {
+    return (
+      <div className="rounded-xl p-4 border border-[#FFF100]/40 bg-[#FFF100]/5 w-full">
+        <div className="flex items-start gap-2">
+          <Clock size={16} className="shrink-0 mt-0.5 text-[#8A7D00]" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-konami-text">
+              Your 30-minute verification window starts when you reveal the password
+            </p>
+            <p className="text-xs text-konami-text-muted mt-1">
+              Reveal the account password to start the timer. Payment stays in escrow until then.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const remainingMs = Math.max(0, deadlineMs - nowMs);
   const expired = remainingMs === 0;
@@ -139,40 +162,36 @@ function VerificationCountdown({ order, paused = false }) {
     order?.status === 'completed' ||
     String(order?.escrowStatus || '').toLowerCase() === 'released';
 
+  const urgentStyles = expired || urgent;
+
   return (
     <div
-      className={`rounded-xl p-4 border ${
-        expired ? 'border-[#C8102E]/40 bg-[#C8102E]/5' : 'border-[#FFF100]/40 bg-[#FFF100]/5'
+      className={`rounded-xl p-4 border w-full ${
+        urgentStyles ? 'border-konami-red bg-konami-red/5' : 'border-[#FFF100]/40 bg-[#FFF100]/5'
       }`}
     >
       <div className="flex items-start gap-2">
-        <AlertTriangle
+        <Clock
           size={16}
-          className={`shrink-0 mt-0.5 ${expired ? 'text-konami-red' : 'text-[#8A7D00]'}`}
+          className={`shrink-0 mt-0.5 ${urgentStyles ? 'text-konami-red' : 'text-[#8A7D00]'}`}
         />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-konami-text">
-            You have 30 minutes to verify this account. If you do not confirm or raise a dispute,
-            payment will be automatically released to the seller.
-          </p>
           {expired ? (
-            <p className="mt-2 font-heading text-lg font-extrabold uppercase tracking-wide text-konami-red">
+            <p className="font-heading text-lg font-extrabold uppercase tracking-wide text-konami-red">
               Time expired — {released ? 'payment released' : 'payment will be released to the seller'}
             </p>
           ) : (
-            <p className="mt-2 flex items-baseline gap-2">
-              <span
-                className={`font-heading text-2xl font-extrabold tabular-nums tracking-wide ${
-                  urgent ? 'text-konami-red' : 'text-konami-text'
-                }`}
-              >
-                {countdown}
-              </span>
-              <span className="text-[11px] font-bold uppercase tracking-wide text-konami-text-muted">
-                remaining to confirm
-              </span>
+            <p
+              className={`font-heading text-2xl font-extrabold tabular-nums tracking-wide ${
+                urgent ? 'text-konami-red' : 'text-konami-text'
+              }`}
+            >
+              {countdown}
             </p>
           )}
+          <p className={`text-xs mt-1 ${urgentStyles ? 'text-konami-red' : 'text-konami-text-dim'}`}>
+            Payment releases automatically when this timer ends unless you raise a dispute.
+          </p>
         </div>
       </div>
     </div>
@@ -471,7 +490,21 @@ export default function OrderDetailPage() {
     };
   }, [paymentSuccess, order, id]);
 
-  if (loading) return <div className="pt-16"><LoadingSpinner fullScreen /></div>;
+  if (loading) {
+    return (
+      <div className="w-full max-w-screen overflow-x-hidden pt-16 pb-20 md:pb-0 min-h-screen bg-konami-light-gray">
+        <div className="max-w-6xl mx-auto px-4 py-8 animate-pulse">
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="lg:w-[400px] space-y-4">
+              <div className="h-56 bg-white/10 rounded-2xl border border-konami-mid-gray" />
+              <div className="h-40 bg-white/10 rounded-2xl border border-konami-mid-gray" />
+            </div>
+            <div className="flex-1 h-80 bg-white/10 rounded-2xl border border-konami-mid-gray" />
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (error) return <DeniedScreen />;
   if (!order) return <NotFoundScreen />;
   if (!canViewOrder(order, currentUser)) return <DeniedScreen />;
@@ -584,8 +617,8 @@ export default function OrderDetailPage() {
   };
 
   return (
-    <div className="pt-16 min-h-screen bg-konami-light-gray">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="w-full max-w-screen overflow-x-hidden pt-16 pb-20 md:pb-0 min-h-screen bg-konami-light-gray animate-fade-in">
+      <div className="max-w-6xl mx-auto px-4 py-6 md:py-8">
         {isConfirming && (
           <div className="bg-blue-600 text-white rounded-xl p-4 mb-6 flex items-center gap-3">
             <Loader size={20} className="shrink-0 animate-spin" />
@@ -759,11 +792,14 @@ export default function OrderDetailPage() {
                           Are you sure? This releases the payment to the seller and cannot be undone. Make sure you can log in to the account before confirming.
                         </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-3">
                         <button onClick={handleConfirmReceipt} disabled={actionLoading} className="btn-primary flex-1 text-sm py-2.5">
                           {actionLoading ? 'Processing...' : 'Yes, Confirm Delivery'}
                         </button>
-                        <button onClick={() => setShowConfirm(false)} className="btn-secondary text-sm py-2.5">
+                        <button
+                          onClick={() => setShowConfirm(false)}
+                          className="flex-1 text-sm py-2.5 rounded-xl font-heading font-bold uppercase tracking-wide border border-konami-mid-gray text-konami-text hover:bg-konami-light-gray transition-all duration-200 active:scale-[0.97]"
+                        >
                           Cancel
                         </button>
                       </div>
@@ -771,12 +807,12 @@ export default function OrderDetailPage() {
                   ) : (
                     <>
                       {isBuyer && canConfirmReceipt && (
-                        <VerificationCountdown order={order} paused={showDisputeForm} />
+                        <VerificationCountdown order={order} paused={showConfirm || showDisputeForm} />
                       )}
 
                       {(canConfirmReceipt || canDispute) && (
-                        <div className="flex flex-col gap-2">
-                          <div className={canConfirmReceipt && canDispute ? 'grid grid-cols-1 sm:grid-cols-2 gap-2' : ''}>
+                        <div className="flex flex-col gap-3">
+                          <div className={canConfirmReceipt && canDispute ? 'grid grid-cols-1 md:grid-cols-2 gap-3' : ''}>
                             {canConfirmReceipt && (
                               <button onClick={() => setShowConfirm(true)} className="btn-primary w-full text-sm py-3 flex items-center justify-center gap-2">
                                 <Shield size={16} />

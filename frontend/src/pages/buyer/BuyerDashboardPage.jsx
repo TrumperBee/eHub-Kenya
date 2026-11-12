@@ -36,7 +36,7 @@ export default function BuyerDashboardPage() {
   const completedCount = orders.filter((o) => o.status === 'completed').length;
 
   return (
-    <div className="pt-16 min-h-screen bg-konami-light-gray">
+    <div className="w-full max-w-screen overflow-x-hidden pt-16 pb-20 md:pb-0 min-h-screen bg-konami-light-gray animate-fade-in">
       <div className="max-w-5xl mx-auto px-4 py-8">
         <h1 className="font-heading text-3xl font-extrabold text-konami-text mb-2">
           Welcome back, {userProfile?.displayName || 'Buyer'}

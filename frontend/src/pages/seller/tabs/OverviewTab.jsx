@@ -25,7 +25,7 @@ function OverviewSkeleton() {
         <div className="h-6 bg-gray-300 rounded w-3/4 mb-2" />
         <div className="h-4 bg-gray-300 rounded w-1/2" />
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="bg-white rounded-2xl p-4 shadow-sm">
             <div className="h-8 bg-gray-200 rounded w-16 mb-2" />
@@ -126,7 +126,7 @@ export default function OverviewTab({ profile, onTabChange }) {
         </div>
       </button>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl shadow-card p-4 relative overflow-hidden">
           <div style={{ height: 4, background: '#003BFF', position: 'absolute', top: 0, left: 0, right: 0 }} />
           <p className="font-heading text-4xl font-extrabold mb-1" style={{ color: '#003BFF' }}>{activeCount}</p>
@@ -200,7 +200,7 @@ export default function OverviewTab({ profile, onTabChange }) {
             <h3 className="font-heading text-base font-bold" style={{ color: '#003BFF' }}>RECENT ORDERS</h3>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 text-left">
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#6B7280' }}>Listing</th>

@@ -17,8 +17,8 @@ const faqs = [
 
 export default function HowItWorksPage() {
   return (
-    <div className="pt-16 min-h-screen bg-konami-light-gray">
-      <section className="py-16">
+    <div className="w-full max-w-screen overflow-x-hidden pt-16 pb-20 md:pb-0 min-h-screen bg-konami-light-gray animate-fade-in">
+      <section className="py-10 md:py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h1 className="font-heading text-4xl font-extrabold text-konami-text mb-4">How It Works</h1>
           <p className="text-konami-text-muted max-w-2xl mx-auto">

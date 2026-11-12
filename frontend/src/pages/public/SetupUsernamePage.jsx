@@ -85,7 +85,7 @@ export default function SetupUsernamePage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6"
+    <div className="w-full max-w-screen overflow-x-hidden min-h-screen flex items-center justify-center p-6 animate-fade-in"
       style={{ background: 'linear-gradient(135deg, #003BFF, #001E7A)' }}>
       <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl">
         <div className="text-center mb-6">

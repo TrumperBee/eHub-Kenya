@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 import { getSavedListings } from '../../services/savedListingsService';
 import { getListingById } from '../../services/listingsService';
 import ListingCard from '../../components/listings/ListingCard';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { Bookmark, Package } from 'lucide-react';
 
 const AVAILABLE_STATUSES = ['active'];
@@ -47,11 +46,31 @@ export default function SavedListingsPage() {
     return unsubscribe;
   }, [currentUser]);
 
-  if (loading) return <div className="pt-[68px]"><LoadingSpinner fullScreen /></div>;
+  if (loading) {
+    return (
+      <div className="w-full max-w-screen overflow-x-hidden pt-[68px] pb-20 md:pb-0 min-h-screen bg-[#F5F5F5] animate-fade-in">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="h-7 w-40 bg-konami-mid-gray rounded mb-6 animate-pulse" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-2xl overflow-hidden animate-pulse bg-white/10 border border-konami-mid-gray">
+                <div className="aspect-[16/9] bg-konami-mid-gray/70" />
+                <div className="p-4 space-y-3">
+                  <div className="h-4 w-2/3 bg-konami-mid-gray/70 rounded" />
+                  <div className="h-4 w-1/2 bg-konami-mid-gray/70 rounded" />
+                  <div className="h-9 w-full bg-konami-mid-gray/70 rounded-xl" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="pt-[68px] min-h-screen bg-[#F5F5F5]">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="w-full max-w-screen overflow-x-hidden pt-[68px] pb-20 md:pb-0 min-h-screen bg-[#F5F5F5] animate-fade-in">
+      <div className="max-w-7xl mx-auto px-4 py-6 md:py-10">
         <div className="text-sm mb-4" style={{ color: '#6B7280' }}>
           <Link to="/" className="hover:underline" style={{ color: '#003BFF' }}>Home</Link>
           <span className="mx-2">{' > '}</span>
@@ -72,9 +91,9 @@ export default function SavedListingsPage() {
             <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-4">
               <Bookmark size={32} style={{ color: '#003BFF' }} />
             </div>
-            <p className="font-heading text-lg font-bold mb-2" style={{ color: '#111111' }}>No favourites yet</p>
+            <p className="font-heading text-lg font-bold mb-2" style={{ color: '#111111' }}>Nothing saved yet</p>
             <p className="text-sm mb-6" style={{ color: '#6B7280' }}>
-              Browse and tap the bookmark icon to save accounts for later
+              Tap the bookmark icon on any listing to save it for later
             </p>
             <Link to="/browse" className="btn-primary inline-flex items-center gap-2">
               <Package size={16} /> Browse Accounts

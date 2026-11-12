@@ -60,7 +60,7 @@
            px-8 py-4 rounded-xl uppercase tracking-wide
            transition-all duration-200 cursor-pointer
            shadow-yellow-glow hover:shadow-lg
-           active:scale-95
+           active:scale-[0.97]
            disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none;
     font-size: 14px;
     letter-spacing: 0.05em;
@@ -70,18 +70,31 @@
     @apply bg-transparent hover:bg-white/10
            text-white font-heading font-bold
            px-8 py-4 rounded-xl uppercase tracking-wide
-           border-2 border-white hover:border-konami-yellow hover:text-konami-yellow
-           transition-all duration-200 cursor-pointer;
+           border-2 border-white/30 hover:border-konami-yellow hover:text-konami-yellow
+           transition-all duration-200 cursor-pointer
+           active:scale-[0.97];
+    font-size: 14px;
+    letter-spacing: 0.05em;
+  }
+
+  .btn-outline {
+    @apply bg-transparent hover:bg-konami-light-gray
+           text-konami-text font-heading font-bold
+           px-6 py-3 rounded-xl uppercase tracking-wide
+           border border-konami-mid-gray
+           transition-all duration-200 cursor-pointer
+           active:scale-[0.97]
+           disabled:opacity-50 disabled:cursor-not-allowed;
     font-size: 14px;
     letter-spacing: 0.05em;
   }
 
   .btn-blue {
-    @apply bg-konami-blue hover:bg-konami-blue-hover
-           text-white font-heading font-bold
+    @apply bg-konami-yellow hover:bg-konami-yellow-hover
+           text-konami-text font-heading font-bold
            px-8 py-4 rounded-xl uppercase tracking-wide
            transition-all duration-200 cursor-pointer
-           active:scale-95
+           active:scale-[0.97]
            disabled:opacity-50 disabled:cursor-not-allowed;
     font-size: 14px;
     letter-spacing: 0.05em;
@@ -91,17 +104,18 @@
     @apply bg-transparent hover:bg-white/10
            text-white/80 hover:text-white
            px-4 py-2 rounded-lg font-medium
-           transition-all duration-200 cursor-pointer;
+           transition-all duration-200 cursor-pointer
+           active:scale-[0.97];
   }
 
   .card {
     @apply bg-white rounded-2xl shadow-card
            border border-konami-mid-gray
-           transition-all duration-300;
+           transition-all duration-200;
   }
 
   .card:hover {
-    @apply shadow-card-hover -translate-y-1;
+    @apply shadow-xl -translate-y-1;
   }
 
   .card-blue {
@@ -159,7 +173,7 @@
   .section-heading {
     font-family: 'Montserrat', sans-serif;
     font-weight: 800;
-    font-size: 48px;
+    font-size: clamp(1.75rem, 5vw, 3rem);
     text-transform: uppercase;
     letter-spacing: 0.02em;
     line-height: 1.1;

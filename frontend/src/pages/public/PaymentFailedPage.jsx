@@ -5,7 +5,7 @@ export default function PaymentFailedPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="pt-[68px] min-h-screen flex items-center justify-center" style={{ background: '#F5F5F5' }}>
+    <div className="w-full max-w-screen overflow-x-hidden pt-[68px] min-h-screen flex items-center justify-center animate-fade-in" style={{ background: '#F5F5F5' }}>
       <div className="max-w-md mx-auto px-4 text-center">
         <div className="card p-8">
           <XCircle size={64} className="mx-auto mb-6" style={{ color: '#C8102E' }} />

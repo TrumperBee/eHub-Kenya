@@ -149,7 +149,7 @@ export default function EditListingPage() {
       await updateListing(id, { status: 'removed' });
       toast.success('Listing removed');
       navigate('/transfer-room');
-    } catch (err) {
+    } catch {
       toast.error('Failed to remove listing');
     }
   };
@@ -161,7 +161,7 @@ export default function EditListingPage() {
   }
 
   return (
-    <div className="pt-16 min-h-screen bg-konami-light-gray">
+    <div className="w-full max-w-screen overflow-x-hidden pt-16 pb-20 md:pb-0 min-h-screen bg-konami-light-gray animate-fade-in">
       <div className="max-w-3xl mx-auto px-4 py-8">
         <h1 className="font-heading text-3xl font-extrabold text-konami-text mb-8">Edit Listing</h1>
 
@@ -228,7 +228,7 @@ export default function EditListingPage() {
 
           <div className="card p-6">
             <h2 className="font-heading text-lg font-bold text-konami-text mb-4">Account Stats</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
                 { label: 'Gold Coins', key: 'goldCoins' },
                 { label: 'GP / Game Points', key: 'gp' },
@@ -318,7 +318,7 @@ Guarantee: This account's email has never been changed before. I guarantee deliv
             <button type="submit" disabled={submitting} className="btn-primary flex-1 flex items-center justify-center gap-2">
               {submitting ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</> : 'Save Changes'}
             </button>
-            <button type="button" onClick={() => setShowDeleteConfirm(true)} className="btn-secondary flex items-center gap-2 text-konami-red border-konami-red/30 hover:bg-konami-red/10">
+            <button type="button" onClick={() => setShowDeleteConfirm(true)} className="btn-outline flex items-center gap-2 !text-konami-red !border-konami-red/30 hover:!bg-konami-red/10">
               <Trash2 size={16} /> Delete
             </button>
           </div>
@@ -333,7 +333,7 @@ Guarantee: This account's email has never been changed before. I guarantee deliv
               </div>
               <p className="text-sm text-konami-text-dim mb-6">This will remove the listing from the marketplace. This action cannot be undone.</p>
               <div className="flex gap-3">
-                <button onClick={() => setShowDeleteConfirm(false)} className="btn-secondary flex-1">Cancel</button>
+                <button onClick={() => setShowDeleteConfirm(false)} className="btn-outline flex-1">Cancel</button>
                 <button onClick={handleDelete} className="btn-primary flex-1 bg-konami-red hover:bg-konami-red-hover">Delete</button>
               </div>
             </div>

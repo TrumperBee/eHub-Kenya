@@ -1,5 +1,7 @@
-export const formatKES = (amount) =>
-  new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', minimumFractionDigits: 0 }).format(amount);
+export const formatKES = (amount) => {
+  const value = Number(amount);
+  return `KES ${(Number.isFinite(value) ? value : 0).toLocaleString('en-KE')}`;
+};
 
 export const formatDate = (timestamp) => {
   if (!timestamp) return '';

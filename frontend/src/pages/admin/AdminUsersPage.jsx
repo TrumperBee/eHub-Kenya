@@ -1,3 +1,4 @@
+import TableSkeleton from '../../components/admin/TableSkeleton';
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { getAllUsers } from '../../services/usersService';
@@ -16,12 +17,10 @@ export default function AdminUsersPage() {
       <h2 className="font-heading text-xl font-bold text-konami-text mb-6">All Users</h2>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-2 border-transparent border-t-konami-blue rounded-full animate-spin" style={{ borderRightColor: '#003BFF' }} />
-        </div>
+        <TableSkeleton />
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-full">
             <thead>
               <tr className="border-b border-konami-mid-gray text-left">
                 <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Name</th>

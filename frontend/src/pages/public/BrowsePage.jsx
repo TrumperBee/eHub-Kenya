@@ -48,11 +48,11 @@ export default function BrowsePage() {
   };
 
   return (
-    <div className="pt-[68px] min-h-screen" style={{ background: '#F5F5F5' }}>
-      <div className="section-blue px-4 pt-[60px] pb-10">
+    <div className="w-full max-w-screen overflow-x-hidden pt-[68px] pb-20 md:pb-0 min-h-screen" style={{ background: '#F5F5F5' }}>
+      <div className="section-blue px-4 pt-10 md:pt-[60px] pb-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h1 className="text-[40px] md:text-[48px] font-heading font-extrabold text-white uppercase">BROWSE ACCOUNTS</h1>
-          <div className="inline-flex items-center px-4 py-2 rounded-full text-sm font-heading font-bold" style={{ background: '#FFFFFF', color: '#003BFF' }}>
+          <h1 className="text-3xl sm:text-4xl md:text-[48px] font-heading font-extrabold text-white uppercase tracking-wide break-words">BROWSE ACCOUNTS</h1>
+          <div className="inline-flex items-center self-start px-4 py-2 rounded-full text-sm font-heading font-bold whitespace-nowrap" style={{ background: '#FFFFFF', color: '#003BFF' }}>
             Showing {listings.length} accounts
           </div>
         </div>
@@ -97,7 +97,7 @@ export default function BrowsePage() {
             <ListingGrid
               listings={listings}
               loading={loading}
-              emptyMessage="No accounts match your filters"
+              emptyMessage="No accounts found"
               onClearFilters={clearFilters}
             />
 

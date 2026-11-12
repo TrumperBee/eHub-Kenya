@@ -1,3 +1,4 @@
+import TableSkeleton from '../../../components/admin/TableSkeleton';
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { getAllUsers } from '../../../services/usersService';
@@ -186,12 +187,7 @@ export default function UsersTab() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div
-            className="w-8 h-8 border-2 border-transparent border-t-konami-blue rounded-full animate-spin"
-            style={{ borderRightColor: '#003BFF' }}
-          />
-        </div>
+        <TableSkeleton />
       ) : filtered.length === 0 ? (
         <div className="bg-white border border-konami-mid-gray rounded-xl text-center py-12">
           <Users size={36} className="mx-auto mb-3 text-konami-text-muted" />

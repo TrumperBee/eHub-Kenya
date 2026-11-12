@@ -60,7 +60,7 @@ function PageLayout({ children }) {
   return (
     <>
       <Navbar />
-      <main className={`min-h-screen animate-page-in ${currentUser ? 'pb-16 md:pb-0' : ''}`}>{children}</main>
+      <main className={`w-full max-w-screen overflow-x-hidden min-h-screen animate-fade-in ${currentUser ? 'pb-20 md:pb-0' : ''}`}>{children}</main>
       <Footer />
       {currentUser && <BottomNav />}
     </>
@@ -68,7 +68,7 @@ function PageLayout({ children }) {
 }
 
 function AppContent() {
-  const { currentUser, userProfile, loading } = useAuth();
+  const { currentUser, userProfile } = useAuth();
 
   useEffect(() => {
     if (!currentUser) return;

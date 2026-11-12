@@ -1,3 +1,4 @@
+import TableSkeleton from '../../components/admin/TableSkeleton';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
@@ -125,14 +126,12 @@ export default function AdminFridayDropsPage({ embedded = false }) {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-2 border-transparent border-t-konami-blue rounded-full animate-spin" style={{ borderRightColor: '#003BFF' }} />
-        </div>
+        <TableSkeleton />
       ) : filtered.length === 0 ? (
         <p className="text-konami-text-muted text-sm">No drops in this view.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-full">
             <thead>
               <tr className="border-b border-konami-mid-gray text-left">
                 <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Account</th>

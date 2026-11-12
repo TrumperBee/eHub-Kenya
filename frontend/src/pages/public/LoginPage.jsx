@@ -55,7 +55,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
+    <div className="w-full max-w-screen overflow-x-hidden min-h-screen flex flex-col md:flex-row animate-fade-in">
       <div className="relative md:w-1/2 min-h-[40vh] md:min-h-screen flex items-center justify-center p-8 md:p-12 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"

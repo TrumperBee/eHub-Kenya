@@ -11,8 +11,8 @@ const {
 } = require('../services/emailService');
 
 const {
-  VERIFICATION_WINDOW_MS,
   verificationDeadlineAfter,
+  verificationStartMs,
   verificationStatusAt,
 } = require('../services/verificationWindow');
 
@@ -270,20 +270,21 @@ async function dispute(req, res) {
 
 /**
  * POST /api/escrow/credentials/reveal — BUYER starts the 30-minute verification
- * window. SERVER-AUTHORITATIVE and IDEMPOTENT:
+ * window on the FIRST "Show Password" click. SERVER-AUTHORITATIVE and
+ * IDEMPOTENT:
  *
  *  • Only the assigned buyer may reveal (403 otherwise).
  *  • The window only begins from `credentials_submitted` (credentials exist).
- *  • First reveal WINS: if the order already has a verificationDeadline, the
- *    EXISTING boundaries are returned verbatim — never restarted, never
+ *  • First reveal WINS: `verificationStartedAt` is written once and the EXISTING
+ *    boundaries are returned verbatim afterwards — never restarted, never
  *    extended, never re-derived from a client/provided clock.
- *  • The reveal instant + deadline are computed from the SERVER clock only and
- *    written atomically in ONE transaction.
+ *  • `verificationStartedAt` + `verificationDeadline` are computed from the
+ *    SERVER clock only and written atomically in ONE transaction. A legacy
+ *    order that only has `credentialsRevealedAt`/`verificationDeadline` is
+ *    honoured as-is; its window is never restarted.
  *
- * SCOPE GUARD (Phase-4 contract): this handler ONLY records the window. It does
- * NOT and MUST NOT alter order.status, escrowStatus, verificationStatus write
- * for auto-release, or trigger escrow release / payout / completion — that is
- * Phase 5 and is out of scope here (stay on the roadmap).
+ * SCOPE GUARD: this handler ONLY records the window. It does NOT alter
+ * order.status, escrowStatus, or trigger escrow release / payout / completion.
  */
 async function revealCredentials(req, res) {
   try {
@@ -318,33 +319,43 @@ async function revealCredentials(req, res) {
 
     await adminDb.runTransaction(async (tx) => {
       const snap = await tx.get(orderRef);
-      const latest = snap.data();
-      if (latest && latest.verificationDeadline) {
-        const deadlineMs = latest.verificationDeadline.toMillis
-          ? latest.verificationDeadline.toMillis()
-          : latest.verificationDeadline;
-        const revealedMs = latest.credentialsRevealedAt
-          ? (latest.credentialsRevealedAt.toMillis
-              ? latest.credentialsRevealedAt.toMillis()
-              : latest.credentialsRevealedAt)
-          : deadlineMs - VERIFICATION_WINDOW_MS;
+      const latest = snap.exists ? snap.data() : null;
+
+      // Already started (current or legacy order): return the stored window.
+      const existingStart = verificationStartMs(latest);
+      if (existingStart != null) {
         reveal = {
-          credentialsRevealedAt: revealedMs,
-          verificationDeadline: deadlineMs,
+          verificationStartedAt: existingStart,
+          credentialsRevealedAt: existingStart,
+          verificationDeadline:
+            (latest.verificationDeadline && latest.verificationDeadline.toMillis
+              ? latest.verificationDeadline.toMillis()
+              : latest.verificationDeadline) ?? verificationDeadlineAfter(existingStart),
         };
         return;
       }
-      reveal = verificationDeadlineAfter(nowMs);
+
+      // First-ever reveal: start the clock now. The conditional guard on the
+      // transaction read means a concurrent first click cannot restart it.
+      const startedAt = nowMs;
+      const deadline = verificationDeadlineAfter(startedAt);
+      reveal = {
+        verificationStartedAt: startedAt,
+        credentialsRevealedAt: startedAt,
+        verificationDeadline: deadline,
+      };
+
       await tx.update(orderRef, {
-        credentialsRevealedAt: admin.firestore.Timestamp.fromMillis(reveal.credentialsRevealedAt),
-        verificationDeadline: admin.firestore.Timestamp.fromMillis(reveal.verificationDeadline),
+        verificationStartedAt: admin.firestore.Timestamp.fromMillis(startedAt),
+        credentialsRevealedAt: admin.firestore.Timestamp.fromMillis(startedAt),
+        verificationDeadline: admin.firestore.Timestamp.fromMillis(deadline),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
     });
 
     const status = verificationStatusAt(
       {
-        credentialsRevealedAt: reveal.credentialsRevealedAt,
+        verificationStartedAt: reveal.verificationStartedAt,
         verificationDeadline: reveal.verificationDeadline,
       },
       Date.now()
@@ -352,6 +363,7 @@ async function revealCredentials(req, res) {
 
     return res.json({
       success: true,
+      verificationStartedAt: reveal.verificationStartedAt,
       credentialsRevealedAt: reveal.credentialsRevealedAt,
       verificationDeadline: reveal.verificationDeadline,
       verificationStatus: status,

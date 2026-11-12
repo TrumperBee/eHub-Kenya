@@ -124,7 +124,7 @@ export default function SellerApplicationPage() {
   };
 
   return (
-    <div className="pt-16 min-h-screen bg-konami-light-gray">
+    <div className="w-full max-w-screen overflow-x-hidden pt-16 pb-20 md:pb-0 min-h-screen bg-konami-light-gray animate-fade-in">
       <div className="max-w-lg mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-6">
           <Shield size={24} className="text-konami-blue" />

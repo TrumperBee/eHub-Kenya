@@ -34,7 +34,15 @@ export default function FridayDropsPage() {
             return { ...drop, __listed: listed };
           })
         ).then((enriched) => {
-          setDrops(enriched.filter((d) => d.__listed).map(({ __listed, ...d }) => d));
+          setDrops(
+            enriched
+              .filter((d) => d.__listed)
+              .map((d) => {
+                const drop = { ...d };
+                delete drop.__listed;
+                return drop;
+              })
+          );
           setLoading(false);
         });
       },
@@ -49,7 +57,7 @@ export default function FridayDropsPage() {
     .sort((a, b) => (b.discountPercent || 0) - (a.discountPercent || 0));
 
   return (
-    <div className="animate-page-in">
+    <div className="w-full max-w-screen overflow-x-hidden pb-20 md:pb-0 animate-fade-in">
       <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #001E7A 0%, #003BFF 100%)' }}>
         <div className="max-w-7xl mx-auto px-4 py-14 md:py-20 text-center">
           <p className="inline-flex items-center gap-2 font-heading text-xs font-bold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full mb-4"

@@ -5,18 +5,17 @@ import { db } from '../../services/firebase';
 import { getListingById, incrementViewCount } from '../../services/listingsService';
 import { useAuth } from '../../context/AuthContext';
 import { useFridayDrop } from '../../context/FridayDropContext';
-import { TIERS, PLATFORMS } from '../../utils/constants';
+import { PLATFORMS } from '../../utils/constants';
 import { formatKES } from '../../utils/formatters';
 import { formatFridayLabel } from '../../utils/fridayUtils';
 import TierBadge from '../../components/listings/TierBadge';
 import PlayerBadge from '../../components/listings/PlayerBadge';
 import ReviewCard from '../../components/reviews/ReviewCard';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
 import BuyNowButton from '../../components/checkout/BuyNowButton';
 import SaveButton from '../../components/listings/SaveButton';
 import CommentSection from '../../components/comments/CommentSection';
 import { toggleSaveListing, subscribeSavedListingIds } from '../../services/savedListingsService';
-import { ChevronDown, ChevronUp, Shield, Star, Circle, ChevronRight, Bookmark, Flame, MessageCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Shield, Star, Circle, ChevronRight, Flame, MessageCircle, ShoppingBag } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const statRows = [
@@ -26,7 +25,8 @@ const statRows = [
 
 export default function ListingDetailPage() {
   const { id } = useParams();
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser } = useAuth();
+  const { getDropForListing } = useFridayDrop();
   const [listing, setListing] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -69,16 +69,34 @@ export default function ListingDetailPage() {
     return () => { document.title = 'eFootball Hub Kenya - Buy & Sell eFootball Accounts Safely'; };
   }, [id]);
 
-  if (loading) return <div className="pt-[68px]"><LoadingSpinner fullScreen /></div>;
-  if (!listing) {
+  if (loading) {
     return (
-      <div className="pt-[68px] min-h-screen bg-konami-light-gray flex items-center justify-center">
-        <p className="text-konami-text-muted">Listing not found.</p>
+      <div className="w-full max-w-screen overflow-x-hidden pt-[68px] pb-20 md:pb-0 min-h-screen bg-konami-light-gray animate-fade-in">
+        <div className="max-w-7xl mx-auto px-4 py-6 animate-pulse">
+          <div className="h-4 w-52 bg-konami-mid-gray rounded mb-6" />
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className="flex-1 space-y-6">
+              <div className="aspect-video bg-white/10 rounded-2xl border border-konami-mid-gray" />
+              <div className="h-40 bg-white/10 rounded-2xl border border-konami-mid-gray" />
+            </div>
+            <div className="lg:w-[380px] h-80 bg-white/10 rounded-2xl border border-konami-mid-gray" />
+          </div>
+        </div>
       </div>
     );
   }
-
-  const tierConfig = TIERS[listing.tier] || TIERS.bronze;
+  if (!listing) {
+    return (
+      <div className="pt-[68px] min-h-screen bg-konami-light-gray flex items-center justify-center px-4">
+        <div className="card p-8 max-w-md w-full text-center">
+          <ShoppingBag size={36} className="mx-auto mb-3 text-konami-text-muted" />
+          <p className="font-heading font-bold uppercase text-konami-text mb-2">Listing not found</p>
+          <p className="text-sm text-konami-text-muted mb-5">This account may have been sold or removed.</p>
+          <Link to="/browse" className="btn-primary inline-flex text-sm">Browse Accounts</Link>
+        </div>
+      </div>
+    );
+  }
 
   const handleToggleSave = async () => {
     if (!currentUser) {
@@ -89,7 +107,7 @@ export default function ListingDetailPage() {
       const nowSaved = await toggleSaveListing(currentUser.uid, listing);
       setIsSaved(nowSaved);
       toast.success(nowSaved ? 'Saved to your list' : 'Removed from saved');
-    } catch (err) {
+    } catch {
       toast.error('Failed to save listing');
     }
   };
@@ -100,7 +118,6 @@ export default function ListingDetailPage() {
   const isReserved = listing.status === 'reserved';
   const isUnavailable = isSold || isReserved;
 
-  const { getDropForListing } = useFridayDrop();
   const fridayDrop = getDropForListing(listing.id) || null;
   const dropLive = fridayDrop?.state === 'live';
   const dropUpcoming = fridayDrop?.state === 'scheduled';
@@ -116,7 +133,7 @@ export default function ListingDetailPage() {
   ];
 
   return (
-    <div className="pt-[68px] min-h-screen" style={{ background: '#F5F5F5' }}>
+    <div className="w-full max-w-screen overflow-x-hidden pt-[68px] pb-20 md:pb-0 min-h-screen animate-fade-in" style={{ background: '#F5F5F5' }}>
       {isUnavailable && (
         <div className="py-3" style={{ background: '#C8102E' }}>
           <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
@@ -147,7 +164,7 @@ export default function ListingDetailPage() {
                   <img
                     src={photos[selectedPhoto]}
                     alt={listing.title}
-                    className="w-full aspect-video object-cover"
+                    className="w-full max-w-full h-auto aspect-video object-cover"
                   />
                 ) : (
                   <div className="w-full aspect-video flex items-center justify-center">
@@ -412,9 +429,9 @@ export default function ListingDetailPage() {
                 )}
 
                 <div className="rounded-xl p-3 flex items-start gap-2 mb-4" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                  <Shield size={16} className="text-white/70 mt-0.5 shrink-0" />
-                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                    Payment held in escrow until you confirm delivery
+                  <Shield size={16} className="text-[#FFF100] mt-0.5 shrink-0" />
+                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                    Escrow protected — payment held until you confirm
                   </p>
                 </div>
 

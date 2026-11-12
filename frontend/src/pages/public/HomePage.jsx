@@ -8,10 +8,10 @@ import TrustBadges from '../../components/home/TrustBadges';
 
 export default function HomePage() {
   return (
-    <div className="animate-page-in">
+    <div className="w-full max-w-screen overflow-x-hidden animate-fade-in">
       <div className="w-full bg-[#FFF100] py-2 px-4 text-center">
-        <p className="font-heading font-bold text-[#111111] text-xs uppercase tracking-widest">
-          Kenya's First Dedicated eFootball Account Marketplace - Buy & Sell Safely with Escrow
+        <p className="font-heading font-bold text-[#111111] text-[11px] sm:text-xs uppercase tracking-wide sm:tracking-widest">
+          Kenya's First Dedicated eFootball Account Marketplace - Buy and Sell Safely with Escrow
         </p>
       </div>
       <HeroSection />
@@ -39,7 +39,7 @@ export default function HomePage() {
       <HowItWorksSection />
       <TrustBadges />
 
-      <section className="py-16" style={{ background: '#003BFF' }}>
+      <section className="py-10 md:py-16" style={{ background: '#003BFF' }}>
         <div className="max-w-3xl mx-auto px-4 text-center">
           <h2 className="font-heading text-3xl md:text-4xl font-extrabold text-white uppercase mb-4">
             READY TO FIND YOUR DREAM SQUAD?

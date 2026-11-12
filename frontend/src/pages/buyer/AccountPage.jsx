@@ -1,20 +1,19 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateProfile } from 'firebase/auth';
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { doc, collection, query, where, orderBy, limit, getDocs, writeBatch, setDoc } from 'firebase/firestore';
-import { auth } from '../../services/firebase';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { updateUserDocument } from '../../services/authService';
 import PasswordInput from '../../components/common/PasswordInput';
-import { validateUsernameFormat, isUsernameTaken, generateSuggestions, checkUsername } from '../../utils/usernameUtils';
+import { validateUsernameFormat, generateSuggestions, checkUsername } from '../../utils/usernameUtils';
 import { formatDate, formatKES } from '../../utils/formatters';
 import { ORDER_STATUS } from '../../utils/constants';
 import toast from 'react-hot-toast';
 import {
   User, Lock, Bell, ShoppingBag, Settings, LogOut, Camera, CheckCircle,
-  Store, Calendar, Clock, AlertTriangle, X, Loader2, HelpCircle, MessageCircle,
-  ChevronRight, Shield, Check, UserCheck, Package, Star, Save,
+  Store, Calendar, Clock, X, Loader2,
+  ChevronRight, Shield, Check, Package, Save,
 } from 'lucide-react';
 
 const TABS = [
@@ -347,7 +346,7 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="pt-[68px] min-h-screen bg-[#F5F5F5]">
+    <div className="w-full max-w-screen overflow-x-hidden pt-[68px] pb-20 md:pb-0 min-h-screen bg-[#F5F5F5] animate-fade-in">
       <div className="max-w-7xl mx-auto px-4 py-4 md:py-6 flex gap-6">
         <div className="hidden md:flex flex-col w-60 shrink-0">
           <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 text-center">
@@ -533,7 +532,7 @@ export default function AccountPage() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
                   {
                     icon: userProfile?.role === 'seller' ? <Store size={18} /> : <User size={18} />,

@@ -1,3 +1,4 @@
+import TableSkeleton from '../../../components/admin/TableSkeleton';
 import { useEffect, useRef, useState } from 'react';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
@@ -142,12 +143,7 @@ export default function PayoutsTab({ orders = [], loading = false }) {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div
-            className="w-8 h-8 border-2 border-transparent border-t-konami-blue rounded-full animate-spin"
-            style={{ borderRightColor: '#003BFF' }}
-          />
-        </div>
+        <TableSkeleton />
       ) : pendingOrders.length === 0 ? (
         <div className="bg-white border border-konami-mid-gray rounded-xl text-center py-14">
           <CheckCircle2 size={38} className="mx-auto mb-3 text-green-600" />

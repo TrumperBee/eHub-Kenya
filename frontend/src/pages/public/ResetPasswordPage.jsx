@@ -56,7 +56,7 @@ export default function ResetPasswordPage() {
 
   if (!oobCode) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6"
+      <div className="w-full max-w-screen overflow-x-hidden min-h-screen flex items-center justify-center p-6 animate-fade-in"
         style={{ background: 'linear-gradient(135deg, #003BFF, #001E7A)' }}>
         <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl text-center">
           <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
@@ -89,7 +89,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
+    <div className="w-full max-w-screen overflow-x-hidden min-h-screen flex flex-col md:flex-row animate-fade-in">
       <div className="relative md:w-1/2 min-h-[40vh] md:min-h-screen flex items-center justify-center p-8 md:p-12 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"

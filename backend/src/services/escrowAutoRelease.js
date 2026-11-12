@@ -1,5 +1,5 @@
 const { canonicalStatus } = require('./orderStateMachine');
-const { verificationStatusAt } = require('./verificationWindow');
+const { verificationStartMs, verificationDeadlineMs } = require('./verificationWindow');
 
 /**
  * eHub Kenya — Phase 5: automatic escrow release decision (pure).
@@ -21,12 +21,15 @@ const { verificationStatusAt } = require('./verificationWindow');
  * ELIGIBILITY (ALL must hold):
  *   1. escrow currently HELD (money actually parked in escrow).
  *   2. canonical status == 'credentials_submitted'.
- *   3. a verification deadline exists.
- *   4. the deadline has PASSED (nowMs >= deadline) — the 30-minute buyer
- *      verification window (§Phase 4) is over.
+ *   3. the buyer has actually STARTED the window - `verificationStartedAt`
+ *      exists (legacy orders may instead carry `credentialsRevealedAt` or a
+ *      stored `verificationDeadline`; all resolve to the same start instant).
+ *   4. the window has PASSED: nowMs >= verificationStartedAt + 30 minutes.
+ *      The window NEVER starts at payment confirmation (`paidAt`), so an order
+ *      whose password was never revealed is never auto-released.
  *   5. NO open dispute: canonical status is not 'disputed' and disputeStatus is
  *      not an open/resolving value (an open/under_review dispute freezes
- *      escrow — automatic release is forbidden while a dispute is being
+ *      escrow - automatic release is forbidden while a dispute is being
  *      reviewed; only an admin resolve may release after that).
  *
  * IDEMPOTENCY: an order whose escrow is no longer HELD (already released,
@@ -34,17 +37,14 @@ const { verificationStatusAt } = require('./verificationWindow');
  * so a repeated worker pass or a concurrent admin route can never double-release.
  *
  * @returns {{ eligible: boolean, reason: string }}
- *   reason ∈ eligible | not_held | not_credentials_submitted | missing_deadline
- *            | not_expired | disputed | already_released
+ *   reason ? eligible | not_held | not_credentials_submitted | not_started
+ *            | missing_deadline | not_expired | disputed | already_released
  */
 function escrowAutoReleaseDecision(effectiveOrder, nowMs) {
   const status = canonicalStatus(effectiveOrder.status);
   const escrowStatus = (effectiveOrder.escrowStatus || '').toLowerCase();
-  const deadline = effectiveOrder.verificationDeadline
-    ? (effectiveOrder.verificationDeadline.toMillis
-        ? effectiveOrder.verificationDeadline.toMillis()
-        : effectiveOrder.verificationDeadline)
-    : null;
+  const startedMs = verificationStartMs(effectiveOrder);
+  const deadline = verificationDeadlineMs(effectiveOrder);
   const disputeStatus = (effectiveOrder.disputeStatus || '').toLowerCase();
 
   if (escrowStatus !== 'held') {
@@ -53,6 +53,11 @@ function escrowAutoReleaseDecision(effectiveOrder, nowMs) {
 
   if (status !== 'credentials_submitted') {
     return { eligible: false, reason: 'not_credentials_submitted' };
+  }
+
+  // No first "Show Password" click yet -> the 30-minute window has not started.
+  if (startedMs == null) {
+    return { eligible: false, reason: 'not_started' };
   }
 
   if (!deadline) {

@@ -1,3 +1,4 @@
+import TableSkeleton from '../../components/admin/TableSkeleton';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -390,9 +391,7 @@ export default function AdminDisputesPage({ embedded = false }) {
       )}
 
       {loading && !error ? (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-2 border-transparent border-t-konami-blue rounded-full animate-spin" style={{ borderRightColor: '#003BFF' }} />
-        </div>
+        <TableSkeleton />
       ) : rows.length === 0 ? (
         <div className="bg-white border border-konami-mid-gray rounded-xl text-center py-12">
           <Scale size={40} className="mx-auto mb-3 text-konami-text-muted" />
@@ -407,7 +406,7 @@ export default function AdminDisputesPage({ embedded = false }) {
       ) : (
         <div className="bg-white border border-konami-mid-gray rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-full text-sm">
               <thead>
                 <tr className="bg-konami-light-gray text-left">
                   <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-konami-text-muted">Order ID</th>
@@ -503,7 +502,7 @@ export default function AdminDisputesPage({ embedded = false }) {
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
                   <p className="text-xs text-konami-text-muted mb-0.5">Amount</p>
                   <p className="font-heading text-lg font-bold text-konami-text">{formatKES(selected.amount)}</p>

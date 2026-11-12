@@ -79,8 +79,8 @@ export default function FAQPage() {
   };
 
   return (
-    <div className="pt-16 min-h-screen bg-konami-light-gray">
-      <section className="py-16">
+    <div className="w-full max-w-screen overflow-x-hidden pt-16 pb-20 md:pb-0 min-h-screen bg-konami-light-gray animate-fade-in">
+      <section className="py-10 md:py-16">
         <div className="max-w-3xl mx-auto px-4">
           <div className="text-center mb-10">
             <h1 className="font-heading text-4xl font-extrabold text-konami-text mb-4">Frequently Asked Questions</h1>

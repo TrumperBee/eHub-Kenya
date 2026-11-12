@@ -170,7 +170,7 @@ export default function CreateListingPage() {
   const selectedTierColor = (t) => form.tier === t ? '#003BFF' : '#E0E0E0';
 
   return (
-    <div className="pt-[68px] min-h-screen" style={{ background: '#F5F5F5' }}>
+    <div className="w-full max-w-screen overflow-x-hidden pt-[68px] pb-20 md:pb-0 min-h-screen animate-fade-in" style={{ background: '#F5F5F5' }}>
       <div className="max-w-3xl mx-auto px-4 py-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="card overflow-hidden">
@@ -235,7 +235,7 @@ export default function CreateListingPage() {
 
           <div className="card p-6 space-y-6">
             <h2 className="font-heading text-base font-bold uppercase" style={{ color: '#003BFF' }}>Account Stats</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
                 { label: 'Gold Coins', key: 'goldCoins' },
                 { label: 'GP / Game Points', key: 'gp' },

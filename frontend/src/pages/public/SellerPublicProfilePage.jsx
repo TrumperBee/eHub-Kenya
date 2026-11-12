@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, orderBy, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
@@ -7,25 +7,20 @@ import { formatDate } from '../../utils/formatters';
 import ListingCard from '../../components/listings/ListingCard';
 import ReviewCard from '../../components/reviews/ReviewCard';
 import ReviewForm from '../../components/reviews/ReviewForm';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { Star, ShieldCheck, MessageCircle, X, Star as StarIcon } from 'lucide-react';
+import { Star, ShieldCheck, Star as StarIcon } from 'lucide-react';
 
 export default function SellerPublicProfilePage() {
   const { sellerId } = useParams();
-  const navigate = useNavigate();
   const { currentUser, userProfile } = useAuth();
   const [seller, setSeller] = useState(null);
   const [listings, setListings] = useState([]);
   const [reviews, setReviews] = useState([]);
-  const [hasCompletedOrder, setHasCompletedOrder] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [checkingOrder, setCheckingOrder] = useState(true);
 
   useEffect(() => {
     if (!sellerId) return;
     setLoading(true);
-    setCheckingOrder(true);
 
     const fetchSeller = getDoc(doc(db, 'users', sellerId));
     const fetchListings = getDocs(
@@ -49,26 +44,6 @@ export default function SellerPublicProfilePage() {
   }, [sellerId]);
 
   useEffect(() => {
-    if (!sellerId || !currentUser) {
-      setCheckingOrder(false);
-      return;
-    }
-
-    const q = query(
-      collection(db, 'orders'),
-      where('buyerId', '==', currentUser.uid),
-      where('sellerId', '==', sellerId),
-      where('status', '==', 'completed'),
-      orderBy('createdAt', 'desc'),
-    );
-
-    getDocs(q).then(snap => {
-      setHasCompletedOrder(snap.docs.length > 0);
-      setCheckingOrder(false);
-    });
-  }, [sellerId, currentUser]);
-
-  useEffect(() => {
     if (!sellerId) return;
     const reviewsRef = collection(db, 'users', sellerId, 'reviews');
     const q = query(reviewsRef, orderBy('createdAt', 'desc'));
@@ -81,10 +56,20 @@ export default function SellerPublicProfilePage() {
     return unsub;
   }, [sellerId]);
 
-  if (loading) return <div className="pt-[68px]"><LoadingSpinner fullScreen /></div>;
+  if (loading) {
+    return (
+      <div className="w-full max-w-screen overflow-x-hidden pt-[68px] pb-20 md:pb-0 min-h-screen bg-[#F5F5F5] animate-fade-in">
+        <div className="max-w-5xl mx-auto px-4 py-6 space-y-6 animate-pulse">
+          <div className="h-4 w-40 bg-konami-mid-gray rounded" />
+          <div className="h-36 bg-white/10 rounded-2xl border border-konami-mid-gray" />
+          <div className="h-28 bg-white/10 rounded-2xl border border-konami-mid-gray" />
+        </div>
+      </div>
+    );
+  }
   if (!seller) {
     return (
-      <div className="pt-[68px] min-h-screen bg-[#F5F5F5] flex items-center justify-center">
+      <div className="pt-[68px] min-h-screen bg-[#F5F5F5] flex items-center justify-center px-4">
         <p className="text-[#6B7280]">Seller not found.</p>
       </div>
     );
@@ -106,7 +91,7 @@ export default function SellerPublicProfilePage() {
   };
 
   return (
-    <div className="pt-[68px] min-h-screen bg-[#F5F5F5]">
+    <div className="w-full max-w-screen overflow-x-hidden pt-[68px] pb-20 md:pb-0 min-h-screen bg-[#F5F5F5] animate-fade-in">
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         <div className="text-sm mb-4" style={{ color: '#6B7280' }}>
           <Link to="/" className="hover:underline" style={{ color: '#003BFF' }}>Home</Link>
@@ -115,7 +100,7 @@ export default function SellerPublicProfilePage() {
         </div>
 
         <div className="rounded-2xl p-6 md:p-8" style={{ background: '#003BFF' }}>
-          <div className="flex items-center gap-5">
+          <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
             <div className="w-20 h-20 rounded-full flex items-center justify-center text-white font-heading font-extrabold text-2xl shrink-0"
               style={{ background: '#001E7A' }}>
               {seller.photoURL ? (

@@ -1,3 +1,4 @@
+import TableSkeleton from '../../components/admin/TableSkeleton';
 import React, { useState, useEffect } from 'react';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -120,16 +121,14 @@ export default function AdminOrdersPage({ embedded = false }) {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-2 border-transparent border-t-konami-blue rounded-full animate-spin" style={{ borderRightColor: '#003BFF' }} />
-        </div>
+        <TableSkeleton />
       ) : filtered.length === 0 ? (
         <p className="text-konami-text-muted text-sm">
           {orders.length === 0 ? 'No orders yet.' : 'No orders match this filter.'}
         </p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-full">
             <thead>
               <tr className="border-b border-konami-mid-gray text-left">
                 <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-konami-text-muted">Order ID</th>

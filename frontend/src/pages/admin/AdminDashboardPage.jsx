@@ -45,7 +45,6 @@ const CARD_STYLES = {
   blue: { background: '#EFF6FF', color: '#1D4ED8', bar: '#003BFF' },
   gold: { background: '#FFFBEB', color: '#B45309', bar: '#D4AF37' },
   green: { background: '#ECFDF5', color: '#047857', bar: '#16A34A' },
-  purple: { background: '#F5F3FF', color: '#6D28D9', bar: '#7C3AED' },
 };
 
 function StatCard({ label, value, sub, icon, tone = 'blue' }) {

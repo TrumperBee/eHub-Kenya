@@ -38,8 +38,8 @@ export default function TransferRoomPage() {
   const actionOrders = useSellerActionOrders(currentUser?.uid);
 
   return (
-    <div className="pt-[68px] min-h-screen" style={{ background: '#F5F5F5' }}>
-      <div className="flex">
+    <div className="w-full max-w-screen overflow-x-hidden pt-[68px] pb-20 md:pb-0 min-h-screen animate-fade-in" style={{ background: '#F5F5F5' }}>
+      <div className="flex w-full">
         <aside className="hidden md:block w-60 shrink-0 min-h-[calc(100vh-68px)] p-4 sticky top-[68px]" style={{ background: '#001E7A' }}>
           <div className="mb-6">
             <h2 className="font-heading text-sm font-bold uppercase tracking-wider" style={{ color: '#FFF100' }}>TRANSFER ROOM</h2>
@@ -76,7 +76,7 @@ export default function TransferRoomPage() {
           </Link>
         </aside>
 
-        <main className="flex-1 p-4 md:p-6 max-w-5xl">
+        <main className="flex-1 min-w-0 w-full p-4 md:p-6 max-w-5xl">
           <div className="md:hidden relative mb-4">
             <div className="flex gap-1 rounded-xl p-1 overflow-x-auto no-scrollbar relative" style={{ background: '#E0E0E0' }}>
               {MOBILE_NAV.map((tab) => {

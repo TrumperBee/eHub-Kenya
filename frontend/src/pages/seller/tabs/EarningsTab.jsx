@@ -13,7 +13,7 @@ function EarningsSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
       <div className="h-8 bg-gray-200 rounded w-40" />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="bg-white rounded-2xl p-4 shadow-sm">
             <div className="h-8 bg-gray-200 rounded w-24 mb-2" />
@@ -88,7 +88,7 @@ export default function EarningsTab({ profile }) {
     <div>
       <h1 className="font-heading text-2xl font-extrabold mb-6" style={{ color: '#111' }}>EARNINGS</h1>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-2xl shadow-sm p-4 relative overflow-hidden">
           <div style={{ height: 4, background: '#003BFF', position: 'absolute', top: 0, left: 0, right: 0 }} />
           <p className="font-heading text-3xl font-extrabold mb-1" style={{ color: '#003BFF' }}>{formatKES(totalEarned)}</p>
@@ -167,7 +167,7 @@ export default function EarningsTab({ profile }) {
             <h3 className="font-heading text-base font-bold" style={{ color: '#111' }}>Completed Sales</h3>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-full">
               <thead>
                 <tr className="border-b border-gray-200 text-left">
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#6B7280' }}>Date</th>

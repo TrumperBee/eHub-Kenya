@@ -21,6 +21,20 @@ const PAYMENT_STATUS = {
   abandoned: { label: 'Abandoned', bg: 'bg-gray-100',   text: 'text-gray-500' },
 };
 
+function OrderSkeleton() {
+  return (
+    <div className="card p-4 animate-pulse">
+      <div className="flex items-center gap-4">
+        <div className="flex-1 space-y-2">
+          <div className="h-4 w-2/3 bg-konami-mid-gray rounded" />
+          <div className="h-3 w-1/2 bg-konami-mid-gray rounded" />
+        </div>
+        <div className="h-6 w-20 bg-konami-mid-gray rounded" />
+      </div>
+    </div>
+  );
+}
+
 export default function MyOrdersPage() {
   const { userProfile } = useAuth();
   const [orders, setOrders] = useState([]);
@@ -28,9 +42,18 @@ export default function MyOrdersPage() {
   const [activeFilter, setActiveFilter] = useState('all');
 
   useEffect(() => {
-    if (!userProfile) return;
-    setLoading(true);
-    getBuyerOrders(userProfile.uid).then(setOrders).finally(() => setLoading(false));
+    if (!userProfile) return undefined;
+    let active = true;
+    getBuyerOrders(userProfile.uid)
+      .then((rows) => {
+        if (active) setOrders(rows);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [userProfile]);
 
   const filtered = activeFilter === 'all' ? orders
@@ -38,16 +61,16 @@ export default function MyOrdersPage() {
     : orders.filter(o => o.status === 'completed');
 
   return (
-    <div className="pt-16 min-h-screen bg-konami-light-gray">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="font-heading text-3xl font-extrabold text-konami-text mb-6">My Orders</h1>
+    <div className="w-full max-w-screen overflow-x-hidden pt-16 pb-20 md:pb-0 min-h-screen bg-konami-light-gray animate-fade-in">
+      <div className="max-w-4xl mx-auto px-4 py-6 md:py-10">
+        <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-konami-text mb-6 uppercase tracking-wide">My Orders</h1>
 
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 overflow-x-auto no-scrollbar">
           {FILTER_TABS.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveFilter(tab.key)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-heading font-bold uppercase tracking-wide whitespace-nowrap transition-all duration-200 active:scale-[0.97] ${
                 activeFilter === tab.key
                   ? 'bg-konami-blue text-white'
                   : 'bg-white text-konami-text-muted hover:text-konami-text border border-konami-mid-gray'
@@ -59,15 +82,18 @@ export default function MyOrdersPage() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-3 border-transparent border-t-konami-blue rounded-full animate-spin" style={{ borderRightColor: '#003BFF' }} />
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => <OrderSkeleton key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="card p-12 text-center">
-            <ShoppingBag size={48} className="mx-auto mb-4 text-konami-text-muted" />
-            <p className="text-konami-text-dim mb-2">No orders yet</p>
-            <Link to="/browse" className="btn-primary inline-block text-sm mt-2">
-              Browse Listings
+          <div className="card p-8 md:p-12 text-center">
+            <span className="w-16 h-16 rounded-full bg-konami-light-gray flex items-center justify-center mx-auto mb-4">
+              <ShoppingBag size={30} className="text-konami-text-muted" />
+            </span>
+            <h2 className="font-heading text-lg font-bold text-konami-text uppercase tracking-wide mb-1">No orders yet</h2>
+            <p className="text-sm text-konami-text-muted mb-6">Browse accounts to get started.</p>
+            <Link to="/browse" className="btn-primary inline-flex items-center justify-center text-sm mt-2">
+              Browse Accounts
             </Link>
           </div>
         ) : (
@@ -78,7 +104,7 @@ export default function MyOrdersPage() {
                 <Link
                   key={order.id}
                   to={`/orders/${order.id}`}
-                  className="card p-4 flex items-center gap-4 hover:border-konami-blue/50 transition-colors"
+                  className="card p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 hover:border-konami-blue/50"
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-konami-text truncate">
@@ -88,7 +114,7 @@ export default function MyOrdersPage() {
                       {order.sellerDisplayName || 'Unknown Seller'} - {formatDate(order.createdAt)}
                     </p>
                   </div>
-                  <div className="text-right shrink-0">
+                  <div className="flex items-center justify-between sm:block sm:text-right shrink-0 gap-3">
                     <p className="text-sm font-bold text-konami-text">{formatKES(order.amount)}</p>
                     <span className={`text-xs ${statusConfig.color || 'text-konami-text-dim'}`}>
                       {statusConfig.label || order.status}
@@ -99,7 +125,9 @@ export default function MyOrdersPage() {
                       </span>
                     )}
                   </div>
-                  <span className="text-xs text-konami-text-muted hover:text-konami-blue ml-2">View <ArrowRight size={12} className="inline" /></span>
+                  <span className="text-xs text-konami-text-muted hover:text-konami-blue sm:ml-2 inline-flex items-center gap-1">
+                    View <ArrowRight size={12} />
+                  </span>
                 </Link>
               );
             })}

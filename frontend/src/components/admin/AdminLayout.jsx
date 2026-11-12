@@ -19,9 +19,9 @@ export default function AdminLayout({ children }) {
   const { count } = useOpenDisputeCount();
 
   return (
-    <div className="pt-16 min-h-screen bg-konami-light-gray">
-      <div className="flex">
-        <aside className="w-[220px] shrink-0 min-h-[calc(100vh-64px)] bg-[#111] border-r border-[#1A1A1A] p-4 hidden lg:block">
+    <div className="w-full max-w-screen overflow-x-hidden pt-16 pb-20 md:pb-0 min-h-screen bg-konami-light-gray animate-fade-in">
+      <div className="flex w-full">
+        <aside className="w-[220px] shrink-0 min-h-[calc(100vh-64px)] bg-[#001450] border-r border-white/10 p-4 hidden lg:block">
           <div className="mb-6 px-3">
             <h1 className="font-heading text-lg font-bold text-konami-blue uppercase tracking-wider">
               Command Center
@@ -60,7 +60,7 @@ export default function AdminLayout({ children }) {
           </nav>
         </aside>
 
-        <main className="flex-1 p-6 max-w-full overflow-x-hidden">
+        <main className="flex-1 min-w-0 p-4 md:p-6 max-w-full overflow-x-hidden">
           {children}
         </main>
       </div>
