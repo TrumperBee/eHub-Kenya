@@ -8,7 +8,7 @@ import {
   urlBase64ToUint8Array,
 } from '../utils/push';
 
-const VAPID_PUBLIC_KEY = import.meta.env?.VITE_VAPID_PUBLIC_KEY || '';
+const ENV_VAPID_PUBLIC_KEY = import.meta.env?.VITE_VAPID_PUBLIC_KEY || '';
 const SW_URL = '/sw.js';
 
 /**
@@ -41,6 +41,20 @@ export default function usePushNotifications() {
     const token = await currentUser.getIdToken();
     return { Authorization: `Bearer ${token}` };
   }, [currentUser]);
+
+  // The VAPID public key lives on the server, so a production build works
+  // without VITE_VAPID_PUBLIC_KEY. The env value stays as a local override.
+  const resolveVapidPublicKey = useCallback(async () => {
+    if (ENV_VAPID_PUBLIC_KEY) return ENV_VAPID_PUBLIC_KEY;
+    try {
+      const { data } = await axios.get(`${BACKEND_URL}/api/push/public-key`);
+      const key = typeof data?.publicKey === 'string' ? data.publicKey.trim() : '';
+      if (key) return key;
+    } catch (err) {
+      console.warn('Push public key lookup failed:', err?.message || err);
+    }
+    throw new Error('Notifications are not set up on this site yet. Please try again later.');
+  }, []);
 
   const postSubscription = useCallback(
     async (subscription) => {
@@ -81,7 +95,10 @@ export default function usePushNotifications() {
   const subscribe = useCallback(async () => {
     if (!currentUser) throw new Error('Sign in to enable notifications');
     if (!isPushSupported()) throw new Error('This browser does not support notifications');
-    if (!VAPID_PUBLIC_KEY) throw new Error('Notifications are not configured for this site');
+
+    // Resolve the key BEFORE asking for permission: a site with no keys must
+    // not burn the browser's one-shot permission prompt.
+    const vapidPublicKey = await resolveVapidPublicKey();
 
     setBusy(true);
     try {
@@ -98,7 +115,7 @@ export default function usePushNotifications() {
         existing ||
         (await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
         }));
 
       await postSubscription(subscription);
@@ -106,7 +123,7 @@ export default function usePushNotifications() {
     } finally {
       setBusy(false);
     }
-  }, [currentUser, ensureRegistration, postSubscription]);
+  }, [currentUser, ensureRegistration, postSubscription, resolveVapidPublicKey]);
 
   const unsubscribe = useCallback(async () => {
     if (!isPushSupported()) return { ok: false };

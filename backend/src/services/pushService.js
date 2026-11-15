@@ -94,4 +94,10 @@ async function sendPushToUser(userId, { title, body, url, icon } = {}) {
   }
 }
 
-module.exports = { sendPushToUser, isPushConfigured };
+module.exports = {
+  sendPushToUser,
+  isPushConfigured,
+  // Public by design (it is the key browsers subscribe with), exposed so the
+  // frontend never needs its own copy of the key at build time.
+  getVapidPublicKey: () => (configured ? VAPID_PUBLIC_KEY : ''),
+};

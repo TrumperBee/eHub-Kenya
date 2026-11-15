@@ -1,5 +1,7 @@
 // Web Push subscription management.
 //
+// GET    /api/push/public-key — the VAPID public key the browser subscribes
+//                               with (public by design, no auth needed).
 // POST   /api/push/subscribe — store the browser PushSubscription for the
 //                              signed-in user (one document per endpoint).
 // DELETE /api/push/subscribe — remove it when the user unsubscribes or the
@@ -13,6 +15,7 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 const { admin, adminDb } = require('../services/firebaseAdmin');
+const { getVapidPublicKey } = require('../services/pushService');
 const { verifyFirebaseToken } = require('../middleware/verifyFirebaseToken');
 
 const MAX_ENDPOINT_LENGTH = 2048;
@@ -41,6 +44,21 @@ function normalizeSubscription(body) {
     keys: { p256dh, auth },
   };
 }
+
+// GET /api/push/public-key
+// The browser needs this value to create a subscription. Serving it from the
+// backend means the frontend never needs VITE_VAPID_PUBLIC_KEY at build time —
+// only the server env needs the key pair.
+router.get('/public-key', (req, res) => {
+  const publicKey = getVapidPublicKey();
+  if (!publicKey) {
+    return res.status(503).json({
+      error: 'Push notifications are not configured on the server (VAPID keys missing)',
+    });
+  }
+  res.set('Cache-Control', 'public, max-age=300');
+  return res.json({ publicKey });
+});
 
 // POST /api/push/subscribe
 router.post('/subscribe', verifyFirebaseToken, async (req, res) => {
