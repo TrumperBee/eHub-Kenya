@@ -22,9 +22,13 @@ function Stat({ label, value, tone = 'blue' }) {
     green: 'text-green-600',
   };
   return (
-    <div>
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-konami-text-muted">{label}</p>
-      <p className={`font-heading text-lg font-bold ${tones[tone] || tones.blue}`}>{value}</p>
+    <div className="min-w-0">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-konami-text-muted leading-snug">
+        {label}
+      </p>
+      <p className={`font-heading text-lg sm:text-xl font-bold mt-0.5 break-words ${tones[tone] || tones.blue}`}>
+        {value}
+      </p>
     </div>
   );
 }
@@ -99,14 +103,14 @@ export default function PayoutsTab({ orders = [], loading = false }) {
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-4">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="bg-white border border-konami-mid-gray rounded-xl p-5">
           <div className="flex items-start justify-between gap-4">
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wider text-konami-text-muted">
                 Total pending payouts
               </p>
-              <p className="font-heading text-3xl font-bold text-konami-text mt-1">
+              <p className="font-heading text-3xl font-bold text-konami-text mt-1 break-words">
                 {formatKES(totalPending)}
               </p>
               <p className="text-xs text-konami-text-muted mt-1">
@@ -122,7 +126,7 @@ export default function PayoutsTab({ orders = [], loading = false }) {
             </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mt-5 pt-4 border-t border-konami-mid-gray">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-5 pt-4 border-t border-konami-mid-gray">
             <Stat label="Sale value" value={formatKES(pendingOrders.reduce((s, o) => s + (Number(o.amount) || 0), 0))} />
             <Stat
               label={`Platform fee (${Math.round(PLATFORM_FEE_RATE * 100)}%)`}
@@ -133,7 +137,7 @@ export default function PayoutsTab({ orders = [], loading = false }) {
           </div>
         </div>
 
-        <div className="rounded-xl p-5 flex gap-3" style={{ background: '#FFFBEB', border: '1px solid #FDE68A' }}>
+        <div className="rounded-xl p-5 flex gap-3 h-full" style={{ background: '#FFFBEB', border: '1px solid #FDE68A' }}>
           <Info size={18} className="shrink-0 mt-0.5" style={{ color: '#B45309' }} />
           <p className="text-sm leading-relaxed" style={{ color: '#92400E' }}>
             <span className="font-semibold">Platform fee is 5% of each sale.</span> This covers ZetuPay
