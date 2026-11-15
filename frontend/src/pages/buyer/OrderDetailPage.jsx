@@ -17,8 +17,9 @@ import ChatWindow from '../../components/chat/ChatWindow';
 import ReviewForm from '../../components/reviews/ReviewForm';
 import {
   Shield, CheckCircle, Mail, KeyRound, Eye, EyeOff, Copy,
-  Send, Upload, AlertTriangle, Lock, ShoppingBag, Loader, RefreshCw, Star, X, Clock,
+  Send, Upload, AlertTriangle, Lock, ShoppingBag, Loader, RefreshCw, Star, X, Clock, MessageCircle,
 } from 'lucide-react';
+import { buildSellerPayoutAlertUrl } from '../../utils/whatsapp';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import toast from 'react-hot-toast';
 
@@ -312,6 +313,33 @@ function CredentialsList({ deliveries, isSeller, orderId, revealed = null, onRev
         onCancel={() => setConfirmReveal(false)}
         variant="default"
       />
+    </div>
+  );
+}
+
+function SellerPayoutWhatsAppCard({ order }) {
+  const href = buildSellerPayoutAlertUrl({
+    sellerName: order.sellerDisplayName || order.sellerUsername,
+    orderId: order.id,
+  });
+
+  return (
+    <div className="bg-blue-500/10 border border-blue-400/30 rounded-xl p-4">
+      <p className="text-xs font-semibold text-konami-blue">
+        Waiting for buyer to verify (30-minute window active)
+      </p>
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-3 inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-xl px-4 py-2 text-sm font-medium transition-colors"
+      >
+        <MessageCircle size={16} aria-hidden="true" />
+        Alert Admin on WhatsApp
+      </a>
+      <p className="mt-2 text-xs text-konami-text-muted">
+        Tap this if you do not receive payment within 1 hour
+      </p>
     </div>
   );
 }
@@ -989,6 +1017,10 @@ export default function OrderDetailPage() {
                         <SellerDeliveryForm order={order} />
                       </div>
                     </details>
+                  )}
+
+                  {isSeller && order.status === 'credentials_submitted' && (
+                    <SellerPayoutWhatsAppCard order={order} />
                   )}
 
                   {order.status === 'disputed' && (
