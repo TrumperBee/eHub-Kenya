@@ -10,6 +10,7 @@ const dropRoutes = require('./src/routes/drop.routes');
 const emailRoutes = require('./src/routes/email.routes');
 const statsRoutes = require('./src/routes/stats.routes');
 const reviewRoutes = require('./src/routes/review.routes');
+const settingsRoutes = require('./src/routes/settings.routes');
 const errorHandler = require('./src/middleware/errorHandler');
 const { ALLOWED_ORIGINS } = require('./src/config');
 const { startStatsReconciler } = require('./src/services/statsRecoService');
@@ -51,6 +52,7 @@ app.use('/api/drops', dropRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/settings', settingsRoutes);
 
 app.use(errorHandler);
 

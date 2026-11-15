@@ -12,6 +12,7 @@ import AdminListingsPage from './AdminListingsPage';
 import AdminOrdersPage from './AdminOrdersPage';
 import AdminDisputesPage from './AdminDisputesPage';
 import AdminFridayDropsPage from './AdminFridayDropsPage';
+import DeveloperSettingsTab from './tabs/DeveloperSettingsTab';
 import { BACKEND_URL } from '../../utils/constants';
 import { formatKES } from '../../utils/formatters';
 import { sellerPayout } from '../../utils/payouts';
@@ -23,6 +24,7 @@ import {
   Package,
   RefreshCw,
   Scale,
+  Settings,
   ShoppingCart,
   UserCheck,
   Users,
@@ -37,6 +39,7 @@ const TABS = [
   { id: 'orders', label: 'Orders', icon: ShoppingCart },
   { id: 'disputes', label: 'Disputes', icon: Scale },
   { id: 'drops', label: 'Friday Drops', icon: Flame },
+  { id: 'developer', label: 'Developer Settings', icon: Settings },
 ];
 
 const TAB_IDS = new Set(TABS.map((tab) => tab.id));
@@ -303,6 +306,7 @@ export default function AdminDashboardPage() {
           {tab === 'orders' && <AdminOrdersPage embedded />}
           {tab === 'disputes' && <AdminDisputesPage embedded />}
           {tab === 'drops' && <AdminFridayDropsPage embedded />}
+          {tab === 'developer' && <DeveloperSettingsTab />}
         </section>
       </div>
     </AdminLayout>

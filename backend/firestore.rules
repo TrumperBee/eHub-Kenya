@@ -125,6 +125,14 @@ service cloud.firestore {
         ]);
     }
 
+    // Maintenance flag: publicly readable so the storefront can show the
+    // maintenance page even to signed-out visitors. Written only by the backend
+    // Admin SDK (super-admin route), which bypasses these rules.
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     match /notifications/{notifId} {
       allow read: if isLoggedIn() && resource.data.userId == request.auth.uid;
       allow create: if isLoggedIn();
