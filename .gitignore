@@ -31,3 +31,5 @@ Desktop.ini
 
 # Firebase service account keys (never commit)
 *-firebase-adminsdk-*.json
+.firebase-sa.json
+firebase-sa.json
