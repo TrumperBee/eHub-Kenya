@@ -23,6 +23,12 @@ const { FRONTEND_URL } = require('../config');
 const FROM = `${FROM_NAME} <${FROM_EMAIL}>`;
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
+// Payout alerts go to the marketplace operator (manual M-Pesa payouts).
+const ADMIN_PAYOUT_EMAIL = 'ochiengv250@gmail.com';
+const PLATFORM_FEE_RATE = 0.05;
+const SUPPORT_EMAIL = 'support@ehubmarket.me';
+const MARKET_FOOTER = `eHub Market &middot; ${SUPPORT_EMAIL} &middot; This is an automated message`;
+
 if (!RESEND_API_KEY) {
   logger.warn('RESEND_API_KEY is not set — transactional emails are disabled (order flows keep working).');
 } else if (!process.env.RESEND_FROM_EMAIL) {
@@ -47,6 +53,18 @@ async function getUserEmail(uid) {
     return (snap.exists && snap.data().email) || null;
   } catch (err) {
     logger.warn(`getUserEmail lookup failed for ${uid}: ${err.message}`);
+    return null;
+  }
+}
+
+// Safe seller profile used for the admin payout alert (name + payout phone).
+async function getUserProfile(uid) {
+  if (!uid) return null;
+  try {
+    const snap = await adminDb.doc(`users/${uid}`).get();
+    return snap.exists ? snap.data() : null;
+  } catch (err) {
+    logger.warn(`getUserProfile lookup failed for ${uid}: ${err.message}`);
     return null;
   }
 }
@@ -97,8 +115,34 @@ async function runWithIdempotency(eventKey, sendFn) {
   }
 }
 
+/**
+ * Reusable Resend sender. Resolves with the provider response on success and
+ * throws on failure so callers (and the idempotency wrapper) can retry later.
+ * With no RESEND_API_KEY the message is skipped instead of throwing.
+ */
+async function sendEmail(to, subject, htmlBody, options = {}) {
+  if (!to) throw new Error('sendEmail: recipient is required');
+  if (!subject) throw new Error('sendEmail: subject is required');
+  if (!htmlBody) throw new Error('sendEmail: html body is required');
+
+  if (!resend) {
+    logger.warn(`sendEmail skipped (RESEND_API_KEY not set): ${subject}`);
+    return { status: 'not_configured' };
+  }
+
+  const payload = { from: FROM, to, subject, html: htmlBody };
+  if (options.text) payload.text = options.text;
+  if (options.attachments) payload.attachments = options.attachments;
+
+  const result = await resend.emails.send(payload);
+  if (result && result.error) {
+    throw new Error(result.error.message || 'Resend error');
+  }
+  return { status: 'sent', id: (result && result.data && result.data.id) || null };
+}
+
 function sendRaw({ to, subject, html, text, attachments }) {
-  return resend.emails.send({ from: FROM, to, subject, html, text, attachments });
+  return sendEmail(to, subject, html, { text, attachments });
 }
 
 // ---------------------------------------------------------------------------
@@ -162,6 +206,81 @@ const bodyBox = (text) =>
        ${text}</td></tr>
    </table>`;
 
+// Bold red notice used by the buyer "credentials ready" email.
+const bodyWarning = (text) =>
+  `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px;">
+     <tr><td style="background:#FEF2F2;border-left:4px solid #C8102E;border-radius:8px;padding:13px 14px;font-size:14px;font-weight:700;color:#B91C1C;line-height:1.5;">
+       ${text}</td></tr>
+   </table>`;
+
+// ---------------------------------------------------------------------------
+// eHub Market transactional layout (brand blue #003BFF / yellow #FFF100)
+// ---------------------------------------------------------------------------
+
+function renderMarketLayout({ title, bodyHtml, cta, footerHtml }) {
+  const ctaHtml = cta
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px auto 4px;">
+         <tr><td style="border-radius:10px;background-color:${cta.background || '#FFF100'};">
+           <a href="${esc(cta.url)}" style="display:inline-block;padding:14px 30px;font-size:15px;font-weight:700;text-decoration:none;color:${cta.color || '#111111'};">${esc(cta.label)}</a>
+         </td></tr>
+       </table>`
+    : '';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${esc(title)}</title></head>
+<body style="margin:0;padding:0;background-color:#F4F5F7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F5F7;padding:24px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#003BFF;border-radius:14px 14px 0 0;">
+        <tr>
+          <td style="padding:22px 28px;">
+            <span style="color:#FFFFFF;font-size:20px;font-weight:800;letter-spacing:0.4px;">eHub</span>
+            <span style="color:#FFF100;font-size:20px;font-weight:800;letter-spacing:0.4px;margin-left:6px;">Market</span>
+          </td>
+        </tr>
+      </table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#FFFFFF;border-radius:0 0 14px 14px;">
+        <tr><td style="padding:30px 28px 24px;">
+          <h1 style="font-size:22px;color:#111111;margin:0 0 16px;line-height:1.3;">${esc(title)}</h1>
+          <div style="font-size:14.5px;color:#374151;line-height:1.65;">${bodyHtml}</div>
+          ${ctaHtml}
+        </td></tr>
+        <tr><td style="padding:16px 28px;border-top:1px solid #EEF0F3;background-color:#FAFAFB;">
+          <p style="font-size:11.5px;color:#6B7280;margin:0;line-height:1.6;">${footerHtml || MARKET_FOOTER}</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+const platformFee = (amount) => Math.round(Number(amount || 0) * PLATFORM_FEE_RATE);
+const sellerPayout = (amount) => Number(amount || 0) - platformFee(amount);
+
+function payoutRow(label, value, { emphasis } = {}) {
+  const style = emphasis
+    ? 'padding:10px 14px;border-bottom:1px solid #EEF0F3;font-size:14px;font-weight:700;color:#111111;'
+    : 'padding:10px 14px;border-bottom:1px solid #EEF0F3;font-size:14px;color:#374151;';
+  return `<tr>
+    <td style="${style}background:#FAFAFB;width:48%;">${esc(label)}</td>
+    <td style="${style}">${value}</td>
+  </tr>`;
+}
+
+function payoutTable(order, sellerPhone) {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #EEF0F3;border-radius:10px;border-collapse:separate;overflow:hidden;margin:0 0 18px;">
+    ${payoutRow('Listing', esc(order.listingTitle || 'Account listing'))}
+    ${payoutRow('Sale Amount', formatKES(order.amount))}
+    ${payoutRow(`Platform Fee (${Math.round(PLATFORM_FEE_RATE * 100)}%)`, `- ${formatKES(platformFee(order.amount))}`)}
+    ${payoutRow('Amount to Send Seller', formatKES(sellerPayout(order.amount)), { emphasis: true })}
+    ${payoutRow('Seller Display Name', esc(order.sellerDisplayName || 'Not provided'))}
+    ${payoutRow('Seller Phone Number', esc(sellerPhone || 'Not provided'))}
+  </table>`;
+}
+
 function orderCta(order, label, hint = '') {
   return { url: orderUrl(order), label, hint };
 }
@@ -199,7 +318,7 @@ async function sendBuyerPaymentConfirmedEmail(order) {
   });
 }
 
-// Seller: buyer paid (most important — includes the seller guide PDF)
+// Email 1 — seller: buyer paid, submit the account credentials now.
 async function sendSellerPaymentReceivedEmail(order) {
   if (!order) return;
   const sellerEmail = await getUserEmail(order.sellerId);
@@ -209,35 +328,36 @@ async function sendSellerPaymentReceivedEmail(order) {
   }
   const key = `seller-payment-confirmed-${order.id}`;
   await runWithIdempotency(key, async () => {
-    const pdfBuffer = await getSellerOrderGuidePdf();
-    const attachments = pdfBuffer
-      ? [{ filename: 'eHub Seller Order Guide.pdf', content: pdfBuffer, contentType: 'application/pdf' }]
-      : undefined;
-    const title = `New Paid Order — "${order.listingTitle || 'your listing'}"`;
+    const listingTitle = order.listingTitle || 'your listing';
+    const amount = order.amount ?? order.paidAmount;
+    // The guide is a bonus attachment — never let PDF rendering block the sale
+    // notification itself.
+    const pdfBuffer = await getSellerOrderGuidePdf().catch(() => null);
+
     const bodyHtml =
-      bodyP(`Hi ${esc(order.sellerDisplayName || 'there')},`) +
-      bodyBox(
-        bodyStrong(`Listing:`)+` ${esc(order.listingTitle || 'your listing')}<br>`+
-        bodyStrong(`Amount:`)+` ${formatKES(order.amount)}<br>`+
-        bodyStrong(`Status:`)+` Payment confirmed`
-      ) +
-      bodyP(bodyStrong(`NEXT STEP:`)+` Open the order from your Orders / Sales page and submit the buyer's account login details in the “Submit Account Details” box.`) +
-      bodyP(`The buyer is waiting on you. Once you submit the details, the buyer verifies the account and confirms delivery — then admin releases your payout to your registered payout phone.`) +
-      bodyP(`The attached ${bodyStrong('eHub Seller Order Guide (PDF)')} walks you through all 6 steps.`) +
-      bodyP(`Account login details, eHub passwords and payment secrets are ${bodyStrong('never')} transmitted by email or outside the private order page.`);
-    return sendRaw({
-      to: sellerEmail,
-      subject: `New Paid Order — Action Required`,
-      html: renderLayout({
-        eyebrow: 'Payment Received',
-        title,
+      bodyP(`Your listing ${bodyStrong(esc(listingTitle))} has been purchased for ${bodyStrong(formatKES(amount))}.`) +
+      bodyP('Payment is held securely in escrow.') +
+      bodyP('Log in to your Transfer Room to submit the account credentials.') +
+      bodyP('The buyer has 30 minutes to verify after you reveal the password.');
+
+    return sendEmail(
+      sellerEmail,
+      'New Sale on eHub Market — Transfer Account Now',
+      renderMarketLayout({
+        title: 'You have a new sale!',
         bodyHtml,
-        cta: orderCta(order, 'OPEN ORDER', 'You must be signed in to open the order page.'),
-        footnote: `Order ${order.id} · ${formatKES(order.amount)} · Seller guide attached as a PDF.`,
+        cta: { url: `${FRONTEND_URL}/transfer-room`, label: 'Go to Transfer Room' },
       }),
-      text: `New paid order — ${formatKES(order.amount)} for ${order.listingTitle || 'your listing'}. Submit the account details from your Orders page: ${orderUrl(order)}`,
-      attachments,
-    });
+      {
+        text:
+          `You have a new sale! ${listingTitle} sold for ${formatKES(amount)}. ` +
+          `Payment is held securely in escrow. Submit the account credentials in your Transfer Room: ` +
+          `${FRONTEND_URL}/transfer-room`,
+        attachments: pdfBuffer
+          ? [{ filename: 'eHub Seller Order Guide.pdf', content: pdfBuffer, contentType: 'application/pdf' }]
+          : undefined,
+      }
+    );
   });
 }
 
@@ -269,31 +389,75 @@ async function sendSellerCredentialsSubmittedEmail(order) {
   });
 }
 
-// Buyer: credentials ready (never include the password)
+// Email 2 — buyer: seller submitted the credentials, 30-minute verify window.
 async function sendBuyerCredentialsReadyEmail(order) {
   if (!order || !order.buyerEmail) return;
   const key = `buyer-credentials-ready-${order.id}`;
   await runWithIdempotency(key, async () => {
-    const title = `Account Ready — Verify & Confirm Delivery`;
     const bodyHtml =
-      bodyP(`Hi ${esc(order.buyerDisplayName || 'there')},`) +
-      bodyP(`The seller submitted the login details for "${esc(order.listingTitle || 'your purchase')}".`) +
-      bodyBox(
-        bodyStrong(`Your login is on the order page only.`)+`<br>It is never emailed, so open your order to view it, then: 1) Sign in to verify the account, 2) Confirm delivery to release the seller's payment.`
-      ) +
-      bodyP(`Your eFootball password is ${bodyStrong('never')} included in this email or anywhere in public chat. If the account doesn't match the listing, raise a dispute from the order page.`);
-    return sendRaw({
-      to: order.buyerEmail,
-      subject: `Account Ready — Verify Now`,
-      html: renderLayout({
-        eyebrow: 'Order Update',
-        title,
+      bodyP('Log in to your order page to view the credentials.') +
+      bodyP(`<strong>IMPORTANT:</strong> You have 30 minutes from when you first reveal the password to either confirm receipt or raise a dispute.`) +
+      bodyP('If you do nothing within 30 minutes, payment is automatically released to the seller.') +
+      bodyWarning('Your 30-minute window starts the moment you click Show Password');
+
+    return sendEmail(
+      order.buyerEmail,
+      'Account Details Ready — Verify Within 30 Minutes',
+      renderMarketLayout({
+        title: 'The seller has submitted the account details',
         bodyHtml,
-        cta: orderCta(order, 'View Login & Verify'),
-        footnote: `Order ${order.id} · login details are only visible on the private order page.`,
+        cta: { url: orderUrl(order), label: 'View My Order' },
       }),
-      text: `Seller submitted account login details for your order. View them on the order page (never emailed): ${orderUrl(order)}`,
-    });
+      {
+        text:
+          `The seller has submitted the account details for "${order.listingTitle || 'your order'}". ` +
+          `Log in to your order page to view the credentials. You have 30 minutes from the moment you first ` +
+          `reveal the password to confirm receipt or raise a dispute; otherwise payment is automatically ` +
+          `released to the seller. ${orderUrl(order)}`,
+      }
+    );
+  });
+}
+
+// Email 3 — admin: order completed, manual payout required.
+async function sendAdminPayoutRequiredEmail(order) {
+  if (!order || !order.id) return;
+  const key = `admin-payout-required-${order.id}`;
+  await runWithIdempotency(key, async () => {
+    const seller = await getUserProfile(order.sellerId);
+    const sellerName =
+      order.sellerDisplayName ||
+      (seller && (seller.sellerDisplayName || seller.displayName || seller.username)) ||
+      'Not provided';
+    const sellerPhone =
+      (seller && (seller.sellerWhatsapp || seller.phoneNumber)) || order.sellerPhone || '';
+    const payout = sellerPayout(order.amount);
+
+    const bodyHtml =
+      payoutTable({ ...order, sellerDisplayName: sellerName }, sellerPhone) +
+      bodyP('Log in to the admin panel to mark as paid after sending.');
+
+    return sendEmail(
+      ADMIN_PAYOUT_EMAIL,
+      'PAYOUT REQUIRED — Sale Completed on eHub Market',
+      renderMarketLayout({
+        title: 'A sale has been completed. Manual payout required.',
+        bodyHtml,
+        cta: {
+          url: `${FRONTEND_URL}/hub-command-af29x`,
+          label: 'Open Admin Payouts',
+          background: '#003BFF',
+          color: '#FFFFFF',
+        },
+      }),
+      {
+        text:
+          `Payout required for order ${order.id}: ${order.listingTitle || 'listing'} sold for ` +
+          `${formatKES(order.amount)}. Platform fee ${formatKES(platformFee(order.amount))}. ` +
+          `Send ${formatKES(payout)} to ${sellerName} (${sellerPhone || 'phone not provided'}). ` +
+          `Mark as paid: ${FRONTEND_URL}/hub-command-af29x`,
+      }
+    );
   });
 }
 
@@ -566,11 +730,13 @@ async function sendTestEmail(to) {
 }
 
 module.exports = {
+  sendEmail,
   sendBuyerPaymentConfirmedEmail,
   sendSellerPaymentReceivedEmail,
   sendSellerCredentialsSubmittedEmail,
   sendBuyerCredentialsReadyEmail,
   sendOrderCompletedEmail,
+  sendAdminPayoutRequiredEmail,
   sendOrderRefundedEmail,
   sendDisputeRaisedEmail,
   sendDisputeResolvedEmail,

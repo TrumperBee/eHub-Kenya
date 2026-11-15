@@ -5,6 +5,7 @@ const {
   sendSellerCredentialsSubmittedEmail,
   sendBuyerCredentialsReadyEmail,
   sendOrderCompletedEmail,
+  sendAdminPayoutRequiredEmail,
   sendOrderRefundedEmail,
   sendDisputeRaisedEmail,
   sendDisputeResolvedEmail,
@@ -130,7 +131,10 @@ async function release(req, res) {
     });
 
     // Trusted event: escrow released by the buyer. Never blocks the workflow.
-    await sendOrderCompletedEmail(order);
+    const emailOrder = { ...order, id: orderId };
+    await sendOrderCompletedEmail(emailOrder);
+    // Admin must pay the seller manually — alert the operator.
+    await sendAdminPayoutRequiredEmail(emailOrder);
 
     return res.json({ success: true });
   } catch (err) {

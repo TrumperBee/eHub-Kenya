@@ -1,5 +1,6 @@
 const { admin, adminDb } = require('./firebaseAdmin');
 const { assertValidTransition } = require('./orderStateMachine');
+const { sendSellerPaymentReceivedEmail } = require('./emailService');
 
 /**
  * Shared payment outcome processing for ZetuPay orders. Used by the webhook,
@@ -180,6 +181,10 @@ async function processSuccessfulPayment(orderId, event = {}) {
     orderId,
   });
   bumpStats();
+
+  // Trusted event: the payment transaction committed. Notify the seller that
+  // they must deliver the account. Idempotent and non-throwing.
+  await sendSellerPaymentReceivedEmail({ ...state, id: orderId });
 
   return { orderId, processed: true };
 }
