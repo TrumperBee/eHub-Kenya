@@ -9,10 +9,16 @@ export const MAINTENANCE_WHATSAPP_NUMBER = '+254713079528';
 export const MAINTENANCE_WHATSAPP_URL = 'https://wa.me/254713079528';
 
 // The super admin route (and everything under it) must keep working while
-// maintenance mode is on — otherwise nobody could turn it back off.
+// maintenance mode is on — otherwise nobody could turn it back off. The login
+// page stays reachable too: admins (and any already-locked-out user) need a way
+// back in while the storefront is closed.
+export const MAINTENANCE_EXEMPT_PATHS = ['/login', ADMIN_ROUTE];
+
 export const isMaintenanceExemptPath = (pathname) => {
   const path = String(pathname || '/');
-  return path === ADMIN_ROUTE || path.startsWith(`${ADMIN_ROUTE}/`);
+  return MAINTENANCE_EXEMPT_PATHS.some(
+    (exempt) => path === exempt || path.startsWith(`${exempt}/`)
+  );
 };
 
 export const resolveMaintenanceMessage = (message) => {

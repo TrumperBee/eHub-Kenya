@@ -15,16 +15,22 @@ test('admin route is exempt from the maintenance page', () => {
   assert.equal(isMaintenanceExemptPath(`${ADMIN_ROUTE}/disputes`), true);
 });
 
+test('login is exempt so admins can sign in while the storefront is closed', () => {
+  assert.equal(isMaintenanceExemptPath('/login'), true);
+  assert.equal(isMaintenanceExemptPath('/login/'), true);
+});
+
 test('storefront routes are not exempt', () => {
   assert.equal(isMaintenanceExemptPath('/'), false);
   assert.equal(isMaintenanceExemptPath('/browse'), false);
   assert.equal(isMaintenanceExemptPath('/orders/abc'), false);
-  assert.equal(isMaintenanceExemptPath('/login'), false);
+  assert.equal(isMaintenanceExemptPath('/register'), false);
 });
 
 test('a lookalike admin prefix does not grant an exemption', () => {
   assert.equal(isMaintenanceExemptPath(`${ADMIN_ROUTE}-evil`), false);
   assert.equal(isMaintenanceExemptPath('/hub-command'), false);
+  assert.equal(isMaintenanceExemptPath('/login-help'), false);
 });
 
 test('only a literal true enables maintenance mode', () => {

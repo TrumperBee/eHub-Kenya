@@ -69,7 +69,8 @@ function MaintenanceSplash() {
   );
 }
 
-// Renders the maintenance page for every route except the super admin console.
+// Renders the maintenance page for every route except the login page and the
+// super admin console (see isMaintenanceExemptPath).
 function MaintenanceGate({ maintenance, children }) {
   const location = useLocation();
   if (isMaintenanceExemptPath(location.pathname)) return children;
