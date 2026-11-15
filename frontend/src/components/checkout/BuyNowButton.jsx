@@ -26,6 +26,8 @@ export default function BuyNowButton({ listing, effectivePrice }) {
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [timedOut, setTimedOut] = useState(false);
+  const [rateLimited, setRateLimited] = useState(false);
+  const [attemptsInfo, setAttemptsInfo] = useState(null);
 
   const pollTimer = useRef(null);
   const cancelled = useRef(false);
@@ -100,9 +102,25 @@ export default function BuyNowButton({ listing, effectivePrice }) {
     pollTimer.current = setTimeout(() => pollStatus(idToPoll, deadline), POLL_INTERVAL_MS);
   };
 
+  // Best-effort counter for the "X of 5 attempts used" hint. A failure here
+  // must never block checkout, so errors are swallowed.
+  const loadAttempts = async () => {
+    if (!auth.currentUser) return;
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const { data } = await axios.get(`${BACKEND}/api/payment/stk-push/attempts`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAttemptsInfo(data);
+    } catch {
+      setAttemptsInfo(null);
+    }
+  };
+
   const handleSendRequest = async () => {
     setError('');
     setTimedOut(false);
+    setRateLimited(false);
     if (!isValidPhone(phone)) {
       setError('Enter a valid M-Pesa number (e.g. 0712345678)');
       return;
@@ -121,9 +139,19 @@ export default function BuyNowButton({ listing, effectivePrice }) {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setOrderId(data.orderId);
+      setAttemptsInfo(null);
       setStep('waiting');
       startPolling(data.orderId);
     } catch (err) {
+      // Rate limited by stkPushLimiter (5 attempts / 30 minutes): this is a
+      // deliberate state, not a payment failure — never fall back to the
+      // generic error copy.
+      if (err?.response?.status === 429) {
+        setRateLimited(true);
+        setError('');
+        setStep('failed');
+        return;
+      }
       const errorMessage = err?.response?.data?.error || 'Could not start payment. Please try again.';
       const errorCode = err?.response?.data?.code;
       const errorDetail = err?.response?.data?.detail;
@@ -139,6 +167,7 @@ export default function BuyNowButton({ listing, effectivePrice }) {
   const handleCancel = () => {
     stopPolling();
     setError('');
+    setRateLimited(false);
     setStep('idle');
   };
 
@@ -148,6 +177,7 @@ export default function BuyNowButton({ listing, effectivePrice }) {
     setPhone('');
     setError('');
     setTimedOut(false);
+    setRateLimited(false);
     setStep('idle');
   };
 
@@ -171,7 +201,7 @@ export default function BuyNowButton({ listing, effectivePrice }) {
   if (step === 'idle') {
     return (
       <button
-        onClick={() => { setError(''); setStep('phone'); }}
+        onClick={() => { setError(''); setRateLimited(false); setStep('phone'); loadAttempts(); }}
         className="w-full flex items-center justify-center gap-2 rounded-xl py-4 font-heading font-bold uppercase tracking-wide text-base transition-all duration-200 shadow-lg hover:shadow-xl active:scale-[0.98]"
         style={{ background: '#FFF100', color: '#111111' }}
       >
@@ -200,6 +230,12 @@ export default function BuyNowButton({ listing, effectivePrice }) {
           style={{ background: 'rgba(255,255,255,0.08)', border: `1px solid ${error ? '#FF6B6B' : 'rgba(255,255,255,0.25)'}` }}
         />
         {error && <p className="text-[11px]" style={{ color: '#FF6B6B' }}>{error}</p>}
+
+        {attemptsInfo && Number.isFinite(attemptsInfo.limit) && (
+          <p className="text-[11px] text-white/40">
+            {attemptsInfo.attempts} of {attemptsInfo.limit} attempts used in the last 30 minutes.
+          </p>
+        )}
 
         <div className="flex gap-2">
           <button
@@ -251,6 +287,29 @@ export default function BuyNowButton({ listing, effectivePrice }) {
         <CheckCircle size={40} className="mx-auto" style={{ color: '#10B981' }} />
         <p className="font-heading font-bold text-white">Payment Confirmed!</p>
         <p className="text-white/60 text-xs">Redirecting to your order…</p>
+      </div>
+    );
+  }
+
+  // ---- Step: rate limited (stkPushLimiter, 5 attempts / 30 minutes) ----
+  if (rateLimited) {
+    return (
+      <div
+        className="w-full rounded-xl p-5 text-center space-y-3"
+        style={{ background: 'rgba(200,16,46,0.15)', border: '1px solid rgba(200,16,46,0.4)' }}
+      >
+        <XCircle size={40} className="mx-auto" style={{ color: '#FF6B6B' }} />
+        <p className="font-heading font-bold text-white">Payment attempts paused</p>
+        <p className="text-white/70 text-xs">
+          Too many payment attempts. You can try again in 30 minutes.
+        </p>
+        <button
+          onClick={handleTryAgain}
+          className="w-full rounded-xl py-3 font-heading font-bold uppercase tracking-wide text-sm transition-all"
+          style={{ background: '#FFF100', color: '#111111' }}
+        >
+          Got It
+        </button>
       </div>
     );
   }
