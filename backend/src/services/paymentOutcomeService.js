@@ -1,6 +1,7 @@
 const { admin, adminDb } = require('./firebaseAdmin');
 const { assertValidTransition } = require('./orderStateMachine');
 const { sendSellerPaymentReceivedEmail } = require('./emailService');
+const { sendPushToUser } = require('./pushService');
 
 /**
  * Shared payment outcome processing for ZetuPay orders. Used by the webhook,
@@ -185,6 +186,18 @@ async function processSuccessfulPayment(orderId, event = {}) {
   // Trusted event: the payment transaction committed. Notify the seller that
   // they must deliver the account. Idempotent and non-throwing.
   await sendSellerPaymentReceivedEmail({ ...state, id: orderId });
+
+  // Web Push (closed-tab alerts). Never throws, so payment flow is unaffected.
+  await sendPushToUser(state.sellerId, {
+    title: 'New Sale!',
+    body: `${state.listingTitle || 'Your listing'} sold for KES ${state.amount}`,
+    url: '/transfer-room',
+  });
+  await sendPushToUser(state.buyerId, {
+    title: 'Payment Confirmed',
+    body: 'Your payment was received. Awaiting account transfer.',
+    url: `/orders/${orderId}`,
+  });
 
   return { orderId, processed: true };
 }

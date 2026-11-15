@@ -55,6 +55,7 @@ import AdminFridayDropsPage from './pages/admin/AdminFridayDropsPage';
 
 import SellerApplicationPage from './pages/SellerApplicationPage';
 import AIAssistant from './components/ai/AIAssistant';
+import PushPermissionBanner from './components/notifications/PushPermissionBanner';
 import { isMaintenanceExemptPath, normalizeMaintenanceDoc } from './utils/maintenance';
 
 // Neutral branded loading screen used only while the very first maintenance
@@ -247,6 +248,7 @@ function AppContent() {
             <Route path="*" element={<PageLayout><HomePage /></PageLayout>} />
             </Routes>
             <AIAssistant />
+            <PushPermissionBanner />
           </MaintenanceGate>
         </BrowserRouter>
     </>

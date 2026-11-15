@@ -10,6 +10,7 @@ const {
   sendDisputeRaisedEmail,
   sendDisputeResolvedEmail,
 } = require('../services/emailService');
+const { sendPushToUser } = require('../services/pushService');
 
 const {
   verificationDeadlineAfter,
@@ -135,6 +136,14 @@ async function release(req, res) {
     await sendOrderCompletedEmail(emailOrder);
     // Admin must pay the seller manually — alert the operator.
     await sendAdminPayoutRequiredEmail(emailOrder);
+
+    // Seller's phone alerts even with the tab closed. 5% platform fee matches
+    // the payout table used by the admin Payouts tab.
+    await sendPushToUser(order.sellerId, {
+      title: 'Payment Released',
+      body: `KES ${Math.round(Number(order.amount || 0) * 0.95)} will be sent to you shortly`,
+      url: '/transfer-room',
+    });
 
     return res.json({ success: true });
   } catch (err) {
@@ -454,6 +463,13 @@ async function submitDelivery(req, res) {
     // Trusted event: credentials submitted (in-order). Never block on emails.
     await sendSellerCredentialsSubmittedEmail({ ...order, id: orderId });
     await sendBuyerCredentialsReadyEmail({ ...order, id: orderId });
+
+    // Buyer's verify window starts now — push even if their tab is closed.
+    await sendPushToUser(order.buyerId, {
+      title: 'Account Details Ready',
+      body: 'Verify your account within 30 minutes',
+      url: `/orders/${orderId}`,
+    });
 
     return res.json({ success: true });
   } catch (err) {
