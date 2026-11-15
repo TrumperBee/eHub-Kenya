@@ -19,7 +19,8 @@ import {
   Shield, CheckCircle, Mail, KeyRound, Eye, EyeOff, Copy,
   Send, Upload, AlertTriangle, Lock, ShoppingBag, Loader, RefreshCw, Star, X, Clock, MessageCircle,
 } from 'lucide-react';
-import { buildSellerPayoutAlertUrl } from '../../utils/whatsapp';
+import { getUserById } from '../../services/usersService';
+import { buildSellerPayoutAlertUrl, buildBuyerContactUrl, buildSellerContactUrl, canShowDirectContact, ADMIN_WHATSAPP_URL } from '../../utils/whatsapp';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import toast from 'react-hot-toast';
 
@@ -340,6 +341,88 @@ function SellerPayoutWhatsAppCard({ order }) {
       <p className="mt-2 text-xs text-konami-text-muted">
         Tap this if you do not receive payment within 1 hour
       </p>
+    </div>
+  );
+}
+
+function DirectContactSection({ order, isBuyer, isSeller }) {
+  const allowed = canShowDirectContact(order?.status);
+  const isParticipant = Boolean(isBuyer || isSeller);
+  const otherPartyId = isBuyer ? order?.sellerId : isSeller ? order?.buyerId : null;
+
+  const [contactValue, setContactValue] = useState('');
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!allowed || !isParticipant || !otherPartyId) return undefined;
+    let cancelled = false;
+
+    getUserById(otherPartyId)
+      .then((profile) => {
+        if (cancelled) return;
+        setContactValue((isBuyer ? profile?.sellerWhatsapp : profile?.phoneNumber) || '');
+        setLoaded(true);
+      })
+      .catch((err) => {
+        console.warn('Direct contact lookup failed:', err?.message || err);
+        if (!cancelled) setLoaded(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [allowed, isParticipant, otherPartyId, isBuyer]);
+
+  // Render nothing until the other party's details are known, so a delayed
+  // lookup can never flash an empty section or a disabled button.
+  if (!allowed || !isParticipant || !loaded) return null;
+
+  const href = isBuyer
+    ? buildBuyerContactUrl({
+        sellerWhatsapp: contactValue,
+        orderId: order.id,
+        listingTitle: order.listingTitle,
+      })
+    : buildSellerContactUrl({
+        buyerPhone: contactValue,
+        orderId: order.id,
+        listingTitle: order.listingTitle,
+      });
+
+  // Buyer: no seller number means no section at all (never a broken button).
+  if (isBuyer && !href) return null;
+
+  return (
+    <div className="bg-konami-blue-dark border border-white/10 rounded-xl p-4">
+      <p className="text-xs text-white/60 uppercase tracking-wide">Direct Contact</p>
+      <div className="mt-3 flex flex-col gap-2">
+        {href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-xl px-4 py-2 text-sm font-medium transition-colors"
+          >
+            <MessageCircle size={16} aria-hidden="true" />
+            {isBuyer ? 'Chat with Seller on WhatsApp' : 'Chat with Buyer on WhatsApp'}
+          </a>
+        ) : (
+          <div className="text-xs text-white/60">
+            <p>Buyer has not added a contact number</p>
+            <p className="mt-1">
+              Contact via admin:{' '}
+              <a
+                href={ADMIN_WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#FFF100] hover:underline"
+              >
+                wa.me/254713079528
+              </a>
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -772,6 +855,8 @@ export default function OrderDetailPage() {
             </div>
 
             <div className="space-y-3">
+              <DirectContactSection order={order} isBuyer={isBuyer} isSeller={isSeller} />
+
               {isBuyer ? (
                 <OrderStatePanel guide={isConfirming ? {
                   tone: 'waiting',
