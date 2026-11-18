@@ -3,12 +3,18 @@ import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firest
 import { auth, db, googleProvider } from './firebase';
 import { registerNewUserCount } from './statsService';
 
+// Usernames keep the casing the user typed; `usernameLower` is what uniqueness
+// checks query so "Baba" and "BABA" cannot both exist.
 export const createUserDocument = async (uid, data) => {
+  const username =
+    typeof data.username === 'string' && data.username.trim() ? data.username.trim() : null;
+
   await setDoc(doc(db, 'users', uid), {
     uid,
     email: data.email,
     displayName: data.displayName || '',
-    username: data.username || null,
+    username,
+    usernameLower: username ? username.toLowerCase() : null,
     phoneNumber: data.phoneNumber || null,
     photoURL: data.photoURL || null,
     role: 'buyer',
@@ -40,7 +46,7 @@ export const updateUserDocument = async (uid, data) => {
 
 export const registerWithEmail = async (email, password, displayName, username) => {
   const cred = await createUserWithEmailAndPassword(auth, email, password);
-  await createUserDocument(cred.user.uid, { email, displayName, username: username.toLowerCase() });
+  await createUserDocument(cred.user.uid, { email, displayName, username });
   return cred.user;
 };
 

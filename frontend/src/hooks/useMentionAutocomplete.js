@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
 export const useMentionAutocomplete = () => {
@@ -15,14 +15,28 @@ export const useMentionAutocomplete = () => {
       return;
     }
     try {
-      const q = query(
-        collection(db, 'users'),
-        where('username', '>=', searchText.toLowerCase()),
-        where('username', '<=', searchText.toLowerCase() + '\uf8ff'),
-        limit(5)
-      );
-      const snap = await getDocs(q);
-      const results = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+      const lower = searchText.toLowerCase();
+      const users = collection(db, 'users');
+      const prefix = (field) => [
+        where(field, '>=', lower),
+        where(field, '<=', lower + '\uf8ff'),
+        limit(5),
+      ];
+
+      // New accounts are indexed by usernameLower (original casing kept for
+      // display). Legacy accounts stored a lowercase `username`, so both ranges
+      // are read and merged.
+      const [byLower, byLegacy] = await Promise.all([
+        getDocs(query(users, ...prefix('usernameLower'))),
+        getDocs(query(users, ...prefix('username'))),
+      ]);
+
+      const merged = new Map();
+      [...byLower.docs, ...byLegacy.docs].forEach((docSnap) => {
+        merged.set(docSnap.id, { uid: docSnap.id, ...docSnap.data() });
+      });
+      const results = Array.from(merged.values()).slice(0, 5);
+
       setSuggestions(results);
       setShowSuggestions(results.length > 0);
     } catch (err) {

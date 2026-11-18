@@ -62,7 +62,7 @@ export function AuthProvider({ children }) {
   const register = async (email, password, displayName, username) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateAuthProfile(cred.user, { displayName });
-    await createUserDocument(cred.user.uid, { email, displayName, username: username?.toLowerCase() });
+    await createUserDocument(cred.user.uid, { email, displayName, username });
     return cred.user;
   };
 

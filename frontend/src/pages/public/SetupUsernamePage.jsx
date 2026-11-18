@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { validateUsernameFormat, checkUsername, generateSuggestions } from '../../utils/usernameUtils';
+import { validateUsernameFormat, checkUsername, generateSuggestions, normalizeUsernameLower } from '../../utils/usernameUtils';
 import { updateUserDocument } from '../../services/authService';
 
 export default function SetupUsernamePage() {
@@ -24,7 +24,8 @@ export default function SetupUsernamePage() {
   }, [currentUser, navigate]);
 
   const handleUsernameChange = (e) => {
-    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    // Keep the user's casing; only strip characters we never allow.
+    const value = e.target.value.replace(/[^a-zA-Z0-9_-]/g, '');
     setUsername(value);
     setUsernameTaken(false);
     setUsernameAvailable(null);
@@ -69,7 +70,10 @@ export default function SetupUsernamePage() {
     setSaving(true);
     setError('');
     try {
-      await updateUserDocument(currentUser.uid, { username: username.toLowerCase() });
+      await updateUserDocument(currentUser.uid, {
+        username,
+        usernameLower: normalizeUsernameLower(username),
+      });
       navigate('/account');
     } catch (err) {
       setError(err.message || 'Failed to save username. Try again.');
@@ -106,7 +110,7 @@ export default function SetupUsernamePage() {
           <div>
             <input
               type="text"
-              placeholder="Username (e.g. victork254)"
+              placeholder="Username (e.g. VictorKE)"
               value={username}
               onChange={handleUsernameChange}
               className={`input-field ${usernameError || usernameTaken ? '!border-red-500' : ''} ${usernameAvailable ? '!border-green-500' : ''}`}
@@ -114,7 +118,7 @@ export default function SetupUsernamePage() {
               autoFocus
             />
             <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
-              Only lowercase letters, numbers, and underscores. No spaces.
+              Letters (capitals welcome), numbers, underscores and hyphens. No spaces.
             </p>
 
             {usernameChecking && (

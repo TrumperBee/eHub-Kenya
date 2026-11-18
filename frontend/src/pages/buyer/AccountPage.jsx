@@ -6,7 +6,7 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { updateUserDocument } from '../../services/authService';
 import PasswordInput from '../../components/common/PasswordInput';
-import { validateUsernameFormat, generateSuggestions, checkUsername } from '../../utils/usernameUtils';
+import { validateUsernameFormat, generateSuggestions, checkUsername, normalizeUsernameLower } from '../../utils/usernameUtils';
 import { formatDate, formatKES } from '../../utils/formatters';
 import { ORDER_STATUS } from '../../utils/constants';
 import toast from 'react-hot-toast';
@@ -136,7 +136,8 @@ export default function AccountPage() {
   }, []);
 
   const handleUsernameChange = (e) => {
-    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    // Keep the user's casing; only strip characters we never allow.
+    const value = e.target.value.replace(/[^a-zA-Z0-9_-]/g, '');
     setUsernameVal(value);
     setUsernameTaken(false);
     setUsernameAvailable(null);
@@ -151,7 +152,8 @@ export default function AccountPage() {
     setUsernameError(null);
     if (!value) { setUsernameChecking(false); return; }
 
-    if (value === userProfile?.username) {
+    // Same username with different capitalisation is still their own name.
+    if (normalizeUsernameLower(value) === normalizeUsernameLower(userProfile?.username)) {
       setUsernameAvailable(value);
       setUsernameChecking(false);
       setUsernameTaken(false);
@@ -186,7 +188,8 @@ export default function AccountPage() {
     try {
       await updateUserDocument(currentUser.uid, {
         displayName: displayName.trim(),
-        username: usernameVal.toLowerCase(),
+        username: usernameVal,
+        usernameLower: normalizeUsernameLower(usernameVal),
         phoneNumber: phoneNumber.trim() || null,
       });
       await updateProfile({
@@ -475,7 +478,7 @@ export default function AccountPage() {
                     onChange={handleUsernameChange}
                     className={`input-field ${usernameError || usernameTaken ? '!border-red-500' : ''} ${usernameAvailable ? '!border-green-500' : ''}`}
                   />
-                  <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>Your unique identifier. Shown on reviews and public pages.</p>
+                  <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>Your unique identifier. Capitals are kept; it must be unique regardless of case.</p>
                   {usernameChecking && (
                     <div className="flex items-center gap-1.5 mt-1">
                       <Loader2 size={14} className="animate-spin" style={{ color: '#003BFF' }} />
