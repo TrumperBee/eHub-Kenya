@@ -6,12 +6,22 @@ import PasswordInput from '../../components/common/PasswordInput';
 import { validateUsernameFormat, generateSuggestions, checkUsername } from '../../utils/usernameUtils';
 import { googleAuthErrorMessage } from '../../utils/authErrors';
 
+const PHONE_PATTERN = /^(?:\+254|254|0)7\d{8}$/;
+
+const validateKenyanPhone = (value) => {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return 'Phone number is required to buy and sell on eHub Market.';
+  if (!PHONE_PATTERN.test(trimmed)) return 'Enter a valid Kenyan phone number (e.g. 0712345678)';
+  return '';
+};
+
 export default function RegisterPage() {
   const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [form, setForm] = useState({ displayName: '', username: '', email: '', password: '', confirmPassword: '' });
+  const [form, setForm] = useState({ displayName: '', username: '', email: '', phoneNumber: '', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const [loading, setLoading] = useState(false);
   const from = location.state?.from;
   const redirectPath = from ? `${from.pathname}${from.search || ''}` : '/account';
@@ -48,7 +58,8 @@ export default function RegisterPage() {
   };
 
   const handleUsernameChange = (e) => {
-    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    // Keep the user's casing; only strip characters we never allow.
+    const value = e.target.value.replace(/[^a-zA-Z0-9_-]/g, '');
     setForm(prev => ({ ...prev, username: value }));
     setUsernameTaken(false);
     setUsernameAvailable(null);
@@ -78,6 +89,8 @@ export default function RegisterPage() {
     }
     if (form.displayName.length < 2) return 'Name must be at least 2 characters';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Invalid email address';
+    const phoneValidationError = validateKenyanPhone(form.phoneNumber);
+    if (phoneValidationError) return phoneValidationError;
     if (form.password.length < 8) return 'Password must be at least 8 characters';
     if (form.password !== form.confirmPassword) return 'Passwords do not match';
     if (usernameError) return usernameError;
@@ -86,19 +99,33 @@ export default function RegisterPage() {
     return null;
   };
 
-  const canSubmit = form.displayName && form.username && form.email && form.password && form.confirmPassword
+  // Phone is deliberately NOT part of canSubmit: the submit handler shows the
+  // inline phone error, which a permanently disabled button would hide.
+  const canSubmit = form.displayName && form.username && form.email
+    && form.password && form.confirmPassword
     && !usernameError && !usernameChecking && !usernameTaken && form.username.length >= 3;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!canSubmit) {
-      const validationError = validate();
-      if (validationError) { setError(validationError); return; }
-    }
+
+    // Phone is required and is the only field with its own inline error, so it
+    // is checked first and blocks submission on its own.
+    const phoneValidationError = validateKenyanPhone(form.phoneNumber);
+    setPhoneError(phoneValidationError);
+    if (phoneValidationError) return;
+
+    const validationError = validate();
+    if (validationError) { setError(validationError); return; }
     setLoading(true);
     try {
-      await register(form.email, form.password, form.displayName, form.username);
+      await register(
+        form.email,
+        form.password,
+        form.displayName,
+        form.username,
+        form.phoneNumber.trim()
+      );
       navigate(redirectPath);
     } catch (err) {
       const code = err.code || '';
@@ -183,7 +210,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div>
               <input
                 type="text"
@@ -198,14 +225,14 @@ export default function RegisterPage() {
             <div>
               <input
                 type="text"
-                placeholder="Username (e.g. victork254)"
+                placeholder="Username (e.g. VictorKE)"
                 value={form.username}
                 onChange={handleUsernameChange}
                 className={`input-field ${usernameError || usernameTaken ? '!border-red-500' : ''} ${usernameAvailable ? '!border-green-500' : ''}`}
                 autoComplete="off"
               />
               <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
-                Only lowercase letters, numbers, and underscores. No spaces.
+                Letters (capitals welcome), numbers, underscores and hyphens. No spaces.
               </p>
 
               {usernameChecking && (
@@ -272,6 +299,34 @@ export default function RegisterPage() {
                 className="input-field"
                 autoComplete="email"
               />
+            </div>
+
+            <div>
+              <input
+                type="tel"
+                inputMode="tel"
+                placeholder="M-Pesa number (e.g. 0712345678)"
+                value={form.phoneNumber}
+                onChange={(e) => {
+                  setForm(prev => ({ ...prev, phoneNumber: e.target.value }));
+                  // Clear stale errors while typing; re-check on blur/submit.
+                  if (phoneError) setPhoneError('');
+                }}
+                onBlur={() => setPhoneError(validateKenyanPhone(form.phoneNumber))}
+                required
+                aria-required="true"
+                aria-invalid={Boolean(phoneError)}
+                className={`input-field ${phoneError ? '!border-red-500' : ''}`}
+                autoComplete="tel"
+              />
+              {phoneError && (
+                <p className="text-xs mt-1" style={{ color: '#EF4444' }} role="alert">
+                  {phoneError}
+                </p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Used for M-Pesa payments and seller contact. Never shared publicly.
+              </p>
             </div>
 
             <div>

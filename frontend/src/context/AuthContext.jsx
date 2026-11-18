@@ -59,10 +59,10 @@ export function AuthProvider({ children }) {
     return { isNew: false };
   };
 
-  const register = async (email, password, displayName, username) => {
+  const register = async (email, password, displayName, username, phoneNumber) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateAuthProfile(cred.user, { displayName });
-    await createUserDocument(cred.user.uid, { email, displayName, username });
+    await createUserDocument(cred.user.uid, { email, displayName, username, phoneNumber });
     return cred.user;
   };
 
