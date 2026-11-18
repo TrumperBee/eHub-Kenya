@@ -1,161 +1,338 @@
+// Last security audit: 2026-11-18
+// Audited by: Claude + Victor Ochieng
+//
+// Threat model notes
+// ------------------
+// * The Firebase client SDK is untrusted. Every rule below assumes a user can
+//   call any path with any payload and tries to prove ownership from data the
+//   client cannot forge (request.auth.uid / request.auth.token.email).
+// * Firestore cannot restrict *fields* on a read — a `read` grant returns the
+//   whole document. Private contact data therefore lives in
+//   users/{uid}/private/contact and the public users/{uid} document only holds
+//   display data (name, username, rating, sales counters, photo).
+// * Backend code uses the Admin SDK, which bypasses these rules entirely. That
+//   is why orders, disputes, payouts and reviews are written server-side only.
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Must stay in sync with ADMIN_EMAIL in the backend environment. Rules
+    // cannot read env vars, so the value is duplicated here on purpose.
+    function adminEmail() {
+      return 'ochiengv250@gmail.com';
+    }
+
     function isLoggedIn() { return request.auth != null; }
-    function isOwner(uid) { return request.auth.uid == uid; }
-    function isAdmin() { return request.auth != null && request.auth.token.email == 'ochiengv250@gmail.com'; }
+    function isOwner(uid) { return isLoggedIn() && request.auth.uid == uid; }
+    function isAdmin() {
+      return isLoggedIn() && request.auth.token.email == adminEmail();
+    }
     function isSeller() {
       return isLoggedIn() &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.sellerApproved == true;
     }
 
+    // SECURITY: contact details must never live on the publicly readable user
+    // document. Writes are rejected so the leak cannot be reintroduced later.
+    function userPrivateKeys() {
+      return ['email', 'phoneNumber', 'whatsappNumber', 'sellerWhatsapp', 'sellerPhone'];
+    }
+
+    // SECURITY: fields that grant privileges or compute money/trust. Only an
+    // admin (or the backend) may change them.
+    function userProtectedKeys() {
+      return [
+        'uid', 'role', 'sellerApproved', 'sellerRating', 'sellerTotalRatings',
+        'totalSales', 'totalPurchases', 'statsCounted', 'disabled', 'banned',
+        'createdAt'
+      ];
+    }
+
+    function usernameIsValid() {
+      let data = request.resource.data;
+      return !('username' in data)
+        || data.username == null
+        || (data.username is string
+            && data.username.size() >= 3
+            && data.username.size() <= 20
+            && data.username.matches('^[a-zA-Z0-9_-]+$'));
+    }
+
+    // ------------------------------------------------------------------ users
     match /users/{userId} {
+
+      // Public profile data (displayName, username, sellerRating, sellerBio,
+      // sales counters, photoURL). The owner reads the same document for their
+      // own settings; admins read everything. Contact data is NOT here.
       allow read: if true;
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId) || isAdmin();
+
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == userId
+        && usernameIsValid()
+        && !request.resource.data.keys().hasAny(userPrivateKeys())
+        // SECURITY: a brand-new account cannot bootstrap itself into a
+        // privileged or pre-rated state. Only the safe defaults are accepted;
+        // admin promotion and rating changes happen server-side.
+        && (!('role' in request.resource.data) || request.resource.data.role == 'buyer')
+        && (!('sellerApproved' in request.resource.data) || request.resource.data.sellerApproved == false)
+        && (!('disabled' in request.resource.data) || request.resource.data.disabled == false)
+        && (!('banned' in request.resource.data) || request.resource.data.banned == false)
+        && (!('sellerRating' in request.resource.data) || request.resource.data.sellerRating == 0)
+        && (!('sellerTotalRatings' in request.resource.data) || request.resource.data.sellerTotalRatings == 0)
+        && (!('totalSales' in request.resource.data) || request.resource.data.totalSales == 0)
+        && (!('totalPurchases' in request.resource.data) || request.resource.data.totalPurchases == 0);
+
+      allow update: if (isOwner(userId) || isAdmin())
+        && usernameIsValid()
+        && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(userPrivateKeys()))
+        && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(userProtectedKeys()));
+
+      // Users are never hard-deleted from the client; AccountPage sets a
+      // `deleted` flag through the guarded update above.
+      allow delete: if isAdmin();
+
+      // SECURITY: private contact details (phone, email, WhatsApp). Owner and
+      // admin only. Order participants never read this document: the backend
+      // snapshots the seller's contact onto the order at payment time, and the
+      // order document is already readable only by its buyer/seller.
+      match /private/{docId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) || isAdmin();
+      }
 
       match /reviews/{reviewId} {
         allow read: if true;
         // Reviews are written only by the backend, which verifies a completed
-        // order first. Clients must not be able to post or edit reviews directly.
+        // order first. Clients must not be able to post or edit reviews.
         allow create, update, delete: if false;
       }
 
       match /savedListings/{listingId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow delete: if isOwner(userId);
+        allow read, create, delete: if isOwner(userId);
+        allow update: if false;
+      }
+
+      // SECURITY: notification documents are produced by the backend or by the
+      // owner's own UI, never created/edited by other users.
+      match /notifications/{notifId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if false;
+      }
+
+      // Web-push endpoints. Written by POST /api/push/subscribe (Admin SDK);
+      // these rules only let the owner inspect/remove their own devices.
+      match /pushSubscriptions/{subId} {
+        allow read, create, update, delete: if isOwner(userId);
       }
     }
 
+    // --------------------------------------------------------------- listings
     match /listings/{listingId} {
-      allow read: if true;
-      allow create: if isSeller();
-      allow update: if (isLoggedIn() &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount']))
-        || (isSeller() && resource.data.sellerId == request.auth.uid)
+      // Public marketplace: anyone can read an active listing (and a sold one,
+      // so shared links keep working). Paused/reserved listings are visible to
+      // their owner, the buyer who reserved them, and admins only.
+      allow read: if resource.data.status in ['active', 'sold']
+        || isOwner(resource.data.sellerId)
+        || (isLoggedIn() && resource.data.reservedById == request.auth.uid)
         || isAdmin();
-      allow delete: if isAdmin();
+
+      // SECURITY: create only for an approved seller, only as themselves, only
+      // as an active listing, and never with contact data embedded (the public
+      // listing document must not leak a seller's phone number).
+      allow create: if isLoggedIn()
+        && isSeller()
+        && request.resource.data.sellerId == request.auth.uid
+        && request.resource.data.status == 'active'
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 100
+        && (!('description' in request.resource.data)
+            || (request.resource.data.description is string
+                && request.resource.data.description.size() <= 1000))
+        && request.resource.data.price is number
+        && request.resource.data.price >= 100
+        && request.resource.data.price <= 500000
+        // SECURITY: featured placement is admin-only.
+        && (!('featured' in request.resource.data) || request.resource.data.featured == false)
+        && !request.resource.data.keys().hasAny(userPrivateKeys());
+
+      allow update: if
+        // View counting from any visitor: exactly one increment, nothing else.
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount'])
+          && request.resource.data.viewCount == resource.data.get('viewCount', 0) + 1)
+        // Owner edits. SECURITY: the owner can never mark a listing sold,
+        // reserve it, promote it to featured, or move it to a state the
+        // payment flow owns.
+        || (isOwner(resource.data.sellerId)
+          && request.resource.data.sellerId == resource.data.sellerId
+          && request.resource.data.status in ['active', 'paused', 'removed']
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'sellerId', 'sellerWhatsapp', 'sellerPhone', 'sellerEmail',
+            'reservedById', 'reservedBy', 'reservedAt', 'soldAt', 'soldTo',
+            'featured', 'sellerRating'
+          ]))
+        || isAdmin();
+
+      // Owner hard-delete only while the listing is still active. Sold/reserved
+      // listings are closed by the backend.
+      allow delete: if isOwner(resource.data.sellerId)
+        && resource.data.status == 'active';
 
       match /reviews/{reviewId} {
         allow read: if true;
-        // Reviews are written only by the backend, which verifies a completed
-        // order first. Clients must not be able to post or edit reviews directly.
         allow create, update, delete: if false;
       }
 
       match /comments/{commentId} {
         allow read: if true;
-        allow create: if isLoggedIn();
+        allow create: if isLoggedIn()
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.content is string
+          && request.resource.data.content.size() > 0
+          && request.resource.data.content.size() <= 500;
         allow update: if isLoggedIn() && (
-          resource.data.authorId == request.auth.uid ||
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy'])
+          (resource.data.authorId == request.auth.uid
+            && request.resource.data.content is string
+            && request.resource.data.content.size() <= 500)
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy'])
         );
-        allow delete: if isLoggedIn() && resource.data.authorId == request.auth.uid || isAdmin();
+        allow delete: if (isLoggedIn() && resource.data.authorId == request.auth.uid) || isAdmin();
       }
     }
 
+    // ----------------------------------------------------------------- orders
+    // Orders are managed exclusively by the backend via Admin SDK
+    // (POST /api/payment/stk-push creates them, /api/escrow/* mutates them).
+    // Clients cannot create, update or delete an order — that is what keeps
+    // prices, escrow status and payouts trustworthy.
     match /orders/{orderId} {
       allow read: if isLoggedIn() &&
         (resource.data.buyerId == request.auth.uid ||
          resource.data.sellerId == request.auth.uid ||
          isAdmin());
-      allow create: if false; // orders are created only by the backend Admin SDK
-      allow update: if isLoggedIn() &&
-        (resource.data.buyerId == request.auth.uid ||
-         resource.data.sellerId == request.auth.uid ||
-         isAdmin());
+      allow create, update, delete: if false;
 
+      // Order chat: participants (and the admin) only.
       match /messages/{messageId} {
-        allow read: if isLoggedIn() &&
-          (get(/databases/$(database)/documents/orders/$(orderId)).data.buyerId == request.auth.uid ||
-           get(/databases/$(database)/documents/orders/$(orderId)).data.sellerId == request.auth.uid ||
-           isAdmin());
-        allow create: if isLoggedIn() && (
-          get(/databases/$(database)/documents/orders/$(orderId)).data.buyerId == request.auth.uid ||
-          get(/databases/$(database)/documents/orders/$(orderId)).data.sellerId == request.auth.uid ||
-          isAdmin()
-        );
+        function order() {
+          return get(/databases/$(database)/documents/orders/$(orderId)).data;
+        }
+        allow read: if isLoggedIn()
+          && (order().buyerId == request.auth.uid || order().sellerId == request.auth.uid || isAdmin());
+        allow create: if isLoggedIn()
+          && (order().buyerId == request.auth.uid || order().sellerId == request.auth.uid || isAdmin())
+          && request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if false;
       }
 
+      // Credential deliveries are backend-only. Buyers read them through the
+      // audited reveal endpoint.
       match /delivery/{deliveryId} {
-        allow read: if isLoggedIn() &&
-          (get(/databases/$(database)/documents/orders/$(orderId)).data.buyerId == request.auth.uid ||
-           get(/databases/$(database)/documents/orders/$(orderId)).data.sellerId == request.auth.uid ||
-           isAdmin());
+        allow read: if isLoggedIn()
+          && (get(/databases/$(database)/documents/orders/$(orderId)).data.buyerId == request.auth.uid
+              || get(/databases/$(database)/documents/orders/$(orderId)).data.sellerId == request.auth.uid
+              || isAdmin());
         allow create, update, delete: if false;
       }
     }
 
+    // ------------------------------------------------------- seller onboarding
     match /sellerApplications/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId);
-      allow update: if isAdmin();
+      allow create: if isOwner(userId)
+        && request.resource.data.userId == userId
+        && request.resource.data.status == 'pending';
+      // SECURITY: only admins can approve/reject. An applicant may re-submit
+      // after a rejection (status back to 'pending'), but can never approve
+      // themselves or edit an approved application.
+      allow update: if isAdmin()
+        || (isOwner(userId)
+          && resource.data.status != 'approved'
+          && request.resource.data.userId == userId
+          && request.resource.data.status == 'pending');
+      allow delete: if isAdmin();
     }
 
+    // -------------------------------------------------------- backend-owned
     match /transactions/{txId} {
       allow read: if isAdmin();
       allow write: if false;
     }
 
-    // Dispute records mirror the dispute state of an order. Written only by the
-    // backend Admin SDK (which bypasses rules); readable by the super admin so
-    // the Command Center can list them without scanning every order.
     match /disputes/{disputeId} {
       allow read: if isAdmin();
       allow write: if false;
     }
 
-    // Public platform counters (read by everyone, written by backend Admin SDK
-    // which bypasses rules). Client writes are limited to atomic counter fields
-    // only — a full document overwrite is rejected.
-    // Public platform counters (read by everyone). All metrics are derived by
-    // the backend reconciliation service from source-of-truth data (listings,
-    // orders, users) and written with the Admin SDK, which bypasses these
-    // rules. The ONLY client write allowed is the idempotent one-time
-    // totalUsers increment made when a brand-new user registers (guarded by a
-    // statsCounted flag on the user's own doc). A full document overwrite or
-    // any other counter change from the browser is rejected.
+    // Platform counters are derived by the backend reconciliation service from
+    // listings/orders/users. SECURITY: with no client write path the numbers
+    // cannot be inflated from a browser.
     match /stats/{docId} {
-      allow read: if true;
-      allow write: if isLoggedIn() &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'totalUsers',
-        ]);
-    }
-
-    // Maintenance flag: publicly readable so the storefront can show the
-    // maintenance page even to signed-out visitors. Written only by the backend
-    // Admin SDK (super-admin route), which bypasses these rules.
-    match /settings/{docId} {
       allow read: if true;
       allow write: if false;
     }
 
-    match /notifications/{notifId} {
-      allow read: if isLoggedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isLoggedIn();
-      allow update: if isLoggedIn() && resource.data.userId == request.auth.uid;
-      allow delete: if false;
+    // SECURITY: only the public maintenance flag is readable; every other
+    // settings document is backend-only. Writes always use the Admin SDK.
+    match /settings/{docId} {
+      allow read: if docId == 'maintenanceMode';
+      allow write: if false;
     }
 
+    // Root notification feed (legacy + backend notifications).
+    match /notifications/{notifId} {
+      allow read: if isLoggedIn() && resource.data.userId == request.auth.uid;
+      // SECURITY: self-notifications only. Cross-user notifications go through
+      // POST /api/notifications (Admin SDK, rate-limited).
+      allow create: if isLoggedIn()
+        && (request.resource.data.userId == request.auth.uid || isAdmin())
+        && request.resource.data.title is string
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.message is string
+        && request.resource.data.message.size() <= 500;
+      allow update: if isLoggedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if isLoggedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // ------------------------------------------------------------ friday drops
     match /fridayDrops/{dropId} {
-      allow read: if isLoggedIn() && resource.data.sellerId == request.auth.uid
+      allow read: if (isLoggedIn() && resource.data.sellerId == request.auth.uid)
                  || resource.data.status == 'approved'
                  || isAdmin();
-      allow create: if isSeller();
-      allow update: if isSeller() && resource.data.sellerId == request.auth.uid
+      // SECURITY: a seller can only submit a drop for their own listing.
+      allow create: if isSeller()
+        && request.resource.data.sellerId == request.auth.uid
+        && request.resource.data.status == 'pending';
+      allow update: if (isSeller() && resource.data.sellerId == request.auth.uid)
                  || isAdmin()
-                 || isLoggedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']);
+                 // Public drop page view counter: exactly one increment.
+                 || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views'])
+                     && request.resource.data.views == resource.data.get('views', 0) + 1);
       allow delete: if isAdmin();
     }
 
     match /dropNotifications/{notifId} {
-      allow read: if isLoggedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isLoggedIn();
-      allow update: if isLoggedIn() && resource.data.userId == request.auth.uid;
-      allow delete: if false;
+      allow read, delete: if isLoggedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isLoggedIn()
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if isLoggedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+    }
+
+    // Reviews (root collection variant — the app stores them under
+    // users/{sellerId}/reviews and listings/{id}/reviews, both backend-written).
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isLoggedIn()
+        && request.resource.data.buyerId == request.auth.uid
+        && request.resource.data.orderId is string
+        && get(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.buyerId == request.auth.uid
+        && get(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.status == 'completed';
+      allow update, delete: if false;
     }
   }
 }

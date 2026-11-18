@@ -1,14 +1,14 @@
 import { db } from './firebase';
-import { collection, query, where, orderBy, getDocs, getDoc, doc, addDoc, updateDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, getDoc, doc, onSnapshot } from 'firebase/firestore';
 import { resolveOrderPlatform } from '../utils/orderPlatform';
 
 const ordersRef = collection(db, 'orders');
 
 export { resolveOrderPlatform };
 
-export const createOrder = async (data) => {
-  return addDoc(ordersRef, { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-};
+// SECURITY: there is deliberately no client-side createOrder/updateOrder.
+// Orders are created by POST /api/payment/stk-push and mutated by the escrow
+// endpoints (Admin SDK); firestore.rules rejects every client write.
 
 export const getOrderById = async (id) => {
   const snap = await getDoc(doc(db, 'orders', id));
@@ -25,10 +25,6 @@ export const getSellerOrders = async (sellerId) => {
   const q = query(ordersRef, where('sellerId', '==', sellerId), orderBy('createdAt', 'desc'));
   const snapshot = await getDocs(q);
   return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-};
-
-export const updateOrder = async (id, data) => {
-  return updateDoc(doc(db, 'orders', id), { ...data, updatedAt: serverTimestamp() });
 };
 
 export const getAllOrders = async () => {

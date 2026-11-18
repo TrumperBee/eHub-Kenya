@@ -1,7 +1,9 @@
 import TableSkeleton from '../../../components/admin/TableSkeleton';
 import { useEffect, useRef, useState } from 'react';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
+import { getUserContact, mergeContactIntoProfile } from '../../../services/userContactService';
+import { markSellerPayoutPaid } from '../../../services/adminOrderService';
 import toast from 'react-hot-toast';
 import { formatKES, formatDate } from '../../../utils/formatters';
 import { PLATFORM_FEE_RATE, platformFee, sellerPayout, completedAtMs } from '../../../utils/payouts';
@@ -59,8 +61,13 @@ export default function PayoutsTab({ orders = [], loading = false }) {
     Promise.all(
       missing.map(async (id) => {
         try {
-          const snap = await getDoc(doc(db, 'users', id));
-          return [id, snap.exists() ? snap.data() : {}];
+          // SECURITY: payout phone lives in the owner/admin-only private
+          // contact document, so it is fetched separately and merged here.
+          const [snap, contact] = await Promise.all([
+            getDoc(doc(db, 'users', id)),
+            getUserContact(id),
+          ]);
+          return [id, mergeContactIntoProfile(snap.exists() ? snap.data() : {}, contact)];
         } catch {
           return [id, {}];
         }
@@ -83,12 +90,9 @@ export default function PayoutsTab({ orders = [], loading = false }) {
   const handleMarkPaid = async (order) => {
     setPayingId(order.id);
     try {
-      await updateDoc(doc(db, 'orders', order.id), {
-        sellerPaid: true,
-        sellerPaidAt: serverTimestamp(),
-        sellerPaidBy: 'admin',
-        updatedAt: serverTimestamp(),
-      });
+      // SECURITY: order writes are backend-only (Admin SDK); the browser can
+      // no longer set sellerPaid directly.
+      await markSellerPayoutPaid(order.id);
       const profile = profiles[order.sellerId];
       toast.success(
         `Marked ${formatKES(sellerPayout(order.amount))} to ${sellerNameOf(order, profile)} as paid.`

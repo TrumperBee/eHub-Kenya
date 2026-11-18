@@ -3,6 +3,9 @@ import { onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, create
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../services/firebase';
 import { getUserDocument, createUserDocument, updateUserDocument } from '../services/authService';
+import { mergeContactIntoProfile, saveUserContact } from '../services/userContactService';
+
+const PRIVATE_CONTACT_KEYS = ['email', 'phoneNumber', 'whatsappNumber', 'sellerWhatsapp', 'sellerPhone'];
 
 const AuthContext = createContext(null);
 
@@ -25,19 +28,54 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (!currentUser) return;
-    const unsub = onSnapshot(doc(db, 'users', currentUser.uid), (snapshot) => {
-      if (snapshot.exists()) {
-        setUserProfile({ uid: snapshot.id, ...snapshot.data() });
-      } else {
-        setUserProfile(null);
+    if (!currentUser) return undefined;
+
+    let profile = null;
+    let contact = {};
+    let active = true;
+
+    // SECURITY: the public user document no longer holds phone/email/WhatsApp.
+    // Both documents are subscribed so consumers keep reading `userProfile`
+    // exactly as before, while the private values are only fetched for the
+    // owner (Firestore rules enforce that).
+    const publish = () => {
+      if (!active) return;
+      setUserProfile(profile ? mergeContactIntoProfile(profile, contact) : null);
+    };
+
+    const unsubProfile = onSnapshot(
+      doc(db, 'users', currentUser.uid),
+      (snapshot) => {
+        profile = snapshot.exists() ? { uid: snapshot.id, ...snapshot.data() } : null;
+        publish();
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Firestore user profile error:', error);
+        setLoading(false);
       }
-      setLoading(false);
-    }, (error) => {
-      console.error('Firestore user profile error:', error);
-      setLoading(false);
-    });
-    return unsub;
+    );
+
+    const unsubContact = onSnapshot(
+      doc(db, 'users', currentUser.uid, 'private', 'contact'),
+      (snapshot) => {
+        contact = snapshot.exists() ? snapshot.data() : {};
+        publish();
+      },
+      (error) => {
+        // A missing private doc is expected for accounts created before the
+        // split; only log unexpected failures.
+        if (error?.code !== 'permission-denied') {
+          console.warn('Private contact subscription error:', error?.code);
+        }
+      }
+    );
+
+    return () => {
+      active = false;
+      unsubProfile();
+      unsubContact();
+    };
   }, [currentUser]);
 
   const login = async (email, password) => {
@@ -74,6 +112,25 @@ export function AuthProvider({ children }) {
 
   const updateUserProfile = async (data) => {
     if (!currentUser) return;
+
+    // SECURITY: split the payload so contact details go to the private
+    // subcollection and never onto the publicly readable user document.
+    const contactFields = {};
+    for (const key of PRIVATE_CONTACT_KEYS) {
+      if (data[key] !== undefined) contactFields[key] = data[key];
+    }
+
+    if (Object.keys(contactFields).length > 0) {
+      await saveUserContact(currentUser.uid, {
+        email: contactFields.email,
+        phoneNumber: contactFields.phoneNumber,
+        whatsappNumber:
+          contactFields.whatsappNumber !== undefined
+            ? contactFields.whatsappNumber
+            : contactFields.sellerWhatsapp,
+      });
+    }
+
     await updateUserDocument(currentUser.uid, data);
   };
 

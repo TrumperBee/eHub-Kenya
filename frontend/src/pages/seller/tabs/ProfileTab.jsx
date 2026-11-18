@@ -71,11 +71,11 @@ export default function ProfileTab({ profile, user, onTabChange }) {
     }
     setSaving(true);
     try {
+      // SECURITY: display fields go to the public profile; contact fields are
+      // routed by AuthContext.updateProfile into users/{uid}/private/contact.
       await updateUserDocument(profile.uid, {
         sellerDisplayName: name,
         sellerBio: sellerBio.trim() || null,
-        sellerWhatsapp: sellerWhatsapp.trim() || null,
-        phoneNumber: phoneNumber.trim() || null,
       });
       await updateProfile({
         sellerDisplayName: name,

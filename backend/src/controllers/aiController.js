@@ -1,4 +1,5 @@
 const { GoogleGenAI } = require('@google/genai');
+const { LIMITS, cleanText } = require('../utils/validateInput');
 
 const apiKey = process.env.GEMINI_API_KEY;
 
@@ -328,11 +329,16 @@ const chat = async (req, res) => {
       return res.status(400).json({ error: 'Messages array required' });
     }
 
-    const recentMessages = messages.slice(-10);
+    // SECURITY: cap history and each message length, and strip control
+    // characters before anything is forwarded to the model provider.
+    const recentMessages = messages.slice(-10).map((m) => ({
+      role: m?.role === 'assistant' ? 'assistant' : 'user',
+      content: cleanText(m?.content, LIMITS.chatMessage),
+    }));
 
     for (const m of recentMessages) {
-      if (!m || typeof m.role !== 'string' || typeof m.content !== 'string' || !m.content.trim()) {
-        return res.status(400).json({ error: 'Each message must have a string role and non-empty text content' });
+      if (!m.content) {
+        return res.status(400).json({ error: 'Each message must have non-empty text content' });
       }
     }
 

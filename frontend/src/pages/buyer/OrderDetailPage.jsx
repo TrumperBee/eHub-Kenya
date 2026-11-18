@@ -19,7 +19,6 @@ import {
   Shield, CheckCircle, Mail, KeyRound, Eye, EyeOff, Copy,
   Send, Upload, AlertTriangle, Lock, ShoppingBag, Loader, RefreshCw, Star, X, Clock, MessageCircle,
 } from 'lucide-react';
-import { getUserById } from '../../services/usersService';
 import { buildSellerPayoutAlertUrl, buildBuyerContactUrl, buildSellerContactUrl, canShowDirectContact, ADMIN_WHATSAPP_URL } from '../../utils/whatsapp';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import toast from 'react-hot-toast';
@@ -348,34 +347,15 @@ function SellerPayoutWhatsAppCard({ order }) {
 function DirectContactSection({ order, isBuyer, isSeller }) {
   const allowed = canShowDirectContact(order?.status);
   const isParticipant = Boolean(isBuyer || isSeller);
-  const otherPartyId = isBuyer ? order?.sellerId : isSeller ? order?.buyerId : null;
 
-  const [contactValue, setContactValue] = useState('');
-  const [loaded, setLoaded] = useState(false);
+  if (!allowed || !isParticipant) return null;
 
-  useEffect(() => {
-    if (!allowed || !isParticipant || !otherPartyId) return undefined;
-    let cancelled = false;
-
-    getUserById(otherPartyId)
-      .then((profile) => {
-        if (cancelled) return;
-        setContactValue((isBuyer ? profile?.sellerWhatsapp : profile?.phoneNumber) || '');
-        setLoaded(true);
-      })
-      .catch((err) => {
-        console.warn('Direct contact lookup failed:', err?.message || err);
-        if (!cancelled) setLoaded(true);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [allowed, isParticipant, otherPartyId, isBuyer]);
-
-  // Render nothing until the other party's details are known, so a delayed
-  // lookup can never flash an empty section or a disabled button.
-  if (!allowed || !isParticipant || !loaded) return null;
+  // SECURITY: contact details come from the snapshot the backend writes onto
+  // the order at payment time. The public user documents no longer expose any
+  // phone number, and only this order's participants can read this document.
+  const contactValue = isBuyer
+    ? order.sellerWhatsapp || order.sellerPhone || ''
+    : order.phone || order.paymentPhone || '';
 
   const href = isBuyer
     ? buildBuyerContactUrl({

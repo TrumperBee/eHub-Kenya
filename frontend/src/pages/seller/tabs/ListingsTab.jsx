@@ -80,7 +80,7 @@ export default function ListingsTab({ profile, user, onTabChange }) {
     if (!deleteId) return;
     setDeleting(true);
     try {
-      await deleteListingSoft(deleteId);
+      await deleteListingSoft(deleteId, profile?.uid);
       toast.success('Listing removed');
       setDeleteId(null);
       fetchData();

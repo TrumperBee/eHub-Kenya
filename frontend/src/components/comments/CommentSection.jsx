@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { db } from '../../services/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { sendNotificationSafe } from '../../services/notificationService';
 import {
   subscribeToComments, fetchOlderComments, postComment, COMMENTS_PAGE
 } from '../../services/commentsService';
@@ -172,30 +171,30 @@ export default function CommentSection({ listingId, sellerId }) {
       setReplyingTo(null);
       toast.success(replyTarget ? 'Reply sent' : 'Message sent');
 
+      // SECURITY: cross-user notifications go through the backend; Firestore
+      // rules only allow a user to write their own notification documents.
       if (mentions && mentions.length > 0) {
         for (const uid of mentions) {
           if (uid === currentUser.uid) continue;
-          await addDoc(collection(db, 'notifications'), {
+          await sendNotificationSafe({
             userId: uid,
             title: 'You were mentioned',
             message: `${userProfile?.displayName || 'Someone'} mentioned you in the discussion.`,
             type: 'mention',
             listingId,
-            read: false,
-            createdAt: serverTimestamp(),
+            link: `/listing/${listingId}`,
           });
         }
       }
 
       if (replyTarget && replyTarget.authorId !== currentUser.uid) {
-        await addDoc(collection(db, 'notifications'), {
+        await sendNotificationSafe({
           userId: replyTarget.authorId,
           title: 'New reply to your message',
           message: `${userProfile?.displayName || 'Someone'} replied to your message.`,
           type: 'reply',
           listingId,
-          read: false,
-          createdAt: serverTimestamp(),
+          link: `/listing/${listingId}`,
         });
       }
     } catch (err) {

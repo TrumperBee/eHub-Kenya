@@ -5,6 +5,8 @@ import { doc, collection, query, where, orderBy, limit, getDocs, writeBatch, set
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { updateUserDocument } from '../../services/authService';
+import { saveUserContact } from '../../services/userContactService';
+import { validatePhone } from '../../utils/validators';
 import PasswordInput from '../../components/common/PasswordInput';
 import { validateUsernameFormat, generateSuggestions, checkUsername, normalizeUsernameLower } from '../../utils/usernameUtils';
 import { formatDate, formatKES } from '../../utils/formatters';
@@ -184,17 +186,25 @@ export default function AccountPage() {
     if (usernameChecking) { toast.error('Please wait for username check'); return; }
     if (usernameError) { toast.error(usernameError); return; }
     if (usernameTaken) { toast.error('Username is taken'); return; }
+    // SECURITY: validate the Kenyan MSISDN before it is written to Firestore.
+    const trimmedPhone = phoneNumber.trim();
+    if (trimmedPhone && !validatePhone(trimmedPhone)) {
+      toast.error('Enter a valid Kenyan phone number (e.g. 0712345678)');
+      return;
+    }
     setSaving(true);
     try {
       await updateUserDocument(currentUser.uid, {
         displayName: displayName.trim(),
         username: usernameVal,
         usernameLower: normalizeUsernameLower(usernameVal),
-        phoneNumber: phoneNumber.trim() || null,
       });
+      // SECURITY: contact details live in the owner-only private subcollection,
+      // never on the publicly readable user document.
+      await saveUserContact(currentUser.uid, { phoneNumber: trimmedPhone });
       await updateProfile({
         displayName: displayName.trim(),
-        phoneNumber: phoneNumber.trim(),
+        phoneNumber: trimmedPhone,
       });
       toast.success('Profile updated');
     } catch (err) {

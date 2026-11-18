@@ -1,4 +1,8 @@
-export const ADMIN_EMAIL = 'ochiengv250@gmail.com';
+// SECURITY: the admin identity is configured per environment so a staging or
+// production deployment can pin its own admin account. The literal is only a
+// local-development fallback.
+const envAdminEmail = (import.meta.env?.VITE_ADMIN_EMAIL || '').trim();
+export const ADMIN_EMAIL = envAdminEmail || 'ochiengv250@gmail.com';
 export const ADMIN_ROUTE = '/hub-command-af29x';
 
 export const TIERS = {

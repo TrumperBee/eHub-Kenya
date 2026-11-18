@@ -49,8 +49,15 @@ function orderUrl(order) {
 async function getUserEmail(uid) {
   if (!uid) return null;
   try {
-    const snap = await adminDb.doc(`users/${uid}`).get();
-    return (snap.exists && snap.data().email) || null;
+    // SECURITY: email lives in the private contact document now. Fall back to
+    // the legacy public field only for users the migration has not touched.
+    const [privateSnap, publicSnap] = await Promise.all([
+      adminDb.doc(`users/${uid}/private/contact`).get(),
+      adminDb.doc(`users/${uid}`).get(),
+    ]);
+    const privateData = privateSnap.exists ? privateSnap.data() : {};
+    const publicData = publicSnap.exists ? publicSnap.data() : {};
+    return privateData.email || publicData.email || null;
   } catch (err) {
     logger.warn(`getUserEmail lookup failed for ${uid}: ${err.message}`);
     return null;
@@ -58,11 +65,25 @@ async function getUserEmail(uid) {
 }
 
 // Safe seller profile used for the admin payout alert (name + payout phone).
+// SECURITY: merges the owner-only contact document so payouts keep working
+// without keeping phone/email on the publicly readable user document.
 async function getUserProfile(uid) {
   if (!uid) return null;
   try {
-    const snap = await adminDb.doc(`users/${uid}`).get();
-    return snap.exists ? snap.data() : null;
+    const [publicSnap, privateSnap] = await Promise.all([
+      adminDb.doc(`users/${uid}`).get(),
+      adminDb.doc(`users/${uid}/private/contact`).get(),
+    ]);
+    if (!publicSnap.exists) return null;
+    const profile = publicSnap.data();
+    const contact = privateSnap.exists ? privateSnap.data() : {};
+    return {
+      ...profile,
+      email: contact.email || profile.email || null,
+      phoneNumber: contact.phoneNumber || profile.phoneNumber || null,
+      sellerWhatsapp:
+        contact.whatsappNumber || contact.sellerWhatsapp || profile.sellerWhatsapp || null,
+    };
   } catch (err) {
     logger.warn(`getUserProfile lookup failed for ${uid}: ${err.message}`);
     return null;

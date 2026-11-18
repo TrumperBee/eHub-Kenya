@@ -3,6 +3,15 @@ const cors = require('cors');
 const morgan = require('morgan');
 require('dotenv').config();
 
+// SECURITY: fail fast when auth/payment secrets are missing. Runs before any
+// route module is required so a misconfigured deploy never starts listening.
+const { validateEnv } = require('./src/utils/validateEnv');
+const envCheck = validateEnv();
+if (!envCheck.ok) {
+  console.error('[env] Refusing to start with an invalid environment.');
+  process.exit(1);
+}
+
 const paymentRoutes = require('./src/routes/payment.routes');
 const escrowRoutes = require('./src/routes/escrow.routes');
 const aiRoutes = require('./src/routes/ai.routes');
@@ -13,8 +22,11 @@ const reviewRoutes = require('./src/routes/review.routes');
 const settingsRoutes = require('./src/routes/settings.routes');
 const pushRoutes = require('./src/routes/push.routes');
 const feedbackRoutes = require('./src/routes/feedback.routes');
+const notificationRoutes = require('./src/routes/notification.routes');
+const adminRoutes = require('./src/routes/admin.routes');
 const resendWebhookRoutes = require('./src/routes/resendWebhook.routes');
 const errorHandler = require('./src/middleware/errorHandler');
+const { apiLimiter } = require('./src/middleware/rateLimiter');
 const { ALLOWED_ORIGINS } = require('./src/config');
 const { startStatsReconciler } = require('./src/services/statsRecoService');
 const { checkConnectivity, getConnectivity } = require('./src/services/zetupayService');
@@ -22,9 +34,9 @@ const { checkConnectivity, getConnectivity } = require('./src/services/zetupaySe
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Secure CORS allowlist: dev + production Vercel origins (plus any additional
-// origins from the FRONTEND_URL env var). Requests without an Origin header
-// (Paystack webhooks, health checks, server-to-server) are allowed.
+// Secure CORS allowlist: the three production origins (apex + www + the legacy
+// Vercel host) and, outside production only, the local dev origins. There is
+// deliberately no wildcard and no env-var expansion.
 app.use(cors({
   origin(origin, callback) {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
@@ -44,6 +56,10 @@ app.use(express.json({
   verify: (req, _res, buf) => { req.rawBody = buf; },
 }));
 app.use(morgan('dev'));
+
+// SECURITY: 100 req/min per signed-in user (or per IP). Signed webhooks and the
+// health probe are skipped so provider callbacks are never throttled.
+app.use('/api', apiLimiter);
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -65,6 +81,10 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/feedback', feedbackRoutes);
+// Authenticated, rate-limited cross-user notifications (Admin SDK write).
+app.use('/api/notifications', notificationRoutes);
+// Admin-only order administration (payouts, dispute review).
+app.use('/api/admin', adminRoutes);
 
 app.use(errorHandler);
 

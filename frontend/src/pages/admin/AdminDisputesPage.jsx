@@ -8,13 +8,13 @@ import {
   getDoc,
   getDocs,
   doc,
-  updateDoc,
   onSnapshot,
   orderBy,
   limit,
-  serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../../services/firebase';
+import { getUserContact, mergeContactIntoProfile } from '../../services/userContactService';
+import { markDisputeUnderReview } from '../../services/adminOrderService';
 import toast from 'react-hot-toast';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { ADMIN_ROUTE } from '../../utils/constants';
@@ -113,10 +113,23 @@ export default function AdminDisputesPage({ embedded = false }) {
   const applyUserDetails = useCallback(async (orders) => {
     return Promise.all(
       orders.map(async (order) => {
-        const buyer = order.buyerId ? await getDoc(doc(db, 'users', order.buyerId)).catch(() => null) : null;
-        const seller = order.sellerId ? await getDoc(doc(db, 'users', order.sellerId)).catch(() => null) : null;
-        const buyerData = buyer?.exists() ? buyer.data() : {};
-        const sellerData = seller?.exists() ? seller.data() : {};
+        // SECURITY: emails/phones live in the private contact document; only
+        // admins can read them (Firestore rules), and they are merged here for
+        // the dispute resolution view.
+        const [buyer, buyerContact, seller, sellerContact] = await Promise.all([
+          order.buyerId ? getDoc(doc(db, 'users', order.buyerId)).catch(() => null) : null,
+          order.buyerId ? getUserContact(order.buyerId) : Promise.resolve({}),
+          order.sellerId ? getDoc(doc(db, 'users', order.sellerId)).catch(() => null) : null,
+          order.sellerId ? getUserContact(order.sellerId) : Promise.resolve({}),
+        ]);
+        const buyerData = mergeContactIntoProfile(
+          buyer?.exists() ? buyer.data() : {},
+          buyerContact
+        );
+        const sellerData = mergeContactIntoProfile(
+          seller?.exists() ? seller.data() : {},
+          sellerContact
+        );
         return {
           ...order,
           buyerName: order.buyerDisplayName || buyerData.displayName || '-',
@@ -288,14 +301,9 @@ export default function AdminDisputesPage({ embedded = false }) {
   const handleMarkUnderReview = async (order) => {
     setMarkingReview(true);
     try {
-      await updateDoc(doc(db, 'orders', order.id), {
-        disputeStatus: 'under_review',
-        adminReviewRequired: false,
-        disputeUpdatedAt: serverTimestamp(),
-        adminReviewerId: currentUser?.uid || '',
-        adminReviewerName: currentUser?.displayName || 'Admin',
-        updatedAt: serverTimestamp(),
-      });
+      // SECURITY: order writes are backend-only (Admin SDK), so the admin
+      // console calls the audited endpoint instead of updateDoc().
+      await markDisputeUnderReview(order.id);
       setTab('review');
       toast.success('Dispute marked as under review.');
     } catch (err) {

@@ -2,6 +2,7 @@ import TableSkeleton from '../../components/admin/TableSkeleton';
 import { useEffect, useRef, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
+import { getUserContact, mergeContactIntoProfile } from '../../services/userContactService';
 import toast from 'react-hot-toast';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { getAllApplications, approveSeller, rejectApplication } from '../../services/usersService';
@@ -72,8 +73,13 @@ export default function AdminApplicationsPage({ embedded = false }) {
     Promise.all(
       missing.map(async (id) => {
         try {
-          const snap = await getDoc(doc(db, 'users', id));
-          return [id, snap.exists() ? snap.data() : {}];
+          // SECURITY: contact details are owner/admin-only; admins reviewing an
+          // application need them to verify the seller.
+          const [snap, contact] = await Promise.all([
+            getDoc(doc(db, 'users', id)),
+            getUserContact(id),
+          ]);
+          return [id, mergeContactIntoProfile(snap.exists() ? snap.data() : {}, contact)];
         } catch {
           return [id, {}];
         }

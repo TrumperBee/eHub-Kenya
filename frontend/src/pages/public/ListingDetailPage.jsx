@@ -15,7 +15,7 @@ import BuyNowButton from '../../components/checkout/BuyNowButton';
 import SaveButton from '../../components/listings/SaveButton';
 import CommentSection from '../../components/comments/CommentSection';
 import { toggleSaveListing, subscribeSavedListingIds } from '../../services/savedListingsService';
-import { ChevronDown, ChevronUp, Shield, Star, Circle, ChevronRight, Flame, MessageCircle, ShoppingBag } from 'lucide-react';
+import { ChevronDown, ChevronUp, Shield, Star, Circle, ChevronRight, Flame, ShoppingBag } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const statRows = [
@@ -409,24 +409,9 @@ export default function ListingDetailPage() {
                   </div>
                 )}
 
-                {!isUnavailable && !isOwner && listing.sellerWhatsapp && (
-                  <button
-                    onClick={() => {
-                      const phone = listing.sellerWhatsapp.replace(/\D/g, '').replace(/^0/, '254');
-                      const msg = encodeURIComponent(
-                        `Hello, I have a question about your listing: ${listing.title}\n${window.location.href}`
-                      );
-                      window.open(`https://wa.me/${phone}?text=${msg}`, '_blank', 'noopener');
-                    }}
-                    className="w-full flex items-center justify-center gap-2 py-3 mb-4
-                               bg-white/10 hover:bg-white/20 border border-white/20
-                               text-white/70 hover:text-white rounded-xl text-sm
-                               font-heading font-bold uppercase tracking-wide transition-all"
-                  >
-                    <MessageCircle size={16} />
-                    Ask Seller a Question
-                  </button>
-                )}
+                {/* SECURITY: no public seller WhatsApp/phone link. Contact
+                    details are revealed only to the buyer once an order
+                    reaches the delivery stage (see OrderDetailPage). */}
 
                 <div className="rounded-xl p-3 flex items-start gap-2 mb-4" style={{ background: 'rgba(255,255,255,0.1)' }}>
                   <Shield size={16} className="text-[#FFF100] mt-0.5 shrink-0" />

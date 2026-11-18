@@ -129,6 +129,16 @@ async function initiateStkPushPayment(req, res) {
       listing = data;
       amountToCharge = dropPrice != null ? dropPrice : data.price;
 
+      // SECURITY: seller contact details are no longer on the public user
+      // document, and Firestore rules cannot filter fields on a read. The
+      // backend therefore snapshots them onto the order so the buyer/seller
+      // can reach each other without exposing the data to everyone else.
+      // Read before any write — transactions require it.
+      const sellerContactSnap = await tx.get(
+        adminDb.doc(`users/${data.sellerId}/private/contact`)
+      );
+      const sellerContact = sellerContactSnap.exists ? sellerContactSnap.data() : {};
+
       tx.set(orderRef, {
         id: orderId,
         buyerId,
@@ -136,6 +146,8 @@ async function initiateStkPushPayment(req, res) {
         buyerDisplayName: req.user.name || req.user.email || 'Buyer',
         sellerId: data.sellerId,
         sellerDisplayName: data.sellerDisplayName || 'Seller',
+        sellerPhone: sellerContact.phoneNumber || '',
+        sellerWhatsapp: sellerContact.whatsappNumber || sellerContact.sellerWhatsapp || '',
         listingId,
         listingTitle: data.title,
         listingTier: data.tier,

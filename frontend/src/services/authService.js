@@ -2,26 +2,29 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithP
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, googleProvider } from './firebase';
 import { registerNewUserCount } from './statsService';
+import { saveUserContact } from './userContactService';
 
 // Usernames keep the casing the user typed; `usernameLower` is what uniqueness
 // checks query so "Baba" and "BABA" cannot both exist.
+//
+// SECURITY: the public users/{uid} document carries display data only. Email,
+// phone and WhatsApp are written to users/{uid}/private/contact, which rules
+// expose to the owner and admins only. Writing them here would be rejected by
+// firestore.rules (and would leak them to every listing viewer).
 export const createUserDocument = async (uid, data) => {
   const username =
     typeof data.username === 'string' && data.username.trim() ? data.username.trim() : null;
 
   await setDoc(doc(db, 'users', uid), {
     uid,
-    email: data.email,
     displayName: data.displayName || '',
     username,
     usernameLower: username ? username.toLowerCase() : null,
-    phoneNumber: data.phoneNumber || null,
     photoURL: data.photoURL || null,
     role: 'buyer',
     sellerApproved: false,
     sellerDisplayName: null,
     sellerBio: null,
-    sellerWhatsapp: null,
     sellerRating: 0,
     sellerTotalRatings: 0,
     totalSales: 0,
@@ -29,6 +32,13 @@ export const createUserDocument = async (uid, data) => {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+
+  await saveUserContact(uid, {
+    email: data.email || '',
+    phoneNumber: data.phoneNumber || '',
+    whatsappNumber: data.sellerWhatsapp || '',
+  });
+
   // One-time, idempotent community-size bump (guarded by the statsCounted flag
   // in the same user doc). Never blocks signup if the stats write fails — the
   // backend reconciliation recomputes totalUsers from the users collection.
@@ -40,8 +50,14 @@ export const getUserDocument = async (uid) => {
   return snap.exists() ? { uid, ...snap.data() } : null;
 };
 
+// SECURITY: profile updates must never carry private contact fields — they
+// belong in users/{uid}/private/contact (see userContactService.saveUserContact).
 export const updateUserDocument = async (uid, data) => {
-  await updateDoc(doc(db, 'users', uid), { ...data, updatedAt: serverTimestamp() });
+  const publicFields = { ...(data || {}) };
+  for (const key of ['email', 'phoneNumber', 'whatsappNumber', 'sellerWhatsapp', 'sellerPhone']) {
+    delete publicFields[key];
+  }
+  await updateDoc(doc(db, 'users', uid), { ...publicFields, updatedAt: serverTimestamp() });
 };
 
 export const registerWithEmail = async (email, password, displayName, username) => {

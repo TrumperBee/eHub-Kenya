@@ -83,10 +83,14 @@ export default function CreateListingPage() {
 
   const validate = () => {
     const errs = {};
-    if (!form.title || form.title.length > 80) errs.title = 'Title is required (max 80 chars)';
+    // SECURITY: trim before validating/saving so whitespace cannot pad a title
+    // or description past the Firestore rules limits.
+    const title = form.title.trim();
+    const description = form.description.trim();
+    if (!title || title.length > 80) errs.title = 'Title is required (max 80 chars)';
     if (!form.tier) errs.tier = 'Select a tier';
-    if (form.description.length < 30) errs.description = 'Description must be at least 30 characters';
-    if (form.description.length > 1000) errs.description = 'Description max 1000 characters';
+    if (description.length < 30) errs.description = 'Description must be at least 30 characters';
+    if (description.length > 1000) errs.description = 'Description max 1000 characters';
     const price = Number(form.price);
     if (!price || price < 100) errs.price = 'Price must be at least KES 100';
 
@@ -125,8 +129,8 @@ export default function CreateListingPage() {
         sellerDisplayName: userProfile.sellerDisplayName || userProfile.displayName,
         sellerPhotoURL: userProfile.photoURL || null,
         sellerRating: userProfile.sellerRating || 0,
-        title: form.title,
-        description: form.description,
+        title: form.title.trim(),
+        description: form.description.trim(),
         tier: form.tier,
         platform: form.platform || 'android',
         price: Number(form.price),
@@ -309,7 +313,7 @@ export default function CreateListingPage() {
             <h2 className="font-heading text-base font-bold uppercase" style={{ color: '#003BFF' }}>Description</h2>
             <div>
               <label className="block text-sm font-heading font-bold uppercase tracking-wider mb-1.5" style={{ color: '#111111' }}>DESCRIPTION</label>
-              <textarea value={form.description} onChange={update('description')} className="input-field min-h-[120px] resize-y" rows={4} placeholder="e.g. This is a high-rated squad with multiple Legendary players. I have been using this account for 2 seasons.
+              <textarea value={form.description} onChange={update('description')} className="input-field min-h-[120px] resize-y" rows={4} maxLength={1000} placeholder="e.g. This is a high-rated squad with multiple Legendary players. I have been using this account for 2 seasons.
 
 Guarantee: This account's email has never been changed before. I guarantee delivery within 3 hours of payment." />
               {errors.description && <p className="text-xs mt-1" style={{ color: '#C8102E' }}>{errors.description}</p>}

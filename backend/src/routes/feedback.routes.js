@@ -3,6 +3,7 @@ const router = express.Router();
 const rateLimit = require('express-rate-limit');
 const { sendEmail } = require('../services/emailService');
 const { adminDb } = require('../services/firebaseAdmin');
+const { LIMITS, cleanText } = require('../utils/validateInput');
 
 // Anonymous feedback is allowed, so the limiter is per IP. Three submissions an
 // hour is plenty for a human and stops anyone using the form as a mail relay.
@@ -13,7 +14,7 @@ const feedbackLimiter = rateLimit({
 });
 
 const FEEDBACK_TO = 'ochiengv250@gmail.com';
-const MAX_MESSAGE_LENGTH = 500;
+const MAX_MESSAGE_LENGTH = LIMITS.feedbackMessage;
 
 const escapeHtml = (value) =>
   String(value ?? '')
@@ -33,14 +34,19 @@ async function resolveSender(userId) {
     return { uid: 'anonymous', name: '', username: '', email: '' };
   }
   try {
-    const snap = await adminDb.doc(`users/${userId}`).get();
+    // SECURITY: email lives in the owner/admin-only contact document now.
+    const [snap, contactSnap] = await Promise.all([
+      adminDb.doc(`users/${userId}`).get(),
+      adminDb.doc(`users/${userId}/private/contact`).get(),
+    ]);
     if (!snap.exists) return { uid: userId, name: '', username: '', email: '' };
     const profile = snap.data() || {};
+    const contact = contactSnap.exists ? contactSnap.data() : {};
     return {
       uid: userId,
       name: profile.displayName || profile.sellerDisplayName || '',
       username: profile.username || '',
-      email: profile.email || '',
+      email: contact.email || profile.email || '',
     };
   } catch (err) {
     console.warn(`feedback: profile lookup failed for ${userId}: ${err.message}`);
@@ -61,12 +67,15 @@ router.post('/', feedbackLimiter, async (req, res, next) => {
     if (typeof message !== 'string' || !message.trim()) {
       return res.status(400).json({ error: 'Message is required.' });
     }
-    const trimmedMessage = message.trim();
-    if (trimmedMessage.length > MAX_MESSAGE_LENGTH) {
+    // SECURITY: trim, strip control characters and cap the freetext before it
+    // reaches the email template. Oversized input is rejected, not truncated,
+    // so the sender knows their message did not arrive whole.
+    if (message.trim().length > MAX_MESSAGE_LENGTH) {
       return res.status(400).json({
         error: `Message must be ${MAX_MESSAGE_LENGTH} characters or fewer.`,
       });
     }
+    const trimmedMessage = cleanText(message, MAX_MESSAGE_LENGTH);
 
     let normalizedRating = null;
     if (rating !== null && rating !== undefined && rating !== '') {
@@ -78,9 +87,9 @@ router.post('/', feedbackLimiter, async (req, res, next) => {
     }
 
     const submittedBy =
-      typeof userId === 'string' && userId.trim() ? userId.trim() : 'anonymous';
+      typeof userId === 'string' && userId.trim() ? cleanText(userId, 128) : 'anonymous';
     const submittedPage =
-      typeof page === 'string' && page.trim() ? page.trim() : '/';
+      typeof page === 'string' && page.trim() ? cleanText(page, 200) : '/';
     // Server-side timestamp — the browser clock is not trustworthy for audits.
     const timestamp = new Date().toISOString();
     const sender = await resolveSender(submittedBy);

@@ -94,14 +94,21 @@ export const updateListing = async (id, data) => {
   return updateDoc(doc(db, 'listings', id), { ...data, updatedAt: serverTimestamp() });
 };
 
-export const getListingOngoingOrderCount = async (listingId) => {
-  const q = query(collection(db, 'orders'), where('listingId', '==', listingId));
+// SECURITY: orders are readable only by their buyer/seller, so this query must
+// be constrained by sellerId as well as listingId or Firestore rejects it.
+export const getListingOngoingOrderCount = async (listingId, sellerId) => {
+  if (!sellerId) return 0;
+  const q = query(
+    collection(db, 'orders'),
+    where('sellerId', '==', sellerId),
+    where('listingId', '==', listingId)
+  );
   const snapshot = await getDocs(q);
   return countOngoingOrders(snapshot.docs.map((d) => d.data().status));
 };
 
-export const deleteListingSoft = async (id) => {
-  const ongoing = await getListingOngoingOrderCount(id);
+export const deleteListingSoft = async (id, sellerId) => {
+  const ongoing = await getListingOngoingOrderCount(id, sellerId);
   if (ongoing > 0) {
     throw new Error(
       `This listing has ${ongoing} ongoing order${ongoing > 1 ? 's' : ''}. You can only delete listings with no ongoing orders. Wait for the order(s) to complete before deleting.`
