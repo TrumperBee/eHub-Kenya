@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://ehubmarket.me/</loc>
+    <loc>https://www.ehubmarket.me/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://ehubmarket.me/browse</loc>
+    <loc>https://www.ehubmarket.me/browse</loc>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://ehubmarket.me/friday-drops</loc>
+    <loc>https://www.ehubmarket.me/friday-drops</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ehubmarket.me/how-it-works</loc>
+    <loc>https://www.ehubmarket.me/how-it-works</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ehubmarket.me/faq</loc>
+    <loc>https://www.ehubmarket.me/faq</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ehubmarket.me/login</loc>
+    <loc>https://www.ehubmarket.me/login</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://ehubmarket.me/register</loc>
+    <loc>https://www.ehubmarket.me/register</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
