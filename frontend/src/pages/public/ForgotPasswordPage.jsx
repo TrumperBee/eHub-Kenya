@@ -4,6 +4,25 @@ import { Mail, Lock, Zap, Shield, MessageCircle, ArrowLeft } from 'lucide-react'
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../services/firebase';
 
+// Firebase has no stable error code for "this account has no password provider"
+// (it depends on the project's email-enumeration-protection setting), so both
+// known codes and the message text are checked.
+const GOOGLE_ONLY_ACCOUNT_MESSAGE =
+  "This account was created with Google Sign-In. Use the 'Sign in with Google' " +
+  'button to log in. You can link a password to your account after signing in.';
+
+const isGoogleOnlyAccountError = (err) => {
+  const code = err?.code || '';
+  const message = String(err?.message || '');
+  return (
+    code === 'auth/user-not-found' ||
+    code === 'auth/no-password' ||
+    code === 'auth/invalid-credential' ||
+    message.includes('PASSWORD_NOT_CONFIGURED') ||
+    /no password provider/i.test(message)
+  );
+};
+
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
@@ -33,7 +52,9 @@ export default function ForgotPasswordPage() {
       setEmail(trimmed);
     } catch (err) {
       const code = err.code || '';
-      if (code === 'auth/invalid-email') {
+      if (isGoogleOnlyAccountError(err)) {
+        setError(GOOGLE_ONLY_ACCOUNT_MESSAGE);
+      } else if (code === 'auth/invalid-email') {
         setError('Please enter a valid email address.');
       } else if (code === 'auth/unauthorized-continue-uri') {
         setError('Password reset is not configured for this domain yet. Contact support.');

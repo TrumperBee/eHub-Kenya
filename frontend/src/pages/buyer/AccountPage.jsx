@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
+import { EmailAuthProvider, linkWithCredential, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { doc, collection, query, where, orderBy, limit, getDocs, writeBatch, setDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
@@ -73,6 +73,12 @@ export default function AccountPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+
+  // Google-only accounts can link a password without losing Google Sign-In.
+  const [linkPassword, setLinkPassword] = useState('');
+  const [linkConfirmPassword, setLinkConfirmPassword] = useState('');
+  const [linkingPassword, setLinkingPassword] = useState(false);
+  const [passwordJustLinked, setPasswordJustLinked] = useState(false);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteEmail, setDeleteEmail] = useState('');
@@ -256,6 +262,35 @@ export default function AccountPage() {
     }
   };
 
+  const handleSetPassword = async () => {
+    if (!currentUser?.email) { toast.error('Your account has no email address to link'); return; }
+    if (linkPassword.length < 8) { toast.error('Password must be at least 8 characters'); return; }
+    if (linkPassword !== linkConfirmPassword) { toast.error('Passwords do not match'); return; }
+    setLinkingPassword(true);
+    try {
+      const credential = EmailAuthProvider.credential(currentUser.email, linkPassword);
+      await linkWithCredential(currentUser, credential);
+      setPasswordJustLinked(true);
+      toast.success('Password set! You can now log in with email and password.');
+      setLinkPassword('');
+      setLinkConfirmPassword('');
+    } catch (err) {
+      if (err.code === 'auth/provider-already-linked') {
+        toast.success('A password is already linked to this account. You can now log in with email and password.');
+      } else if (err.code === 'auth/requires-recent-login') {
+        toast.error('For security, sign out and sign in with Google again, then set your password.');
+      } else if (err.code === 'auth/email-already-in-use' || err.code === 'auth/credential-already-in-use') {
+        toast.error('That email already belongs to another account. Contact support for help.');
+      } else if (err.code === 'auth/weak-password') {
+        toast.error('That password is too weak. Use at least 8 characters.');
+      } else {
+        toast.error(err.message || 'Could not set a password');
+      }
+    } finally {
+      setLinkingPassword(false);
+    }
+  };
+
   const handleDeleteAccount = async () => {
     if (deleteEmail !== currentUser.email) return;
     setDeleting(true);
@@ -280,7 +315,10 @@ export default function AccountPage() {
   });
 
   const strength = getPasswordStrength(newPassword);
-  const isEmailUser = currentUser?.providerData?.some(p => p.providerId === 'password');
+  // A Google account has no password provider until one is explicitly linked.
+  const hasPassword =
+    passwordJustLinked ||
+    Boolean(currentUser?.providerData?.some(p => p.providerId === 'password'));
 
   const sidebarTab = (tab) => {
     const Icon = tab.icon;
@@ -573,7 +611,24 @@ export default function AccountPage() {
 
           {activeTab === 'security' && (
             <div className="space-y-5">
-              {isEmailUser ? (
+              {hasPassword ? (
+                passwordJustLinked && !currentPassword ? (
+                  <div className="bg-white rounded-2xl p-6 shadow-sm space-y-3">
+                    <p className="flex items-center gap-2 font-heading font-bold text-sm" style={{ color: '#047857' }}>
+                      <CheckCircle size={16} /> Password set!
+                    </p>
+                    <p className="text-sm" style={{ color: '#6B7280' }}>
+                      You can now log in with email and password. Google Sign-In still works too.
+                    </p>
+                    <button
+                      onClick={() => setPasswordJustLinked(false)}
+                      className="text-sm font-semibold"
+                      style={{ color: '#003BFF' }}
+                    >
+                      Change password instead
+                    </button>
+                  </div>
+                ) : (
                 <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
                   <h3 className="font-heading font-bold uppercase text-sm" style={{ color: '#003BFF' }}>Change Password</h3>
                   <div>
@@ -618,11 +673,52 @@ export default function AccountPage() {
                     {changingPassword ? 'Updating...' : 'Update Password'}
                   </button>
                 </div>
+                )
               ) : (
-                <div className="bg-white rounded-2xl p-6 shadow-sm">
-                  <p className="text-sm" style={{ color: '#6B7280' }}>
-                    Password management is handled by Google. Please visit your Google account settings to change your password.
-                  </p>
+                <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
+                  <div>
+                    <h3 className="font-heading font-bold uppercase text-sm" style={{ color: '#003BFF' }}>
+                      Set a password for email login
+                    </h3>
+                    <p className="text-sm mt-1" style={{ color: '#6B7280' }}>
+                      Your account was created with Google Sign-In. Add a password and you can also
+                      log in with your email address — Google Sign-In keeps working.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-1" style={{ color: '#374151' }}>New Password</label>
+                    <PasswordInput
+                      value={linkPassword}
+                      onChange={e => setLinkPassword(e.target.value)}
+                      autoComplete="new-password"
+                    />
+                    {linkPassword && (
+                      <div className="mt-2">
+                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full transition-all duration-300 rounded-full"
+                            style={{ width: `${(getPasswordStrength(linkPassword) / 4) * 100}%`, background: strengthColors[getPasswordStrength(linkPassword)] }} />
+                        </div>
+                        <p className="text-xs mt-1" style={{ color: strengthColors[getPasswordStrength(linkPassword)] || '#9CA3AF' }}>
+                          {strengthLabels[getPasswordStrength(linkPassword)] || ''}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-1" style={{ color: '#374151' }}>Confirm Password</label>
+                    <PasswordInput
+                      value={linkConfirmPassword}
+                      onChange={e => setLinkConfirmPassword(e.target.value)}
+                      autoComplete="new-password"
+                    />
+                  </div>
+                  <button
+                    onClick={handleSetPassword}
+                    disabled={linkingPassword || !linkPassword || !linkConfirmPassword}
+                    className="btn-blue"
+                  >
+                    {linkingPassword ? 'Setting...' : 'Set Password'}
+                  </button>
                 </div>
               )}
 
@@ -632,7 +728,7 @@ export default function AccountPage() {
                   <div className="flex justify-between">
                     <span style={{ color: '#6B7280' }}>Login method</span>
                     <span style={{ color: '#111111' }}>
-                      {isEmailUser ? 'Email/Password' : 'Google Account'}
+                      {hasPassword ? 'Email/Password' : 'Google Account'}
                     </span>
                   </div>
                   <div className="flex justify-between">

@@ -6,26 +6,29 @@
 - [ ] Set `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`,
       `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`,
       `VITE_FIREBASE_APP_ID`, `VITE_BACKEND_URL` (real URL) in dashboard env vars
-- [ ] Set `VITE_PAYSTACK_PUBLIC_KEY` to your Paystack publishable key
 
 ## Backend (Render / VPS)
 
 - [ ] Set `PORT=5000`, `FRONTEND_URL` to deployed frontend URL
 - [ ] Set Firebase Admin env vars: `FIREBASE_PROJECT_ID`, `FIREBASE_PRIVATE_KEY`,
       `FIREBASE_CLIENT_EMAIL`
-- [ ] Set Paystack credentials: `PAYSTACK_SECRET_KEY`, `PAYSTACK_PUBLIC_KEY`
-- [ ] Set `PAYSTACK_CALLBACK_URL=https://your-backend.com/api/payment/paystack/callback`
+- [ ] Set ZetuPay credentials: `ZETUPAY_SECRET_KEY`
+      (server-side only; signs webhooks via `x-zetupay-signature`)
+- [ ] Optional: `ZETUPAY_WEBHOOK_SECRET` if `ZETUPAY_SECRET_KEY` is a test key,
+      and `ZETUPAY_CHANNEL_ID` if the wallet settles into a specific paybill/till
+- [ ] Set Web Push: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
+      `VAPID_SUBJECT=mailto:ochiengv250@gmail.com`
 - [ ] Set Cloudflare R2: `CLOUDFLARE_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
       `R2_SECRET_ACCESS_KEY`, `R2_PUBLIC_URL`
 - [ ] Set Email: `EMAIL_USER`, `EMAIL_PASS`
 - [ ] Set Gemini: `GEMINI_API_KEY`
 
-## Paystack Dashboard
+## ZetuPay Dashboard
 
 - [ ] Toggle **Test mode** while developing
-- [ ] Set Webhook URL to `https://your-backend.com/api/payment/paystack/webhook`
-      (signature verified with `PAYSTACK_SECRET_KEY`)
-- [ ] In production, use live `sk_live_` / `pk_live_` keys
+- [ ] Set the Transaction Callback URL to
+      `https://your-backend.com/api/payment/zetupay/callback`
+- [ ] In production, use live `sk_live_` keys
 
 ## Firebase Console
 
@@ -35,8 +38,8 @@
 
 ## Post-Deployment
 
-- [ ] Paystack webhook URL must be HTTPS and publicly accessible
-- [ ] Test full purchase flow end-to-end with Paystack test card `4084 0840 8408 4081` (CVV `408`, any future expiry)
+- [ ] ZetuPay callback URL must be HTTPS and publicly accessible
+- [ ] Test full purchase flow end-to-end in the ZetuPay sandbox (M-Pesa STK Push)
 - [ ] Verify Cloudflare R2 images load (not broken URLs)
 - [ ] Verify admin at `/hub-command-af29x` works
 - [ ] Verify Transfer Room accessible for approved sellers

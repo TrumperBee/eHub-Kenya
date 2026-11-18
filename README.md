@@ -1,6 +1,6 @@
 # eFootball Hub Kenya ⚽
 
-A Kenyan-first eFootball account marketplace with Paystack payments, Firestore database, Cloudflare R2 image storage, real-time chat, escrow protection, and an admin panel.
+A Kenyan-first eFootball account marketplace with ZetuPay (M-Pesa) payments, Firestore database, Cloudflare R2 image storage, real-time chat, escrow protection, and an admin panel.
 
 ## Tech Stack
 
@@ -8,14 +8,14 @@ A Kenyan-first eFootball account marketplace with Paystack payments, Firestore d
 - **Backend:** Node.js, Express, Firebase Admin SDK
 - **Database:** Firestore (Firebase)
 - **Auth:** Firebase Authentication (Email/Password + Google)
-- **Payments:** Zetu Pay(I&M Bank)
+- **Payments:** ZetuPay (M-Pesa STK Push; I&M Bank settlement)
 - **Storage:** Cloudflare R2 (S3-compatible)
 - **Chat:** Real-time via Firestore `onSnapshot`
 - **Email:** Nodemailer (Gmail SMTP)
 
 ## Features
 
-- Browse & purchase eFootball accounts with Paystack
+- Browse & purchase eFootball accounts with ZetuPay M-Pesa payments
 - Seller dashboard ("Transfer Room") for listing management
 - Real-time chat between buyer and seller per order
 - Escrow protection — funds held until buyer confirms receipt
