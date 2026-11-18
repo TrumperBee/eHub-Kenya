@@ -57,23 +57,14 @@ import SellerApplicationPage from './pages/SellerApplicationPage';
 import PushPermissionBanner from './components/notifications/PushPermissionBanner';
 import { isMaintenanceExemptPath, normalizeMaintenanceDoc } from './utils/maintenance';
 
-// Neutral branded loading screen used only while the very first maintenance
-// snapshot is in flight, so restricted content never flashes before the gate
-// decides what to show.
-function MaintenanceSplash() {
-  return (
-    <div className="w-full max-w-screen overflow-x-hidden min-h-screen flex items-center justify-center bg-[#001450]">
-      <div className="w-9 h-9 rounded-full border-2 border-[#FFF100]/25 border-t-[#FFF100] animate-spin" />
-    </div>
-  );
-}
-
 // Renders the maintenance page for every route except the login page and the
-// super admin console (see isMaintenanceExemptPath).
+// super admin console (see isMaintenanceExemptPath). While the very first
+// snapshot is in flight the app renders nothing at all: the page background
+// (white, from index.css) shows through, so there is no coloured flash.
 function MaintenanceGate({ maintenance, children }) {
   const location = useLocation();
   if (isMaintenanceExemptPath(location.pathname)) return children;
-  if (maintenance.loading) return <MaintenanceSplash />;
+  if (!maintenance.checked) return null;
   if (maintenance.enabled) return <MaintenancePage message={maintenance.message} />;
   return children;
 }
@@ -92,23 +83,44 @@ function PageLayout({ children }) {
 
 function AppContent() {
   const { currentUser, userProfile } = useAuth();
-  const [maintenance, setMaintenance] = useState({ loading: true, enabled: false, message: '' });
+  const [maintenanceChecked, setMaintenanceChecked] = useState(false);
+  const [maintenanceEnabled, setMaintenanceEnabled] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState('');
 
   // Live maintenance flag. Failures (e.g. a rules change not deployed yet) fail
   // open so a settings read can never take the marketplace down on its own.
+  // A 3s fallback also fails open if the first snapshot never arrives, so a slow
+  // or blocked connection can never leave the app on a blank screen.
   useEffect(() => {
+    const fallback = setTimeout(() => {
+      setMaintenanceChecked(true);
+      setMaintenanceEnabled(false);
+    }, 3000);
+
+    const settle = () => {
+      clearTimeout(fallback);
+      setMaintenanceChecked(true);
+    };
+
     const unsub = onSnapshot(
       doc(db, 'settings', 'maintenanceMode'),
       (snap) => {
         const state = normalizeMaintenanceDoc(snap.exists() ? snap.data() : null);
-        setMaintenance({ loading: false, ...state });
+        setMaintenanceEnabled(state.enabled);
+        setMaintenanceMessage(state.message);
+        settle();
       },
       (err) => {
         console.error('Maintenance mode subscription error:', err?.code || err);
-        setMaintenance({ loading: false, enabled: false, message: '' });
+        setMaintenanceEnabled(false);
+        settle();
       }
     );
-    return unsub;
+
+    return () => {
+      clearTimeout(fallback);
+      unsub();
+    };
   }, []);
 
   useEffect(() => {
@@ -169,7 +181,13 @@ function AppContent() {
               },
             }}
           />
-          <MaintenanceGate maintenance={maintenance}>
+          <MaintenanceGate
+            maintenance={{
+              checked: maintenanceChecked,
+              enabled: maintenanceEnabled,
+              message: maintenanceMessage,
+            }}
+          >
             <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />

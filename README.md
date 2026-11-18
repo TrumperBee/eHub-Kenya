@@ -8,7 +8,7 @@ A Kenyan-first eFootball account marketplace with Paystack payments, Firestore d
 - **Backend:** Node.js, Express, Firebase Admin SDK
 - **Database:** Firestore (Firebase)
 - **Auth:** Firebase Authentication (Email/Password + Google)
-- **Payments:** Paystack (mobile money, cards, bank transfers)
+- **Payments:** Zetu Pay(I&M Bank)
 - **Storage:** Cloudflare R2 (S3-compatible)
 - **Chat:** Real-time via Firestore `onSnapshot`
 - **Email:** Nodemailer (Gmail SMTP)
