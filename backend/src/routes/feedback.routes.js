@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
 const { sendEmail } = require('../services/emailService');
+const { adminDb } = require('../services/firebaseAdmin');
 
 // Anonymous feedback is allowed, so the limiter is per IP. Three submissions an
 // hour is plenty for a human and stops anyone using the form as a mail relay.
@@ -21,6 +22,37 @@ const escapeHtml = (value) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+
+/**
+ * Resolve who sent the feedback. The browser only sends a uid, so name,
+ * username (gamertag) and email are read from their Firestore profile here —
+ * otherwise the alert arrives with no way to reply to the person.
+ */
+async function resolveSender(userId) {
+  if (!userId || userId === 'anonymous') {
+    return { uid: 'anonymous', name: '', username: '', email: '' };
+  }
+  try {
+    const snap = await adminDb.doc(`users/${userId}`).get();
+    if (!snap.exists) return { uid: userId, name: '', username: '', email: '' };
+    const profile = snap.data() || {};
+    return {
+      uid: userId,
+      name: profile.displayName || profile.sellerDisplayName || '',
+      username: profile.username || '',
+      email: profile.email || '',
+    };
+  } catch (err) {
+    console.warn(`feedback: profile lookup failed for ${userId}: ${err.message}`);
+    return { uid: userId, name: '', username: '', email: '' };
+  }
+}
+
+const displayName = (sender) => {
+  if (sender.name) return sender.username ? `${sender.name} (@${sender.username})` : sender.name;
+  if (sender.username) return `@${sender.username}`;
+  return 'Anonymous';
+};
 
 router.post('/', feedbackLimiter, async (req, res, next) => {
   try {
@@ -51,6 +83,7 @@ router.post('/', feedbackLimiter, async (req, res, next) => {
       typeof page === 'string' && page.trim() ? page.trim() : '/';
     // Server-side timestamp — the browser clock is not trustworthy for audits.
     const timestamp = new Date().toISOString();
+    const sender = await resolveSender(submittedBy);
 
     const subject = normalizedRating
       ? `eHub Market Feedback — ⭐${normalizedRating}/5`
@@ -61,11 +94,15 @@ router.post('/', feedbackLimiter, async (req, res, next) => {
         <h2 style="margin:0 0 4px">eHub Market Feedback</h2>
         <p style="margin:0 0 16px;color:#6B7280;font-size:13px">
           ${normalizedRating ? `Rating: ⭐ ${normalizedRating}/5` : 'No rating given'}
+          &middot; From ${escapeHtml(displayName(sender))}
         </p>
         <div style="background:#F6F7FB;border-left:4px solid #003BFF;padding:12px 16px;white-space:pre-wrap">
           ${escapeHtml(trimmedMessage)}
         </div>
         <table style="margin-top:16px;font-size:13px;color:#374151">
+          <tr><td style="padding:2px 12px 2px 0;color:#9CA3AF">From</td><td>${escapeHtml(displayName(sender))}</td></tr>
+          <tr><td style="padding:2px 12px 2px 0;color:#9CA3AF">Username</td><td>${sender.username ? `@${escapeHtml(sender.username)}` : '—'}</td></tr>
+          <tr><td style="padding:2px 12px 2px 0;color:#9CA3AF">Email</td><td>${sender.email ? escapeHtml(sender.email) : '—'}</td></tr>
           <tr><td style="padding:2px 12px 2px 0;color:#9CA3AF">Rating</td><td>${normalizedRating ? `${normalizedRating}/5` : '—'}</td></tr>
           <tr><td style="padding:2px 12px 2px 0;color:#9CA3AF">User ID</td><td>${escapeHtml(submittedBy)}</td></tr>
           <tr><td style="padding:2px 12px 2px 0;color:#9CA3AF">Page</td><td>${escapeHtml(submittedPage)}</td></tr>
@@ -78,6 +115,9 @@ router.post('/', feedbackLimiter, async (req, res, next) => {
       await sendEmail(FEEDBACK_TO, subject, htmlBody, {
         text:
           `${trimmedMessage}\n\n` +
+          `From: ${displayName(sender)}\n` +
+          `Username: ${sender.username ? `@${sender.username}` : '—'}\n` +
+          `Email: ${sender.email || '—'}\n` +
           `Rating: ${normalizedRating ? `${normalizedRating}/5` : '—'}\n` +
           `User ID: ${submittedBy}\n` +
           `Page: ${submittedPage}\n` +

@@ -8,6 +8,7 @@ import { formatRelativeTime } from '../../utils/formatters';
 import { isDropLive } from '../../utils/fridayUtils';
 import useSellerActionOrders from '../../hooks/useSellerActionOrders';
 import Badge from './Badge';
+import FeedbackModal from './FeedbackModal';
 
 export default function Navbar() {
   const { currentUser, userProfile, logout } = useAuth();
@@ -18,6 +19,7 @@ export default function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const dropdownRef = useRef(null);
   const notifRef = useRef(null);
 
@@ -58,6 +60,7 @@ export default function Navbar() {
     setDrawerOpen(false);
     setDropdownOpen(false);
     setNotifOpen(false);
+    setFeedbackOpen(false);
   }, [location.pathname]);
 
   const [dropLive, setDropLive] = useState(() => isDropLive());
@@ -291,6 +294,15 @@ export default function Navbar() {
                       </Link>
                     )}
 
+                    <button
+                      type="button"
+                      onClick={() => { setDropdownOpen(false); setFeedbackOpen(true); }}
+                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors text-left"
+                    >
+                      <MessageCircle size={16} />
+                      Send Feedback
+                    </button>
+
                     <div className="border-t border-white/10 mt-1 pt-1">
                       <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-colors hover:bg-white/10"
                         style={{ color: '#C8102E' }}>
@@ -351,6 +363,14 @@ export default function Navbar() {
         <DrawerNavItem icon={<Flame size={18} />} label="Friday Drops" href="/friday-drops" />
         <DrawerNavItem icon={<HelpCircle size={18} />} label="How It Works" href="/how-it-works" />
         <DrawerNavItem icon={<MessageCircle size={18} />} label="FAQ" href="/faq" />
+        <button
+          type="button"
+          onClick={() => { closeDrawer(); setFeedbackOpen(true); }}
+          className="flex items-center gap-3.5 mx-2 px-4 rounded-lg transition-colors min-h-[52px] text-white hover:bg-white/10 text-left"
+        >
+          <span style={{ fontSize: 18, width: 20, textAlign: 'center', flexShrink: 0 }}><MessageCircle size={18} /></span>
+          <span className="font-heading text-sm font-bold uppercase tracking-wide flex-1">Send Feedback</span>
+        </button>
 
         {currentUser && (
           <>
@@ -476,6 +496,8 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
+      {feedbackOpen && <FeedbackModal onClose={() => setFeedbackOpen(false)} />}
     </nav>
   );
 }

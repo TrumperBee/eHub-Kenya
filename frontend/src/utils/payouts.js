@@ -1,9 +1,9 @@
 // Single source of truth for the marketplace payout split.
 //
-// The platform keeps 5% of every sale; the seller receives the rest. The fee is
-// rounded to the nearest shilling ONCE, and the payout is derived by
-// subtraction so the two figures always add back up to the sale amount.
-export const PLATFORM_FEE_RATE = 0.05;
+// Fee holiday: the platform currently deducts nothing, so the seller receives
+// the full sale amount. Public fee copy has been removed from the site —
+// restore 0.05 (and the copy) when the holiday ends.
+export const PLATFORM_FEE_RATE = 0;
 
 const toAmount = (amount) => {
   const n = Number(amount);

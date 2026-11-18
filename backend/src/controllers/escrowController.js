@@ -11,6 +11,7 @@ const {
   sendDisputeResolvedEmail,
 } = require('../services/emailService');
 const { sendPushToUser } = require('../services/pushService');
+const { sellerPayout } = require('../utils/payouts');
 
 const {
   verificationDeadlineAfter,
@@ -137,11 +138,11 @@ async function release(req, res) {
     // Admin must pay the seller manually — alert the operator.
     await sendAdminPayoutRequiredEmail(emailOrder);
 
-    // Seller's phone alerts even with the tab closed. 5% platform fee matches
-    // the payout table used by the admin Payouts tab.
+    // Seller's phone alerts even with the tab closed. Payout split matches
+    // frontend/src/utils/payouts.js (currently a zero-fee holiday).
     await sendPushToUser(order.sellerId, {
       title: 'Payment Released',
-      body: `KES ${Math.round(Number(order.amount || 0) * 0.95)} will be sent to you shortly`,
+      body: `KES ${sellerPayout(order.amount).toLocaleString('en-KE')} will be sent to you shortly`,
       url: '/transfer-room',
     });
 

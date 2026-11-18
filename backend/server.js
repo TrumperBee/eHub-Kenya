@@ -13,6 +13,7 @@ const reviewRoutes = require('./src/routes/review.routes');
 const settingsRoutes = require('./src/routes/settings.routes');
 const pushRoutes = require('./src/routes/push.routes');
 const feedbackRoutes = require('./src/routes/feedback.routes');
+const resendWebhookRoutes = require('./src/routes/resendWebhook.routes');
 const errorHandler = require('./src/middleware/errorHandler');
 const { ALLOWED_ORIGINS } = require('./src/config');
 const { startStatsReconciler } = require('./src/services/statsRecoService');
@@ -31,6 +32,13 @@ app.use(cors({
   },
   credentials: true,
 }));
+// Resend webhooks are signed over the raw bytes, so this route MUST be mounted
+// before express.json() parses the body. It owns its own raw parser.
+app.use(
+  '/api/webhooks/resend',
+  express.raw({ type: '*/*', limit: '1mb' }),
+  resendWebhookRoutes
+);
 app.use(express.json({
   limit: '10mb',
   verify: (req, _res, buf) => { req.rawBody = buf; },

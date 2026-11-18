@@ -14,6 +14,7 @@ const { Resend } = require('resend');
 const { admin, adminDb } = require('./firebaseAdmin');
 const { getSellerOrderGuidePdf } = require('./sellerGuidePdf');
 const logger = require('../utils/logger');
+const { PLATFORM_FEE_RATE, platformFee, sellerPayout } = require('../utils/payouts');
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
@@ -25,7 +26,6 @@ const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 // Payout alerts go to the marketplace operator (manual M-Pesa payouts).
 const ADMIN_PAYOUT_EMAIL = 'ochiengv250@gmail.com';
-const PLATFORM_FEE_RATE = 0.05;
 const SUPPORT_EMAIL = 'support@ehubmarket.me';
 const MARKET_FOOTER = `eHub Market &middot; ${SUPPORT_EMAIL} &middot; This is an automated message`;
 
@@ -257,9 +257,6 @@ function renderMarketLayout({ title, bodyHtml, cta, footerHtml }) {
 </html>`;
 }
 
-const platformFee = (amount) => Math.round(Number(amount || 0) * PLATFORM_FEE_RATE);
-const sellerPayout = (amount) => Number(amount || 0) - platformFee(amount);
-
 function payoutRow(label, value, { emphasis } = {}) {
   const style = emphasis
     ? 'padding:10px 14px;border-bottom:1px solid #EEF0F3;font-size:14px;font-weight:700;color:#111111;'
@@ -271,10 +268,19 @@ function payoutRow(label, value, { emphasis } = {}) {
 }
 
 function payoutTable(order, sellerPhone) {
+  // The fee line disappears during the zero-fee holiday; restoring
+  // PLATFORM_FEE_RATE > 0 in utils/payouts.js brings it back automatically.
+  const feeRow =
+    PLATFORM_FEE_RATE > 0
+      ? payoutRow(
+          `Platform Fee (${Math.round(PLATFORM_FEE_RATE * 100)}%)`,
+          `- ${formatKES(platformFee(order.amount))}`
+        )
+      : '';
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #EEF0F3;border-radius:10px;border-collapse:separate;overflow:hidden;margin:0 0 18px;">
     ${payoutRow('Listing', esc(order.listingTitle || 'Account listing'))}
     ${payoutRow('Sale Amount', formatKES(order.amount))}
-    ${payoutRow(`Platform Fee (${Math.round(PLATFORM_FEE_RATE * 100)}%)`, `- ${formatKES(platformFee(order.amount))}`)}
+    ${feeRow}
     ${payoutRow('Amount to Send Seller', formatKES(sellerPayout(order.amount)), { emphasis: true })}
     ${payoutRow('Seller Display Name', esc(order.sellerDisplayName || 'Not provided'))}
     ${payoutRow('Seller Phone Number', esc(sellerPhone || 'Not provided'))}
@@ -453,7 +459,8 @@ async function sendAdminPayoutRequiredEmail(order) {
       {
         text:
           `Payout required for order ${order.id}: ${order.listingTitle || 'listing'} sold for ` +
-          `${formatKES(order.amount)}. Platform fee ${formatKES(platformFee(order.amount))}. ` +
+          `${formatKES(order.amount)}. ` +
+          (PLATFORM_FEE_RATE > 0 ? `Platform fee ${formatKES(platformFee(order.amount))}. ` : '') +
           `Send ${formatKES(payout)} to ${sellerName} (${sellerPhone || 'phone not provided'}). ` +
           `Mark as paid: ${FRONTEND_URL}/hub-command-af29x`,
       }

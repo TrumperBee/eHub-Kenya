@@ -1,13 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wallet, TrendingUp, Clock, Percent, AlertTriangle, CreditCard } from 'lucide-react';
+import { Wallet, TrendingUp, Clock, Package, AlertTriangle, CreditCard } from 'lucide-react';
 import { getSellerOrders } from '../../../services/ordersService';
 import { PAID_AND_PENDING_STATUSES } from '../../../utils/orderMachine';
 import { formatKES, formatDate } from '../../../utils/formatters';
-
-function calcFee(amount) {
-  return Math.min(Math.round((amount || 0) * 0.005), 200);
-}
+import { sellerPayout } from '../../../utils/payouts';
 
 function EarningsSkeleton() {
   return (
@@ -68,9 +65,8 @@ export default function EarningsTab({ profile }) {
   const completedOrders = orders.filter(o => o.status === 'completed');
   const pendingEscrowOrders = orders.filter(o => PAID_AND_PENDING_STATUSES.includes(o.status));
 
-  const totalEarned = completedOrders.reduce((sum, o) => sum + (o.amount || 0), 0);
+  const totalEarned = completedOrders.reduce((sum, o) => sum + sellerPayout(o.amount), 0);
   const pendingEscrow = pendingEscrowOrders.reduce((sum, o) => sum + (o.amount || 0), 0);
-  const totalFees = completedOrders.reduce((sum, o) => sum + calcFee(o.amount), 0);
 
   const now = new Date();
   const thisMonthEarned = completedOrders
@@ -79,7 +75,7 @@ export default function EarningsTab({ profile }) {
       const d = o.createdAt.toDate ? o.createdAt.toDate() : new Date(o.createdAt);
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     })
-    .reduce((sum, o) => sum + (o.amount || 0), 0);
+    .reduce((sum, o) => sum + sellerPayout(o.amount), 0);
 
   if (loading) return <EarningsSkeleton />;
   if (error) return <EarningsError onRetry={fetchData} />;
@@ -121,11 +117,11 @@ export default function EarningsTab({ profile }) {
 
         <div className="bg-white rounded-2xl shadow-sm p-4 relative overflow-hidden">
           <div style={{ height: 4, background: '#003BFF', position: 'absolute', top: 0, left: 0, right: 0 }} />
-          <p className="font-heading text-3xl font-extrabold mb-1" style={{ color: '#6B7280' }}>{formatKES(totalFees)}</p>
-          <p className="text-sm font-medium" style={{ color: '#111' }}>Platform Fees Paid</p>
+          <p className="font-heading text-3xl font-extrabold mb-1" style={{ color: '#6B7280' }}>{completedOrders.length}</p>
+          <p className="text-sm font-medium" style={{ color: '#111' }}>Completed Sales</p>
           <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 mt-1 leading-snug">
-            <Percent size={12} className="shrink-0" style={{ color: '#6B7280' }} />
-            <span className="text-xs" style={{ color: '#6B7280' }}>0.5% per sale, max KES 200</span>
+            <Package size={12} className="shrink-0" style={{ color: '#6B7280' }} />
+            <span className="text-xs" style={{ color: '#6B7280' }}>Delivered and paid</span>
           </div>
         </div>
       </div>
@@ -136,8 +132,7 @@ export default function EarningsTab({ profile }) {
           <p>Payments are processed through ZetuPay (M-Pesa) and held by eHub until an order completes:</p>
           <ol className="list-decimal pl-4 space-y-0.5">
             <li>When a buyer pays, the funds are held securely while the order is in progress (Payout Pending).</li>
-            <li>Once you transfer the account and the buyer confirms delivery, escrow is released and the payout becomes <strong>Eligible</strong> — the admin sends it manually, typically within 24-48 hours after confirmation.</li>
-            <li>The platform service fee (0.5%, max KES 200) is applied when your payout is processed.</li>
+            <li>Once you transfer the account and the buyer confirms delivery, escrow is released and the payout becomes <strong>Eligible</strong> — the admin sends it manually, typically within 24-48 hours after confirmation, to your registered payout phone number.</li>
             <li>If there is a dispute, the funds stay held until the admin resolves it.</li>
           </ol>
           <p className="mt-2">
@@ -173,21 +168,18 @@ export default function EarningsTab({ profile }) {
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#6B7280' }}>Date</th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#6B7280' }}>Listing</th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#6B7280' }}>Sale Price</th>
-                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#6B7280' }}>Fee Deducted</th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#6B7280' }}>Net Received</th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#6B7280' }}>Payout Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {completedOrders.map((order) => {
-                  const fee = calcFee(order.amount);
-                  const net = (order.amount || 0) - fee;
+                  const net = sellerPayout(order.amount);
                   return (
                     <tr key={order.id} className="hover:bg-blue-50 transition-colors">
                       <td className="px-5 py-3 text-sm" style={{ color: '#6B7280' }}>{formatDate(order.createdAt)}</td>
                       <td className="px-5 py-3 text-sm font-medium max-w-[200px] truncate" style={{ color: '#111' }}>{order.listingTitle || 'Untitled'}</td>
                       <td className="px-5 py-3 text-sm font-semibold" style={{ color: '#111' }}>{formatKES(order.amount)}</td>
-                      <td className="px-5 py-3 text-sm" style={{ color: '#6B7280' }}>{formatKES(fee)}</td>
                       <td className="px-5 py-3 text-sm font-semibold" style={{ color: '#22C55E' }}>{formatKES(net)}</td>
                       <td className="px-5 py-3">
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: '#FEF3C7', color: '#B45309' }}>

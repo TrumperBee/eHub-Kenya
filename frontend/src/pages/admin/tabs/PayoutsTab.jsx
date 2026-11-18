@@ -129,7 +129,7 @@ export default function PayoutsTab({ orders = [], loading = false }) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-5 pt-4 border-t border-konami-mid-gray">
             <Stat label="Sale value" value={formatKES(pendingOrders.reduce((s, o) => s + (Number(o.amount) || 0), 0))} />
             <Stat
-              label={`Platform fee (${Math.round(PLATFORM_FEE_RATE * 100)}%)`}
+              label={PLATFORM_FEE_RATE > 0 ? `Platform fee (${Math.round(PLATFORM_FEE_RATE * 100)}%)` : 'Platform fee'}
               value={formatKES(pendingOrders.reduce((s, o) => s + platformFee(o.amount), 0))}
               tone="gold"
             />
@@ -140,8 +140,18 @@ export default function PayoutsTab({ orders = [], loading = false }) {
         <div className="rounded-xl p-5 flex gap-3 h-full" style={{ background: '#FFFBEB', border: '1px solid #FDE68A' }}>
           <Info size={18} className="shrink-0 mt-0.5" style={{ color: '#B45309' }} />
           <p className="text-sm leading-relaxed" style={{ color: '#92400E' }}>
-            <span className="font-semibold">Platform fee is 5% of each sale.</span> This covers ZetuPay
-            transaction tokens and platform maintenance. Deduct before sending to seller.
+            {PLATFORM_FEE_RATE > 0 ? (
+              <>
+                <span className="font-semibold">Platform fee is {Math.round(PLATFORM_FEE_RATE * 100)}% of each sale.</span>{' '}
+                This covers ZetuPay transaction tokens and platform maintenance. Deduct before sending
+                to seller.
+              </>
+            ) : (
+              <>
+                <span className="font-semibold">No platform fee is deducted right now.</span>{' '}
+                Send the full sale amount to the seller.
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -168,7 +178,7 @@ export default function PayoutsTab({ orders = [], loading = false }) {
                   <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-konami-text-muted">Seller</th>
                   <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-konami-text-muted whitespace-nowrap">Seller phone</th>
                   <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-konami-text-muted whitespace-nowrap text-right">Sale amount</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-konami-text-muted whitespace-nowrap text-right">Fee 5%</th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-konami-text-muted whitespace-nowrap text-right">Fee</th>
                   <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-konami-text-muted whitespace-nowrap text-right">Send seller</th>
                   <th className="px-4 py-3" />
                 </tr>
@@ -242,7 +252,7 @@ export default function PayoutsTab({ orders = [], loading = false }) {
 
       <p className="text-[11px] text-konami-text-muted">
         Payouts stay manual: send the “Send seller” amount to the phone number shown, then mark it paid
-        here. ZetuPay transaction tokens are covered by the 5% platform fee.
+        here.
       </p>
     </div>
   );

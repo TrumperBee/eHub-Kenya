@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import FeedbackModal from '../../components/common/FeedbackModal';
 
 const categories = [
   {
@@ -70,6 +71,7 @@ function FAQItem({ question, answer, open, onToggle }) {
 export default function FAQPage() {
   const [openCategory, setOpenCategory] = useState(0);
   const [openQuestions, setOpenQuestions] = useState({});
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const toggleQuestion = (catIdx, qIdx) => {
     setOpenQuestions(prev => ({
@@ -114,8 +116,27 @@ export default function FAQPage() {
               />
             ))}
           </div>
+
+          <div className="mt-10 rounded-2xl bg-white p-6 sm:p-8 text-center shadow-sm border border-konami-mid-gray">
+            <h2 className="font-heading text-xl font-extrabold text-konami-text mb-2">
+              Didn't find what you needed?
+            </h2>
+            <p className="text-sm text-konami-text-muted mb-5 max-w-lg mx-auto">
+              Tell us what is missing, confusing or broken. Every message is read by the team.
+            </p>
+            <button
+              type="button"
+              onClick={() => setFeedbackOpen(true)}
+              className="inline-flex items-center gap-2 rounded-full px-6 py-3 font-heading text-sm font-bold uppercase tracking-wide transition-colors"
+              style={{ background: '#003BFF', color: '#FFFFFF' }}
+            >
+              💬 Send Feedback
+            </button>
+          </div>
         </div>
       </section>
+
+      {feedbackOpen && <FeedbackModal onClose={() => setFeedbackOpen(false)} />}
     </div>
   );
 }
