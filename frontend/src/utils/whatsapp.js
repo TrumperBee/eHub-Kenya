@@ -53,30 +53,31 @@ export const normalizeWhatsAppNumber = (value) => {
   return number;
 };
 
-const contactText = ({ role, orderId, listingTitle }) => {
+// Pre-filled openers. Kept short so WhatsApp shows them cleanly on mobile.
+const contactText = ({ role, orderId }) => {
   const order = String(orderId || '').trim() || 'my order';
-  const listing = String(listingTitle || '').trim() || 'your listing';
-  const subject = role === 'seller' ? `your order ${order}` : `order ${order}`;
-  return `Hi I'm the ${role} for ${subject} on eHub Market regarding ${listing}`;
+  return role === 'seller'
+    ? `Hi, I'm the seller for your eHub Market order ${order}`
+    : `Hi, I'm contacting you about my eHub Market order ${order}`;
 };
 
 /**
  * Buyer -> seller. Returns null (render nothing) when the seller has not
  * published a usable WhatsApp number, per the "no broken button" rule.
  */
-export const buildBuyerContactUrl = ({ sellerWhatsapp, orderId, listingTitle } = {}) => {
+export const buildBuyerContactUrl = ({ sellerWhatsapp, orderId } = {}) => {
   const number = normalizeWhatsAppNumber(sellerWhatsapp);
   if (!number) return null;
   return `https://wa.me/${number}?text=${encodeWhatsAppText(
-    contactText({ role: 'buyer', orderId, listingTitle })
+    contactText({ role: 'buyer', orderId })
   )}`;
 };
 
 /** Seller -> buyer. Returns null when the buyer has no usable phone number. */
-export const buildSellerContactUrl = ({ buyerPhone, orderId, listingTitle } = {}) => {
+export const buildSellerContactUrl = ({ buyerPhone, orderId } = {}) => {
   const number = normalizeWhatsAppNumber(buyerPhone);
   if (!number) return null;
   return `https://wa.me/${number}?text=${encodeWhatsAppText(
-    contactText({ role: 'seller', orderId, listingTitle })
+    contactText({ role: 'seller', orderId })
   )}`;
 };

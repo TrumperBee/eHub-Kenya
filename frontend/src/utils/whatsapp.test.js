@@ -88,11 +88,15 @@ test('buyer -> seller link follows the documented wa.me template', () => {
   const url = buildBuyerContactUrl({
     sellerWhatsapp: '0712345678',
     orderId: 'ord_123',
-    listingTitle: 'ST 96 CF',
   });
+  const text = "Hi, I'm contacting you about my eHub Market order ord_123";
   assert.equal(
     url,
-    'https://wa.me/254712345678?text=Hi%20I%27m%20the%20buyer%20for%20order%20ord_123%20on%20eHub%20Market%20regarding%20ST%2096%20CF'
+    `https://wa.me/254712345678?text=${encodeURIComponent(text).replace(/'/g, '%27')}`
+  );
+  assert.equal(
+    url,
+    'https://wa.me/254712345678?text=Hi%2C%20I%27m%20contacting%20you%20about%20my%20eHub%20Market%20order%20ord_123'
   );
 });
 
@@ -100,24 +104,28 @@ test('seller -> buyer link follows the documented wa.me template', () => {
   const url = buildSellerContactUrl({
     buyerPhone: '+254 712 345 678',
     orderId: 'ord_123',
-    listingTitle: 'ST 96 CF',
   });
+  const text = "Hi, I'm the seller for your eHub Market order ord_123";
   assert.equal(
     url,
-    'https://wa.me/254712345678?text=Hi%20I%27m%20the%20seller%20for%20your%20order%20ord_123%20on%20eHub%20Market%20regarding%20ST%2096%20CF'
+    `https://wa.me/254712345678?text=${encodeURIComponent(text).replace(/'/g, '%27')}`
+  );
+  assert.equal(
+    url,
+    'https://wa.me/254712345678?text=Hi%2C%20I%27m%20the%20seller%20for%20your%20eHub%20Market%20order%20ord_123'
   );
 });
 
 test('links are null when the other party has no WhatsApp number', () => {
-  assert.equal(buildBuyerContactUrl({ orderId: 'ord_1', listingTitle: 'X' }), null);
+  assert.equal(buildBuyerContactUrl({ orderId: 'ord_1' }), null);
   assert.equal(buildBuyerContactUrl({ sellerWhatsapp: '', orderId: 'ord_1' }), null);
-  assert.equal(buildSellerContactUrl({ orderId: 'ord_1', listingTitle: 'X' }), null);
+  assert.equal(buildSellerContactUrl({ orderId: 'ord_1' }), null);
   assert.equal(buildSellerContactUrl({ buyerPhone: 'n/a', orderId: 'ord_1' }), null);
 });
 
 test('missing order details never leak "undefined" into the message', () => {
   const url = buildBuyerContactUrl({ sellerWhatsapp: '254712345678' });
-  assert.ok(url.includes('order%20my%20order%20on'));
-  assert.ok(url.includes('regarding%20your%20listing'));
+  assert.ok(url.includes('my%20eHub%20Market%20order%20my%20order'));
   assert.ok(!url.includes('undefined'));
+  assert.ok(!url.includes('regarding'));
 });
