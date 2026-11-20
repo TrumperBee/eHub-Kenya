@@ -8,7 +8,6 @@ import { formatKES, formatDate } from '../../utils/formatters';
 import { canViewOrder } from '../../utils/orderAccess';
 import { releaseEscrow, submitDelivery, verifyOrderPayment, revealOrderCredentials } from '../../services/paymentService';
 import { subscribeToDeliveries } from '../../services/ordersService';
-import { submitSellerReview } from '../../services/reviewService';
 import { buyerCanConfirm, buyerCanDispute, sellerCanDeliver, isPaidStatus } from '../../utils/orderMachine';
 import { buyerGuide, sellerGuide } from '../../utils/orderGuide';
 import OrderStatePanel from '../../components/orders/OrderStatePanel';
@@ -19,7 +18,7 @@ import {
   Shield, CheckCircle, Mail, KeyRound, Eye, EyeOff, Copy,
   Send, Upload, AlertTriangle, Lock, ShoppingBag, Loader, RefreshCw, Star, X, Clock, MessageCircle,
 } from 'lucide-react';
-import { buildSellerPayoutAlertUrl, buildBuyerContactUrl, buildSellerContactUrl, canShowDirectContact, ADMIN_WHATSAPP_URL } from '../../utils/whatsapp';
+import { buildBuyerContactUrl, buildSellerContactUrl, canShowDirectContact, ADMIN_WHATSAPP_URL } from '../../utils/whatsapp';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import toast from 'react-hot-toast';
 
@@ -317,30 +316,33 @@ function CredentialsList({ deliveries, isSeller, orderId, revealed = null, onRev
   );
 }
 
-function SellerPayoutWhatsAppCard({ order }) {
-  const href = buildSellerPayoutAlertUrl({
-    sellerName: order.sellerDisplayName || order.sellerUsername,
-    orderId: order.id,
-  });
-
+function AdminWhatsAppIcon() {
   return (
-    <div className="bg-blue-500/10 border border-blue-400/30 rounded-xl p-4">
-      <p className="text-xs font-semibold text-konami-blue">
-        Waiting for buyer to verify (30-minute window active)
-      </p>
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-3 inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-xl px-4 py-2 text-sm font-medium transition-colors"
-      >
-        <MessageCircle size={16} aria-hidden="true" />
-        Alert Admin on WhatsApp
-      </a>
-      <p className="mt-2 text-xs text-konami-text-muted">
-        Tap this if you do not receive payment within 1 hour
-      </p>
-    </div>
+    <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true" className="shrink-0">
+      <circle cx="18" cy="18" r="18" fill="#25D366" />
+      <g transform="translate(6 6)" fill="#FFFFFF">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+      </g>
+    </svg>
+  );
+}
+
+// Always-visible admin contact. Deliberately not tied to order status or role:
+// buyers and sellers must be able to reach admin at any point in the order.
+function AdminWhatsAppButton() {
+  return (
+    <a
+      href={ADMIN_WHATSAPP_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Chat with Admin on WhatsApp"
+      className="flex items-center gap-3 bg-white border border-konami-mid-gray rounded-xl p-3 hover:bg-konami-light-gray transition-colors"
+    >
+      <AdminWhatsAppIcon />
+      <span className="flex-1 text-sm font-semibold text-konami-text">
+        Chat with Admin on WhatsApp
+      </span>
+    </a>
   );
 }
 
@@ -534,7 +536,6 @@ export default function OrderDetailPage() {
   const [disputeReason, setDisputeReason] = useState('');
   const [disputeError, setDisputeError] = useState('');
   const [showReviewForm, setShowReviewForm] = useState(false);
-  const [reviewLoading, setReviewLoading] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const autoVerifiedRef = useRef(false);
 
@@ -626,6 +627,11 @@ export default function OrderDetailPage() {
     setActionLoading(true);
     try {
       await releaseEscrow(id);
+      // Open the review form right away. Rendering is still gated on
+      // `canReview` (order.status === 'completed'), so the modal appears the
+      // moment the live order snapshot reflects the release — no spinner, no
+      // extra click.
+      setShowReviewForm(true);
       setShowConfirm(false);
       toast.success('Transaction complete. Thank you!');
     } catch (err) {
@@ -693,18 +699,8 @@ export default function OrderDetailPage() {
     }
   };
 
-  const handleSubmitReview = async ({ rating, comment }) => {
-    setReviewLoading(true);
-    try {
-      await submitSellerReview({ orderId: id, rating, comment });
-      toast.success('Review posted successfully');
-      setShowReviewForm(false);
-    } catch (err) {
-      console.error('Review error:', err);
-      toast.error(err?.response?.data?.error || 'Could not post your review. Please try again.');
-    } finally {
-      setReviewLoading(false);
-    }
+  const handleReviewSuccess = () => {
+    setShowReviewForm(false);
   };
 
   return (
@@ -835,6 +831,8 @@ export default function OrderDetailPage() {
             </div>
 
             <div className="space-y-3">
+              <AdminWhatsAppButton />
+
               <DirectContactSection order={order} isBuyer={isBuyer} isSeller={isSeller} />
 
               {isBuyer ? (
@@ -938,16 +936,6 @@ export default function OrderDetailPage() {
                           <Star size={18} className="fill-gray-900" />
                           Leave a Review
                         </button>
-                      )}
-
-                      {showReviewForm && (
-                        <div className="bg-white rounded-xl p-4 space-y-3 border border-konami-mid-gray">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-semibold text-konami-text">Leave a Review</h4>
-                            <button onClick={() => setShowReviewForm(false)} className="text-xs text-konami-text-muted hover:text-konami-text">Cancel</button>
-                          </div>
-                          <ReviewForm onSubmit={handleSubmitReview} loading={reviewLoading} />
-                        </div>
                       )}
 
                       {showDisputeForm && (
@@ -1084,10 +1072,6 @@ export default function OrderDetailPage() {
                     </details>
                   )}
 
-                  {isSeller && order.status === 'credentials_submitted' && (
-                    <SellerPayoutWhatsAppCard order={order} />
-                  )}
-
                   {order.status === 'disputed' && (
                     <>
                       {order.disputeReason && (
@@ -1123,6 +1107,17 @@ export default function OrderDetailPage() {
           </div>
         </div>
       </div>
+
+      {showReviewForm && canReview && (
+        <ReviewForm
+          orderId={id}
+          sellerId={order.sellerId}
+          sellerDisplayName={order.sellerDisplayName || 'this seller'}
+          currentUser={currentUser}
+          onClose={() => setShowReviewForm(false)}
+          onSuccess={handleReviewSuccess}
+        />
+      )}
     </div>
   );
 }

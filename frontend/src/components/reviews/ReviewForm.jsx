@@ -7,22 +7,34 @@ import toast from 'react-hot-toast';
 
 const ratingLabels = ['', 'Terrible', 'Poor', 'Average', 'Good', 'Excellent'];
 
-export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, onClose, onSuccess }) {
+export default function ReviewForm({
+  orderId,
+  sellerId,
+  sellerDisplayName,
+  currentUser,
+  onClose,
+  onSuccess,
+}) {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [fetching, setFetching] = useState(true);
+  // BUGFIX: only show the loading spinner when we actually have the props
+  // needed to look up an existing review. OrderDetailPage used to omit
+  // sellerId/currentUser, so `fetching` stayed true forever.
+  const [fetching, setFetching] = useState(Boolean(sellerId && currentUser?.uid));
   const [existingReview, setExistingReview] = useState(null);
 
   useEffect(() => {
-    if (!sellerId || !currentUser) return;
-    
+    if (!sellerId || !currentUser?.uid) return;
+
+    let cancelled = false;
+
     const checkExistingReview = async () => {
       try {
         const reviewRef = doc(db, 'users', sellerId, 'reviews', currentUser.uid);
         const reviewSnap = await getDoc(reviewRef);
-        if (reviewSnap.exists()) {
+        if (!cancelled && reviewSnap.exists()) {
           const data = reviewSnap.data();
           setExistingReview(data);
           setRating(data.rating || 0);
@@ -31,12 +43,13 @@ export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, o
       } catch (err) {
         console.warn('Error fetching existing review:', err);
       } finally {
-        setFetching(false);
+        if (!cancelled) setFetching(false);
       }
     };
 
     checkExistingReview();
-  }, [sellerId, currentUser]);
+    return () => { cancelled = true; };
+  }, [sellerId, currentUser?.uid]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,14 +66,16 @@ export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, o
     try {
       // Written by the backend so it can verify a completed order and update
       // the seller's aggregate rating (which clients may not do directly).
+      // Prefer orderId: it pins the review to the exact completed purchase.
       await submitSellerReview({
+        orderId: orderId || undefined,
         sellerId,
         rating,
         comment: comment.trim(),
       });
 
       toast.success(existingReview ? 'Review updated successfully' : 'Review posted successfully');
-      onSuccess();
+      onSuccess?.();
     } catch (err) {
       toast.error(err?.response?.data?.error || 'Failed to submit review. Try again.');
     } finally {
@@ -75,7 +90,7 @@ export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, o
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: 'rgba(0,20,80,0.75)' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose?.(); }}
     >
       <div className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl">
         <div className="h-1" style={{ background: '#FFF100' }} />
@@ -84,7 +99,7 @@ export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, o
             <h2 className="font-heading font-extrabold text-lg" style={{ color: '#003BFF' }}>
               {existingReview ? 'Update Your Review' : 'Rate Your Experience'} with {sellerDisplayName}
             </h2>
-            <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 transition-colors">
+            <button onClick={() => onClose?.()} className="p-1 rounded-full hover:bg-gray-100 transition-colors">
               <X size={20} style={{ color: '#6B7280' }} />
             </button>
           </div>
@@ -165,7 +180,7 @@ export default function ReviewForm({ sellerId, sellerDisplayName, currentUser, o
               <div className="text-center">
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={() => onClose?.()}
                   className="text-sm hover:underline"
                   style={{ color: '#6B7280' }}
                 >

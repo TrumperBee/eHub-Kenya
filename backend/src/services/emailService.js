@@ -12,7 +12,6 @@
 
 const { Resend } = require('resend');
 const { admin, adminDb } = require('./firebaseAdmin');
-const { getSellerOrderGuidePdf } = require('./sellerGuidePdf');
 const logger = require('../utils/logger');
 const { PLATFORM_FEE_RATE, platformFee, sellerPayout } = require('../utils/payouts');
 
@@ -235,6 +234,82 @@ const bodyWarning = (text) =>
    </table>`;
 
 // ---------------------------------------------------------------------------
+// Seller order guide — rendered inline in the email body
+// ---------------------------------------------------------------------------
+// This used to ship as a "eHub Seller Order Guide.pdf" attachment. Resend's
+// Node SDK JSON-serialises attachment content, so a raw Buffer was not sent as
+// a real PDF: recipients got an HTML-looking file with a .pdf name that only a
+// browser could open. The guide is plain text, so it is rendered directly in
+// the email body instead — sellers can read it without opening any attachment.
+
+const SELLER_GUIDE_STEPS = [
+  {
+    title: 'Check the order',
+    body: 'Open the order from your Seller Dashboard as soon as "Payment confirmed" appears. Every step below happens on the order page.',
+  },
+  {
+    title: 'Read the buy notes',
+    body: 'The buyer may include account requirements (e.g. must-have players, GP, coins). Deliver exactly what was promised.',
+  },
+  {
+    title: 'Sign in to the account',
+    body: 'Log into the eFootball account you are selling using your own device first. Make sure the login works before you hand it over.',
+  },
+  {
+    title: 'Submit the account details',
+    body: 'Use the "Submit Account Details" box on the order page. Enter the account email/username and password exactly, in order, before the buyer verifies.',
+  },
+  {
+    title: 'Wait for buyer verification (this is important)',
+    body: 'After you submit the details the buyer will verify the login and confirm delivery. Let the buyer confirm — never press the buyer’s confirm button, and never mark a delivery done that the buyer has not received.',
+  },
+  {
+    title: 'Get paid by admin',
+    body: 'Once the buyer confirms, admin releases the payout. Payouts are processed manually to your registered payout phone. Keep your payout phone number up to date in your seller profile.',
+  },
+];
+
+const SELLER_GUIDE_RULES = [
+  'Never email, call, or message buyers outside the order with your personal details or the account password.',
+  'Account login details belong in the private order page only — never in the public order chat, reviews, or anywhere else.',
+  'Never share your eHub password, M-Pesa details, or payout phone with anyone, including buyers and eHub staff.',
+  'Keep your payout phone number current so admin can pay you without delays.',
+];
+
+function sellerOrderGuideHtml() {
+  const stepRows = SELLER_GUIDE_STEPS.map((step, index) => `
+    <tr>
+      <td width="34" valign="top" style="padding:0 10px 14px 0;">
+        <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+          <td width="24" height="24" align="center" valign="middle" style="background:#003BFF;border-radius:6px;color:#FFF100;font-size:12px;font-weight:700;">${index + 1}</td>
+        </tr></table>
+      </td>
+      <td valign="top" style="padding:0 0 14px;">
+        <p style="margin:0 0 3px;font-size:13.5px;font-weight:700;color:#111111;">${esc(step.title)}</p>
+        <p style="margin:0;font-size:13px;line-height:1.55;color:#4B5563;">${esc(step.body)}</p>
+      </td>
+    </tr>`).join('');
+
+  const ruleItems = SELLER_GUIDE_RULES
+    .map((rule) => `<li style="margin-bottom:5px;">${esc(rule)}</li>`)
+    .join('');
+
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #EEF0F3;border-radius:10px;border-collapse:separate;overflow:hidden;margin:4px 0 16px;">
+    <tr><td style="padding:16px 16px 2px;background:#FAFAFB;">
+      <p style="margin:0 0 2px;font-size:15px;font-weight:700;color:#003BFF;">eHub Seller Order Guide</p>
+      <p style="margin:0 0 14px;font-size:12.5px;color:#6B7280;">Complete every paid order quickly and safely to get paid.</p>
+      <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#111111;">Your 6-step checklist after a buyer pays:</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${stepRows}</table>
+    </td></tr>
+    <tr><td style="padding:0 16px 16px;background:#FAFAFB;">
+      <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#003BFF;">Security rules you must follow</p>
+      <ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.6;color:#4B5563;">${ruleItems}</ul>
+      <p style="margin:12px 0 0;font-size:12.5px;line-height:1.6;color:#4B5563;"><strong style="color:#111111;">Need help?</strong> Open the order and ask in the private order chat. Admin is on the order and will help resolve any questions or disputes.</p>
+    </td></tr>
+  </table>`;
+}
+
+// ---------------------------------------------------------------------------
 // eHub Market transactional layout (brand blue #003BFF / yellow #FFF100)
 // ---------------------------------------------------------------------------
 
@@ -357,15 +432,13 @@ async function sendSellerPaymentReceivedEmail(order) {
   await runWithIdempotency(key, async () => {
     const listingTitle = order.listingTitle || 'your listing';
     const amount = order.amount ?? order.paidAmount;
-    // The guide is a bonus attachment — never let PDF rendering block the sale
-    // notification itself.
-    const pdfBuffer = await getSellerOrderGuidePdf().catch(() => null);
 
     const bodyHtml =
       bodyP(`Your listing ${bodyStrong(esc(listingTitle))} has been purchased for ${bodyStrong(formatKES(amount))}.`) +
       bodyP('Payment is held securely in escrow.') +
       bodyP('Log in to your Transfer Room to submit the account credentials.') +
-      bodyP('The buyer has 30 minutes to verify after you reveal the password.');
+      bodyP('The buyer has 30 minutes to verify after you reveal the password.') +
+      sellerOrderGuideHtml();
 
     return sendEmail(
       sellerEmail,
@@ -379,10 +452,8 @@ async function sendSellerPaymentReceivedEmail(order) {
         text:
           `You have a new sale! ${listingTitle} sold for ${formatKES(amount)}. ` +
           `Payment is held securely in escrow. Submit the account credentials in your Transfer Room: ` +
-          `${FRONTEND_URL}/transfer-room`,
-        attachments: pdfBuffer
-          ? [{ filename: 'eHub Seller Order Guide.pdf', content: pdfBuffer, contentType: 'application/pdf' }]
-          : undefined,
+          `${FRONTEND_URL}/transfer-room. ` +
+          `The 6-step seller guide and security rules are included in this email.`,
       }
     );
   });
