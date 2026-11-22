@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import {
   Bar,
@@ -14,11 +14,19 @@ import {
   YAxis,
 } from 'recharts';
 import toast from 'react-hot-toast';
-import { Download, Loader2, TrendingUp, Wallet } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { Copy, Download, Image as ImageIcon, Loader2, TrendingUp, Wallet } from 'lucide-react';
 import { db } from '../../../services/firebase';
 import { formatKES } from '../../../utils/formatters';
 import { canonicalStatus } from '../../../utils/orderMachine';
 import { PLATFORM_FEE_RATE } from '../../../utils/payouts';
+import {
+  ANALYTICS_FOOTER_HEIGHT,
+  ANALYTICS_IMAGE_SIZE,
+  analyticsFooterDate,
+  analyticsImageFileName,
+  analyticsImageLayout,
+} from '../../../utils/analyticsImage';
 import {
   ANALYTICS_DAYS,
   STATUS_COLORS,
@@ -85,6 +93,9 @@ export default function AnalyticsTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
+  const [exportingImage, setExportingImage] = useState(false);
+  const [copyingImage, setCopyingImage] = useState(false);
+  const reportRef = useRef(null);
 
   useEffect(() => {
     let active = true;
@@ -153,6 +164,101 @@ export default function AnalyticsTab() {
     toast.success(`Exported ${completedCount} completed orders.`);
   };
 
+  // Capture the analytics cards/charts, then compose a shareable 1080x1080
+  // image with a branded footer. Built as a canvas so the size is exact.
+  const buildAnalyticsImage = async () => {
+    const element = reportRef.current;
+    if (!element) return null;
+
+    // Web fonts must be ready before canvas text is drawn or the footer falls
+    // back to a system font in the exported PNG.
+    if (document.fonts?.ready) await document.fonts.ready;
+
+    const scale = Math.min(3, Math.max(2, ANALYTICS_IMAGE_SIZE / Math.max(element.scrollWidth, 1)));
+    const captured = await html2canvas(element, {
+      backgroundColor: '#F4F5F7',
+      scale,
+      useCORS: true,
+      logging: false,
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = ANALYTICS_IMAGE_SIZE;
+    canvas.height = ANALYTICS_IMAGE_SIZE;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas 2D context unavailable');
+
+    ctx.fillStyle = '#F4F5F7';
+    ctx.fillRect(0, 0, ANALYTICS_IMAGE_SIZE, ANALYTICS_IMAGE_SIZE);
+
+    const image = analyticsImageLayout(captured.width, captured.height);
+    ctx.drawImage(captured, image.x, image.y, image.width, image.height);
+
+    const footerY = ANALYTICS_IMAGE_SIZE - ANALYTICS_FOOTER_HEIGHT;
+    ctx.fillStyle = '#001450';
+    ctx.fillRect(0, footerY, ANALYTICS_IMAGE_SIZE, ANALYTICS_FOOTER_HEIGHT);
+
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '700 34px Montserrat, Inter, sans-serif';
+    ctx.fillText('eHub Market Analytics', 48, footerY + 52);
+    ctx.font = '500 20px Inter, sans-serif';
+    ctx.fillText('ehubmarket.me', 48, footerY + 84);
+
+    const dateText = analyticsFooterDate();
+    ctx.font = '500 18px Inter, sans-serif';
+    ctx.fillText(dateText, ANALYTICS_IMAGE_SIZE - 48 - ctx.measureText(dateText).width, footerY + 54);
+
+    return canvas;
+  };
+
+  const handleExportImage = async () => {
+    setExportingImage(true);
+    try {
+      const canvas = await buildAnalyticsImage();
+      if (!canvas) {
+        toast.error('Analytics are not ready to export yet.');
+        return;
+      }
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = analyticsImageFileName();
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Analytics image downloaded.');
+    } catch (err) {
+      console.error('Analytics image export failed:', err);
+      toast.error('Could not create the analytics image. Please try again.');
+    } finally {
+      setExportingImage(false);
+    }
+  };
+
+  const handleCopyImage = async () => {
+    if (typeof ClipboardItem === 'undefined' || !navigator.clipboard?.write) {
+      toast.error('Copying images is not supported here. Use Export as Image instead.');
+      return;
+    }
+    setCopyingImage(true);
+    try {
+      const canvas = await buildAnalyticsImage();
+      if (!canvas) {
+        toast.error('Analytics are not ready to copy yet.');
+        return;
+      }
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('Could not encode the analytics image');
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      toast.success('Analytics image copied — paste it into WhatsApp.');
+    } catch (err) {
+      console.error('Analytics image copy failed:', err);
+      toast.error('Could not copy the image. Use Export as Image instead.');
+    } finally {
+      setCopyingImage(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -162,15 +268,35 @@ export default function AnalyticsTab() {
             Revenue, order flow and marketplace growth over the last {ANALYTICS_DAYS} days.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleExport}
-          disabled={loading || completedCount === 0}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#FFF100] px-3.5 py-2 text-xs font-bold uppercase tracking-wide text-[#001450] transition-colors hover:bg-yellow-300 disabled:opacity-50"
-        >
-          {loading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-          Export Report
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={loading || completedCount === 0}
+            className="inline-flex items-center gap-2 rounded-lg bg-[#FFF100] px-3.5 py-2 text-xs font-bold uppercase tracking-wide text-[#001450] transition-colors hover:bg-yellow-300 disabled:opacity-50"
+          >
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+            Export CSV
+          </button>
+          <button
+            type="button"
+            onClick={handleExportImage}
+            disabled={loading || !!error || exportingImage || copyingImage}
+            className="inline-flex items-center gap-2 rounded-lg bg-[#001450] px-3.5 py-2 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#00236b] disabled:opacity-50"
+          >
+            {exportingImage ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
+            Export as Image
+          </button>
+          <button
+            type="button"
+            onClick={handleCopyImage}
+            disabled={loading || !!error || exportingImage || copyingImage}
+            className="inline-flex items-center gap-2 rounded-lg border border-[#001450]/25 bg-white px-3.5 py-2 text-xs font-bold uppercase tracking-wide text-[#001450] transition-colors hover:bg-[#F4F5F7] disabled:opacity-50"
+          >
+            {copyingImage ? <Loader2 size={14} className="animate-spin" /> : <Copy size={14} />}
+            Copy Image
+          </button>
+        </div>
       </div>
 
       {error ? (
@@ -187,7 +313,7 @@ export default function AnalyticsTab() {
       ) : loading ? (
         <ChartSkeleton />
       ) : (
-        <>
+        <div ref={reportRef} className="space-y-5">
           <section className={`${DARK_CARD} relative overflow-hidden rounded-2xl p-6`}>
             <div className="absolute -right-8 -top-10 h-40 w-40 rounded-full bg-[#003BFF]/40 blur-2xl" />
             <div className="relative flex flex-wrap items-start justify-between gap-4">
@@ -360,7 +486,7 @@ export default function AnalyticsTab() {
             Charts read live Firestore data when this tab opens. Export includes every completed order,
             not just the last {ANALYTICS_DAYS} days.
           </p>
-        </>
+        </div>
       )}
     </div>
   );
