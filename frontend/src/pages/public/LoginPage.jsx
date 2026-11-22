@@ -3,7 +3,12 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Zap, Shield, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import PasswordInput from '../../components/common/PasswordInput';
-import { loginErrorMessage, googleAuthErrorMessage } from '../../utils/authErrors';
+import {
+  loginErrorMessage,
+  googleAuthErrorMessage,
+  isGoogleOnlyAccountError,
+  GOOGLE_ONLY_LOGIN_MESSAGE,
+} from '../../utils/authErrors';
 
 export default function LoginPage() {
   const { login, loginWithGoogle } = useAuth();
@@ -30,7 +35,10 @@ export default function LoginPage() {
       await login(email, password);
       navigate(redirectPath);
     } catch (err) {
-      setError(loginErrorMessage(err));
+      // A Google-only account has no password to check, so Firebase reports a
+      // generic credential error. Point those users at Google Sign-In instead
+      // of showing "incorrect email or password".
+      setError(isGoogleOnlyAccountError(err) ? GOOGLE_ONLY_LOGIN_MESSAGE : loginErrorMessage(err));
     } finally {
       setLoading(false);
     }

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { EmailAuthProvider, linkWithCredential, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { doc, collection, query, where, orderBy, limit, getDocs, writeBatch, setDoc } from 'firebase/firestore';
-import { db } from '../../services/firebase';
+import { auth, db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { updateUserDocument } from '../../services/authService';
 import { saveUserContact } from '../../services/userContactService';
@@ -10,6 +10,7 @@ import { validatePhone } from '../../utils/validators';
 import PasswordInput from '../../components/common/PasswordInput';
 import Avatar from '../../components/common/Avatar';
 import { validateUsernameFormat, generateSuggestions, checkUsername, normalizeUsernameLower, normalizeUsernameForWrite } from '../../utils/usernameUtils';
+import { changePasswordErrorMessage, setPasswordErrorMessage } from '../../utils/authErrors';
 import { formatDate, formatKES } from '../../utils/formatters';
 import { ORDER_STATUS } from '../../utils/constants';
 import toast from 'react-hot-toast';
@@ -271,8 +272,7 @@ export default function AccountPage() {
       setNewPassword('');
       setConfirmNewPassword('');
     } catch (err) {
-      if (err.code === 'auth/wrong-password') toast.error('Current password is incorrect');
-      else toast.error(err.message || 'Failed to update password');
+      toast.error(changePasswordErrorMessage(err));
     } finally {
       setChangingPassword(false);
     }
@@ -287,20 +287,15 @@ export default function AccountPage() {
       const credential = EmailAuthProvider.credential(currentUser.email, linkPassword);
       await linkWithCredential(currentUser, credential);
       setPasswordJustLinked(true);
-      toast.success('Password set! You can now log in with email and password.');
+      toast.success('Password set! You can now log in with your email and this password.');
       setLinkPassword('');
       setLinkConfirmPassword('');
     } catch (err) {
       if (err.code === 'auth/provider-already-linked') {
-        toast.success('A password is already linked to this account. You can now log in with email and password.');
-      } else if (err.code === 'auth/requires-recent-login') {
-        toast.error('For security, sign out and sign in with Google again, then set your password.');
-      } else if (err.code === 'auth/email-already-in-use' || err.code === 'auth/credential-already-in-use') {
-        toast.error('That email already belongs to another account. Contact support for help.');
-      } else if (err.code === 'auth/weak-password') {
-        toast.error('That password is too weak. Use at least 8 characters.');
+        setPasswordJustLinked(true);
+        toast.success('A password is already linked. You can now log in with email and password.');
       } else {
-        toast.error(err.message || 'Could not set a password');
+        toast.error(setPasswordErrorMessage(err));
       }
     } finally {
       setLinkingPassword(false);
@@ -331,10 +326,12 @@ export default function AccountPage() {
   });
 
   const strength = getPasswordStrength(newPassword);
-  // A Google account has no password provider until one is explicitly linked.
+  // A Google-only account has no password provider until one is explicitly
+  // linked. auth.currentUser is the source of truth; passwordJustLinked keeps
+  // the "Change Password" view visible immediately after a successful link.
   const hasPassword =
     passwordJustLinked ||
-    Boolean(currentUser?.providerData?.some(p => p.providerId === 'password'));
+    Boolean(auth.currentUser?.providerData?.some(p => p.providerId === 'password'));
 
   const sidebarTab = (tab) => {
     const Icon = tab.icon;
@@ -638,10 +635,10 @@ export default function AccountPage() {
                 passwordJustLinked && !currentPassword ? (
                   <div className="bg-white rounded-2xl p-6 shadow-sm space-y-3">
                     <p className="flex items-center gap-2 font-heading font-bold text-sm" style={{ color: '#047857' }}>
-                      <CheckCircle size={16} /> Password set!
+                      <CheckCircle size={16} /> Password set! You can now log in with your email and this password.
                     </p>
                     <p className="text-sm" style={{ color: '#6B7280' }}>
-                      You can now log in with email and password. Google Sign-In still works too.
+                      Google Sign-In still works too.
                     </p>
                     <button
                       onClick={() => setPasswordJustLinked(false)}
@@ -701,11 +698,10 @@ export default function AccountPage() {
                 <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
                   <div>
                     <h3 className="font-heading font-bold uppercase text-sm" style={{ color: '#003BFF' }}>
-                      Set a password for email login
+                      Set a Password
                     </h3>
                     <p className="text-sm mt-1" style={{ color: '#6B7280' }}>
-                      Your account was created with Google Sign-In. Add a password and you can also
-                      log in with your email address — Google Sign-In keeps working.
+                      Add a password so you can also log in with your email. Google Sign-In keeps working.
                     </p>
                   </div>
                   <div>
