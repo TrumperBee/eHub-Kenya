@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Zap, Shield, MessageCircle, CheckCircle, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import PasswordInput from '../../components/common/PasswordInput';
+import { resolveAuthRedirect, resolvePostSetupRedirect } from '../../utils/authRedirect';
 import { validateUsernameFormat, generateSuggestions, checkUsername } from '../../utils/usernameUtils';
 import { googleAuthErrorMessage } from '../../utils/authErrors';
 
@@ -23,8 +24,9 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [loading, setLoading] = useState(false);
-  const from = location.state?.from;
-  const redirectPath = from ? `${from.pathname}${from.search || ''}` : '/account';
+  // Honour the page the user was headed to, otherwise send them home.
+  const redirectPath = resolveAuthRedirect(location);
+  const setupRedirect = resolvePostSetupRedirect(location);
 
   const [usernameError, setUsernameError] = useState(null);
   const [usernameAvailable, setUsernameAvailable] = useState(null);
@@ -151,7 +153,9 @@ export default function RegisterPage() {
     try {
       const result = await loginWithGoogle();
       if (result?.isNew) {
-        navigate('/setup-username');
+        // Carry the intended destination through onboarding so the user lands
+        // there after choosing a username (home by default).
+        navigate('/setup-username', { state: { from: setupRedirect } });
       } else {
         navigate(redirectPath);
       }

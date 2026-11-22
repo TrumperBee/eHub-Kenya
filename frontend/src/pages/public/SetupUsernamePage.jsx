@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { validateUsernameFormat, checkUsername, generateSuggestions, normalizeUsernameLower } from '../../utils/usernameUtils';
 import { updateUserDocument } from '../../services/authService';
+import { resolvePostSetupRedirect } from '../../utils/authRedirect';
 
 export default function SetupUsernamePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser } = useAuth();
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
@@ -16,12 +18,18 @@ export default function SetupUsernamePage() {
   const [usernameChecking, setUsernameChecking] = useState(false);
   const [usernameTaken, setUsernameTaken] = useState(false);
   const debounceRef = useRef(null);
+  // Login/Register hand the intended post-onboarding destination over in
+  // state.from. Finish there instead of dropping the user on /account.
+  const postSetupRedirect = resolvePostSetupRedirect(location);
 
   useEffect(() => {
     if (!currentUser) {
-      navigate('/login');
+      navigate('/login', {
+        replace: true,
+        state: { from: postSetupRedirect, message: 'Please log in to continue' },
+      });
     }
-  }, [currentUser, navigate]);
+  }, [currentUser, navigate, postSetupRedirect]);
 
   const handleUsernameChange = (e) => {
     // Keep the user's casing; only strip characters we never allow.
@@ -74,7 +82,7 @@ export default function SetupUsernamePage() {
         username,
         usernameLower: normalizeUsernameLower(username),
       });
-      navigate('/account');
+      navigate(postSetupRedirect, { replace: true });
     } catch (err) {
       setError(err.message || 'Failed to save username. Try again.');
     } finally {
