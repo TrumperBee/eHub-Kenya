@@ -17,6 +17,8 @@ const router = express.Router();
 const { admin, adminDb } = require('../services/firebaseAdmin');
 const { verifyFirebaseToken } = require('../middleware/verifyFirebaseToken');
 const { runOverdueSellerCheck } = require('../services/sellerOverdueSweep');
+const { approveSellerApplication, VALID_SELLER_UID } = require('../services/sellerApproval');
+const { sendSellerApprovedEmail } = require('../services/emailService');
 
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').trim();
 
@@ -126,6 +128,44 @@ router.post(
 router.post('/run-overdue-check', verifyFirebaseToken, requireAdmin, async (req, res, next) => {
   try {
     const result = await runOverdueSellerCheck();
+    return res.json({ success: true, ...result });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/**
+ * POST /api/admin/sellers/:uid/approve
+ * Persists a seller approval in both Firestore documents, then sends the
+ * welcome email. The email is idempotent per uid, so re-approving a seller
+ * never sends a second welcome message.
+ */
+router.post('/sellers/:uid/approve', verifyFirebaseToken, requireAdmin, async (req, res, next) => {
+  try {
+    const { uid } = req.params;
+    if (!VALID_SELLER_UID.test(uid)) {
+      return res.status(400).json({ success: false, error: 'Invalid seller id' });
+    }
+
+    const userRef = adminDb.doc(`users/${uid}`);
+    const applicationRef = adminDb.doc(`sellerApplications/${uid}`);
+    const [userSnap, applicationSnap] = await Promise.all([userRef.get(), applicationRef.get()]);
+    if (!userSnap.exists) {
+      return res.status(404).json({ success: false, error: 'Seller not found' });
+    }
+    if (!applicationSnap.exists) {
+      return res.status(404).json({ success: false, error: 'Seller application not found' });
+    }
+
+    const result = await approveSellerApplication({
+      uid,
+      adminUid: req.user.uid,
+      sellerName: userSnap.data().displayName || '',
+      userRef,
+      applicationRef,
+      sendWelcome: sendSellerApprovedEmail,
+      serverTimestamp: () => admin.firestore.FieldValue.serverTimestamp(),
+    });
     return res.json({ success: true, ...result });
   } catch (err) {
     return next(err);

@@ -14,6 +14,15 @@ const { Resend } = require('resend');
 const { admin, adminDb } = require('./firebaseAdmin');
 const logger = require('../utils/logger');
 const { PLATFORM_FEE_RATE, platformFee, sellerPayout } = require('../utils/payouts');
+const {
+  WELCOME_SUBJECT,
+  CONGRATULATIONS,
+  HOW_IT_WORKS_STEPS,
+  SELLER_RULES,
+  FIRST_PAYOUT_COPY,
+  WHATSAPP_URL,
+  feeRule,
+} = require('../utils/sellerApprovalCopy');
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
@@ -927,6 +936,81 @@ async function sendFridayDropEmail(drop, sellerEmail, { live }) {
   });
 }
 
+// Seller approved — welcome email. Called by the admin approval route only
+// after both Firestore writes have persisted. Idempotent per seller uid.
+async function sendSellerApprovedEmail({ uid, sellerName } = {}) {
+  if (!uid) return { status: 'skipped' };
+  const sellerEmail = await getUserEmail(uid);
+  if (!sellerEmail) {
+    logger.warn(`seller-approved email skipped (no email on user ${uid})`);
+    return { status: 'skipped' };
+  }
+
+  const key = `seller-approved-${uid}`;
+  return runWithIdempotency(key, async () => {
+    const sectionTitle = (text) =>
+      `<p style="margin:20px 0 8px;font-size:15px;font-weight:700;color:#003BFF;">${esc(text)}</p>`;
+
+    const stepRows = HOW_IT_WORKS_STEPS.map((step, index) => `
+      <tr>
+        <td width="32" valign="top" style="padding:0 10px 10px 0;">
+          <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td width="22" height="22" align="center" valign="middle" style="background:#003BFF;border-radius:6px;color:#FFF100;font-size:11px;font-weight:700;">${index + 1}</td>
+          </tr></table>
+        </td>
+        <td valign="top" style="padding:0 0 10px;">
+          <p style="margin:0 0 2px;font-size:13.5px;font-weight:700;color:#111111;">${esc(step.title)}</p>
+          <p style="margin:0;font-size:13px;line-height:1.5;color:#4B5563;">${esc(step.body)}</p>
+        </td>
+      </tr>`).join('');
+
+    const rules = [...SELLER_RULES, feeRule()];
+    const ruleItems = rules
+      .map((rule) => `<li style="margin-bottom:6px;">${esc(rule)}</li>`)
+      .join('');
+
+    const bodyHtml =
+      bodyP(`Hi ${esc(sellerName || 'there')},`) +
+      bodyP(esc(CONGRATULATIONS)) +
+      sectionTitle('How it works') +
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 4px;">${stepRows}</table>` +
+      sectionTitle('Seller Rules') +
+      `<ul style="margin:0 0 8px;padding-left:20px;font-size:13.5px;line-height:1.6;color:#374151;">${ruleItems}</ul>` +
+      sectionTitle('Your first payout') +
+      bodyP(esc(FIRST_PAYOUT_COPY));
+
+    const transferRoomUrl = `${FRONTEND_URL}/transfer-room`;
+    const textLines = [
+      `Hi ${sellerName || 'there'},`,
+      CONGRATULATIONS,
+      '',
+      'How it works:',
+      ...HOW_IT_WORKS_STEPS.map((step, i) => `${i + 1}. ${step.title} — ${step.body}`),
+      '',
+      'Seller Rules:',
+      ...rules.map((rule) => `- ${rule}`),
+      '',
+      'Your first payout:',
+      FIRST_PAYOUT_COPY,
+      '',
+      `Start Selling Now: ${transferRoomUrl}`,
+      `Questions? Contact admin on WhatsApp: ${WHATSAPP_URL}`,
+    ];
+
+    return sendRaw({
+      to: sellerEmail,
+      subject: WELCOME_SUBJECT,
+      html: renderMarketLayout({
+        title: "You're approved as an eHub Market Seller!",
+        bodyHtml,
+        cta: { url: transferRoomUrl, label: 'Start Selling Now' },
+        footerHtml: `Questions? Contact admin on <a href="${WHATSAPP_URL}" style="color:#003BFF;text-decoration:underline;">WhatsApp</a> &middot; ${MARKET_FOOTER}`,
+      }),
+      text: textLines.join('\n'),
+    });
+  });
+}
+
 // Simple test email (admin-only).
 async function sendTestEmail(to) {
   if (!resend) return { status: 'not_configured' };
@@ -950,6 +1034,7 @@ module.exports = {
   sendEmail,
   sendBuyerPaymentConfirmedEmail,
   sendSellerPaymentReceivedEmail,
+  sendSellerApprovedEmail,
   sendSellerCredentialsSubmittedEmail,
   sendBuyerCredentialsReadyEmail,
   sendOrderCompletedEmail,

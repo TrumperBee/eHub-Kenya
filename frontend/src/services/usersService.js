@@ -1,7 +1,9 @@
-import { db } from './firebase';
+import axios from 'axios';
+import { db, auth } from './firebase';
 import { collection, query, where, getDocs, getDoc, doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { attachContacts } from './userContactService';
 import { sendNotificationSafe } from './notificationService';
+import { BACKEND_URL } from '../utils/constants';
 
 export const getUserById = async (uid) => {
   const snap = await getDoc(doc(db, 'users', uid));
@@ -39,17 +41,20 @@ export const getAllApplications = async () => {
 };
 
 export const approveSeller = async (userId) => {
-  await updateDoc(doc(db, 'users', userId), {
-    role: 'seller',
-    sellerApproved: true,
-    updatedAt: serverTimestamp(),
-  });
-  await updateDoc(doc(db, 'sellerApplications', userId), {
-    status: 'approved',
-    reviewedAt: serverTimestamp(),
-  });
+  // SECURITY: the backend owns the approval write so the welcome email can
+  // only be sent after both Firestore documents have been updated. It also
+  // re-checks the verified admin token before touching either document.
+  const user = auth.currentUser;
+  if (!user) throw new Error('You must be signed in');
+  const token = await user.getIdToken();
+  await axios.post(
+    `${BACKEND_URL}/api/admin/sellers/${encodeURIComponent(userId)}/approve`,
+    {},
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+
   // SECURITY: Firestore rules forbid writing into another user's notification
-  // feed from the browser, so the approval notice goes through the backend.
+  // feed from the browser, so the in-app notice goes through the backend too.
   await sendNotificationSafe({
     userId,
     title: 'Seller Application Approved!',
