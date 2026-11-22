@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, X, Plus, Flame } from 'lucide-react';
+import { Upload, X, Plus, Flame, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { createListing } from '../../services/listingsService';
+import { createListing, SUSPENDED_SELLER_MESSAGE } from '../../services/listingsService';
 import { submitDrop } from '../../services/fridayDropsService';
 import { validateDropPrice } from '../../services/fridayDropGuard';
 import { uploadListingImages } from '../../services/paymentService';
@@ -27,6 +27,10 @@ export default function CreateListingPage() {
   const [uploadProgress, setUploadProgress] = useState(false);
   const [playerInput, setPlayerInput] = useState('');
   const [errors, setErrors] = useState({});
+
+  // Suspended sellers keep access to their dashboard and existing orders, but
+  // can never publish a new listing (rules + createListing enforce it too).
+  const suspended = userProfile?.suspended === true;
 
   const [form, setForm] = useState({
     title: '',
@@ -104,6 +108,7 @@ export default function CreateListingPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (suspended) { toast.error(SUSPENDED_SELLER_MESSAGE); return; }
     if (!validate()) { toast.error('Please fix the errors'); return; }
     setSubmitting(true);
 
@@ -176,6 +181,20 @@ export default function CreateListingPage() {
   return (
     <div className="w-full max-w-screen overflow-x-hidden pt-[68px] pb-20 md:pb-0 min-h-screen animate-fade-in" style={{ background: '#F5F5F5' }}>
       <div className="max-w-3xl mx-auto px-4 py-8">
+        {suspended && (
+          <div className="mb-6 flex items-start gap-3 rounded-xl p-4" style={{ background: '#FEE2E2', border: '1px solid #FECACA' }}>
+            <AlertTriangle size={20} className="shrink-0 mt-0.5" style={{ color: '#B91C1C' }} />
+            <div>
+              <p className="font-heading text-sm font-bold uppercase" style={{ color: '#B91C1C' }}>
+                Seller account suspended
+              </p>
+              <p className="text-xs mt-1" style={{ color: '#7F1D1D' }}>
+                Your account was suspended for repeated failure to deliver paid orders, so new listings are blocked.
+                Contact support to appeal.
+              </p>
+            </div>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="card overflow-hidden">
             <div style={{ height: 4, background: '#FFF100' }} />
@@ -376,7 +395,7 @@ Guarantee: This account's email has never been changed before. I guarantee deliv
             </div>
           </div>
 
-          <button type="submit" disabled={submitting} className="btn-primary w-full flex items-center justify-center gap-2 text-lg py-5">
+          <button type="submit" disabled={submitting || suspended} className="btn-primary w-full flex items-center justify-center gap-2 text-lg py-5 disabled:opacity-60">
             {submitting ? (
               <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Publishing...</>
             ) : 'Publish Listing'}

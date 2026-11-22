@@ -29,6 +29,7 @@ const errorHandler = require('./src/middleware/errorHandler');
 const { apiLimiter } = require('./src/middleware/rateLimiter');
 const { ALLOWED_ORIGINS } = require('./src/config');
 const { startStatsReconciler } = require('./src/services/statsRecoService');
+const { startOverdueSellerScheduler } = require('./src/services/sellerOverdueSweep');
 const { checkConnectivity, getConnectivity } = require('./src/services/zetupayService');
 
 const app = express();
@@ -91,6 +92,8 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`eFootball Hub Kenya Backend running on port ${PORT}`);
   startStatsReconciler();
+  // 5h reminder / 24h flag / auto-suspend. Runs at boot and every 60 minutes.
+  startOverdueSellerScheduler();
   checkConnectivity().then((c) => {
     if (c.ok) {
       console.log(`[zetupay] connectivity OK (HTTP ${c.status}, ${c.elapsedMs}ms)`);

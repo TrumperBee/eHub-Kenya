@@ -613,6 +613,124 @@ async function sendOrderCompletedEmail(order) {
   await Promise.all(tasks);
 }
 
+// Seller: paid order still has no credentials after 5 hours.
+async function sendSellerOverdueReminderEmail(order) {
+  if (!order || !order.id) return { status: 'skipped' };
+  const sellerEmail = await getUserEmail(order.sellerId);
+  if (!sellerEmail) return { status: 'no_recipient' };
+
+  return runWithIdempotency(`seller-overdue-reminder-${order.id}`, async () => {
+    const title = 'Action Required — Submit Account Credentials';
+    const bodyHtml =
+      bodyP(`Hi ${esc(order.sellerDisplayName || 'there')},`) +
+      bodyP(
+        `Your order for "${esc(order.listingTitle || 'your listing')}" was paid ` +
+        `${bodyStrong('over 5 hours ago')}, and the buyer is still waiting for the account login details.`
+      ) +
+      bodyWarning(
+        'You have an order waiting for credential submission. Submit now to avoid account restrictions.'
+      ) +
+      bodyP(
+        'Open the order, sign in to the account you are selling to confirm the login works, then submit the account email and password on the order page.'
+      ) +
+      bodyP(
+        `If the credentials are not submitted within 24 hours of payment, a warning is added to your seller account. Three warnings suspend the account.`
+      );
+
+    return sendRaw({
+      to: sellerEmail,
+      subject: 'Action Required: Submit credentials for your eHub Market order',
+      html: renderMarketLayout({
+        title,
+        bodyHtml,
+        cta: { ...orderCta(order, 'Submit Credentials Now'), background: '#003BFF', color: '#FFFFFF' },
+        footerHtml: `Order ${esc(order.id)} &middot; ${MARKET_FOOTER}`,
+      }),
+      text:
+        `Your order ${order.id} was paid over 5 hours ago and still has no account credentials. ` +
+        `Submit them now to avoid account restrictions: ${orderUrl(order)}`,
+    });
+  });
+}
+
+// Seller: paid order still has no credentials after 24 hours. The caller has
+// already incremented the seller's warning counter and may have suspended them.
+async function sendSellerOverdueFlaggedEmail(order, { warningCount = 1, maxWarnings = 3 } = {}) {
+  if (!order || !order.id) return { status: 'skipped' };
+  const sellerEmail = await getUserEmail(order.sellerId);
+  if (!sellerEmail) return { status: 'no_recipient' };
+
+  return runWithIdempotency(`seller-overdue-flagged-${order.id}`, async () => {
+    const title = 'Your Account Has Been Flagged';
+    const bodyHtml =
+      bodyP(`Hi ${esc(order.sellerDisplayName || 'there')},`) +
+      bodyP(
+        `Order ${bodyStrong(esc(order.id))} for "${esc(order.listingTitle || 'your listing')}" ` +
+        `has been paid for over ${bodyStrong('24 hours')} and the account credentials were never submitted.`
+      ) +
+      bodyWarning(
+        'Your account has been flagged for failing to deliver. Continued violations will result in a ban.'
+      ) +
+      bodyP(
+        `This is warning ${bodyStrong(`${warningCount} of ${maxWarnings}`)} on your seller account. ` +
+        (warningCount >= maxWarnings
+          ? 'The account has reached the limit and is now suspended.'
+          : `At ${maxWarnings} warnings the account is suspended automatically.`)
+      ) +
+      bodyP('Submit the credentials on this order immediately so the buyer can verify the account.');
+
+    return sendRaw({
+      to: sellerEmail,
+      subject: 'Your eHub Market account has been flagged for failing to deliver',
+      html: renderMarketLayout({
+        title,
+        bodyHtml,
+        cta: { ...orderCta(order, 'Submit Credentials Now'), background: '#C8102E', color: '#FFFFFF' },
+        footerHtml: `Order ${esc(order.id)} &middot; ${MARKET_FOOTER}`,
+      }),
+      text:
+        `Your eHub Market account has been flagged for failing to deliver order ${order.id}. ` +
+        `Warning ${warningCount} of ${maxWarnings}. Continued violations will result in a ban: ${orderUrl(order)}`,
+    });
+  });
+}
+
+// Seller: third warning — the account has just been suspended.
+async function sendSellerSuspendedEmail(order) {
+  if (!order || !order.id) return { status: 'skipped' };
+  const sellerEmail = await getUserEmail(order.sellerId);
+  if (!sellerEmail) return { status: 'no_recipient' };
+
+  return runWithIdempotency(`seller-suspended-${order.id}`, async () => {
+    const title = 'Your Seller Account Has Been Suspended';
+    const bodyHtml =
+      bodyP(`Hi ${esc(order.sellerDisplayName || 'there')},`) +
+      bodyWarning(
+        'Your eHub Market seller account has been suspended due to repeated failure to deliver.'
+      ) +
+      bodyP(
+        'You can no longer create new listings. Existing orders still need to be delivered, and buyers can still open disputes on them.'
+      ) +
+      bodyP(
+        `To appeal, contact support at ${bodyStrong(SUPPORT_EMAIL)} from the email on your eHub account and include order ${bodyStrong(esc(order.id))}.`
+      );
+
+    return sendRaw({
+      to: sellerEmail,
+      subject: 'Your eHub Market seller account has been suspended',
+      html: renderMarketLayout({
+        title,
+        bodyHtml,
+        cta: { ...orderCta(order, 'View Your Order'), background: '#003BFF', color: '#FFFFFF' },
+        footerHtml: MARKET_FOOTER,
+      }),
+      text:
+        'Your eHub Market seller account has been suspended due to repeated failure to deliver. ' +
+        `Existing orders still need to be delivered. To appeal, contact ${SUPPORT_EMAIL}.`,
+    });
+  });
+}
+
 // Buyer + seller: order refunded (non-dispute admin refund)
 async function sendOrderRefundedEmail(order) {
   const sellerEmail = await getUserEmail(order.sellerId);
@@ -837,6 +955,9 @@ module.exports = {
   sendOrderCompletedEmail,
   sendAdminPayoutRequiredEmail,
   sendOrderRefundedEmail,
+  sendSellerOverdueReminderEmail,
+  sendSellerOverdueFlaggedEmail,
+  sendSellerSuspendedEmail,
   sendDisputeRaisedEmail,
   sendDisputeResolvedEmail,
   sendFridayDropEmail,

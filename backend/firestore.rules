@@ -30,7 +30,8 @@ service cloud.firestore {
     }
     function isSeller() {
       return isLoggedIn() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.sellerApproved == true;
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.sellerApproved == true &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('suspended', false) != true;
     }
 
     // SECURITY: contact details must never live on the publicly readable user
@@ -45,7 +46,7 @@ service cloud.firestore {
       return [
         'uid', 'role', 'sellerApproved', 'sellerRating', 'sellerTotalRatings',
         'totalSales', 'totalPurchases', 'statsCounted', 'disabled', 'banned',
-        'createdAt'
+        'warnings', 'suspended', 'suspendedAt', 'suspensionReason', 'createdAt'
       ];
     }
 

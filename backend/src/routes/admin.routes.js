@@ -6,6 +6,7 @@
 //
 //   POST /api/admin/orders/:orderId/payout-paid   — record a manual seller payout
 //   POST /api/admin/orders/:orderId/under-review  — move a dispute to review
+//   POST /api/admin/run-overdue-check             — force a seller overdue sweep
 //
 // SECURITY: every handler re-checks the caller's verified token email against
 // ADMIN_EMAIL. Route-level gating is not enough on its own because a valid
@@ -15,6 +16,7 @@ const express = require('express');
 const router = express.Router();
 const { admin, adminDb } = require('../services/firebaseAdmin');
 const { verifyFirebaseToken } = require('../middleware/verifyFirebaseToken');
+const { runOverdueSellerCheck } = require('../services/sellerOverdueSweep');
 
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').trim();
 
@@ -114,5 +116,20 @@ router.post(
     }
   }
 );
+
+/**
+ * POST /api/admin/run-overdue-check
+ * Runs the seller overdue-credential sweep immediately (5h reminder, 24h flag,
+ * auto-suspend at 3 warnings). The same pass runs at boot and hourly; this
+ * route lets an admin verify or force it without waiting for the interval.
+ */
+router.post('/run-overdue-check', verifyFirebaseToken, requireAdmin, async (req, res, next) => {
+  try {
+    const result = await runOverdueSellerCheck();
+    return res.json({ success: true, ...result });
+  } catch (err) {
+    return next(err);
+  }
+});
 
 module.exports = router;

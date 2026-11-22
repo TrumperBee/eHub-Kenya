@@ -744,6 +744,32 @@ export default function OrderDetailPage() {
           </div>
         )}
 
+        {isSeller && order.sellerOverdueFlaggedAt && order.status === 'awaiting_seller_delivery' && (
+          <div
+            className="mb-6 flex items-start gap-3 rounded-xl p-4"
+            style={{ background: '#FEE2E2', border: '1px solid #FECACA' }}
+            role="alert"
+          >
+            <AlertTriangle size={20} className="shrink-0 mt-0.5" style={{ color: '#B91C1C' }} />
+            <div>
+              <p className="font-heading text-sm font-bold uppercase" style={{ color: '#B91C1C' }}>
+                {order.sellerSuspended ? 'Account suspended — delivery overdue' : 'Account flagged — delivery overdue'}
+              </p>
+              <p className="text-xs mt-1" style={{ color: '#7F1D1D' }}>
+                This order is overdue. Your account has been flagged. Submit credentials immediately.
+              </p>
+              <p className="text-xs mt-1" style={{ color: '#7F1D1D' }}>
+                {order.sellerWarningCount > 0 && (
+                  <>Warning {order.sellerWarningCount} of 3. </>
+                )}
+                {order.sellerSuspended
+                  ? 'Your seller account is suspended and cannot create new listings. Contact support to appeal.'
+                  : 'At 3 warnings your seller account is suspended automatically.'}
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="lg:w-[400px] shrink-0 space-y-4">
             <div className="card p-5 space-y-4">

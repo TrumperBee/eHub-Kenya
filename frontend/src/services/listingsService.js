@@ -77,7 +77,19 @@ export const getSellerListings = async (sellerId) => {
   return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 };
 
+export const SUSPENDED_SELLER_MESSAGE =
+  'Your seller account is suspended and cannot create new listings. Contact support to appeal.';
+
 export const createListing = async (data) => {
+  // SECURITY: firestore.rules also block this write, but checking first lets the
+  // seller see why instead of a generic "insufficient permissions" error.
+  if (data?.sellerId) {
+    const sellerSnap = await getDoc(doc(db, 'users', data.sellerId));
+    if (sellerSnap.exists() && sellerSnap.data().suspended === true) {
+      throw new Error(SUSPENDED_SELLER_MESSAGE);
+    }
+  }
+
   const ref = await addDoc(listingsRef, {
     ...data,
     platform: data.platform || 'android',
