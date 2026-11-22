@@ -18,7 +18,9 @@ const { admin, adminDb } = require('../services/firebaseAdmin');
 const { verifyFirebaseToken } = require('../middleware/verifyFirebaseToken');
 const { runOverdueSellerCheck } = require('../services/sellerOverdueSweep');
 const { approveSellerApplication, VALID_SELLER_UID } = require('../services/sellerApproval');
-const { sendSellerApprovedEmail } = require('../services/emailService');
+const { sendSellerApprovedEmail, sendSellerPayoutSentEmail } = require('../services/emailService');
+const { notifySellerPayoutSent } = require('../services/payoutNotification');
+const { sellerPayout } = require('../utils/payouts');
 
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').trim();
 
@@ -48,7 +50,8 @@ async function loadOrder(orderId) {
 /**
  * POST /api/admin/orders/:orderId/payout-paid
  * Marks the seller payout for a completed order as paid. Idempotent: a second
- * call is rejected so the payout timestamp cannot be rewritten.
+ * call is rejected so the payout timestamp cannot be rewritten. After the
+ * write, the seller gets an email + in-app notice with the M-Pesa last four.
  */
 router.post('/orders/:orderId/payout-paid', verifyFirebaseToken, requireAdmin, async (req, res, next) => {
   try {
@@ -74,6 +77,51 @@ router.post('/orders/:orderId/payout-paid', verifyFirebaseToken, requireAdmin, a
       sellerPaidByEmail: req.user.email || '',
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+
+    // The payout is saved. Everything below is best-effort so a delivery
+    // problem cannot make an already-sent payout look like it failed.
+    try {
+      const sellerId = order.sellerId;
+      if (sellerId) {
+        const [publicResult, privateResult] = await Promise.allSettled([
+          adminDb.doc(`users/${sellerId}`).get(),
+          adminDb.doc(`users/${sellerId}/private/contact`).get(),
+        ]);
+        const publicSnap = publicResult.status === 'fulfilled' ? publicResult.value : null;
+        const privateSnap = privateResult.status === 'fulfilled' ? privateResult.value : null;
+        const profile = publicSnap?.exists ? publicSnap.data() : {};
+        const contact = privateSnap?.exists ? privateSnap.data() : {};
+        const phoneNumber =
+          contact.phoneNumber || contact.whatsappNumber ||
+          profile.phoneNumber || profile.sellerWhatsapp ||
+          order.sellerPhone || '';
+
+        await notifySellerPayoutSent({
+          uid: sellerId,
+          orderId,
+          amount: sellerPayout(order.amount),
+          phoneNumber,
+          sellerName:
+            profile.displayName || profile.sellerDisplayName ||
+            order.sellerDisplayName || profile.username || '',
+          listingTitle: order.listingTitle || '',
+          sendEmail: sendSellerPayoutSentEmail,
+          createNotification: async ({ userId, title, message, type, orderId: relatedOrderId }) => {
+            await adminDb.collection('notifications').add({
+              userId,
+              title,
+              message,
+              type,
+              orderId: relatedOrderId || null,
+              read: false,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+          },
+        });
+      }
+    } catch (notifyErr) {
+      console.error(`Payout notice failed for order ${orderId}:`, notifyErr);
+    }
 
     return res.json({ success: true, orderId });
   } catch (err) {

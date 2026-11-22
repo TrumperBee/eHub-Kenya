@@ -23,6 +23,7 @@ const {
   WHATSAPP_URL,
   feeRule,
 } = require('../utils/sellerApprovalCopy');
+const { PAYOUT_SENT_SUBJECT, buildPayoutSentMessage } = require('../utils/payoutSentCopy');
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
@@ -1011,6 +1012,43 @@ async function sendSellerApprovedEmail({ uid, sellerName } = {}) {
   });
 }
 
+// Seller: the admin has sent the manual M-Pesa payout. Called by the
+// payout-paid route only after the order write succeeds. Idempotent per order.
+async function sendSellerPayoutSentEmail({
+  uid,
+  orderId,
+  amount,
+  last4,
+  message,
+  sellerName = '',
+  listingTitle = '',
+} = {}) {
+  if (!uid || !orderId) return { status: 'skipped' };
+  const sellerEmail = await getUserEmail(uid);
+  if (!sellerEmail) {
+    logger.warn(`seller-payout-sent email skipped (no email on user ${uid})`);
+    return { status: 'skipped' };
+  }
+
+  const copy = message || buildPayoutSentMessage({ amount, last4 });
+  return runWithIdempotency(`seller-payout-sent-${orderId}`, async () => {
+    return sendRaw({
+      to: sellerEmail,
+      subject: PAYOUT_SENT_SUBJECT,
+      html: renderMarketLayout({
+        title: 'Your payout has been sent',
+        bodyHtml:
+          bodyP(`Hi ${esc(sellerName || 'there')},`) +
+          bodyP(esc(copy)) +
+          bodyBox('Payouts are sent manually by admin to the M-Pesa number registered on your eHub Market account.'),
+        cta: { url: `${FRONTEND_URL}/transfer-room`, label: 'Open Transfer Room' },
+        footerHtml: `Order ${esc(orderId)}${listingTitle ? ` · ${esc(listingTitle)}` : ''} &middot; ${MARKET_FOOTER}`,
+      }),
+      text: `${copy}\nOpen your Transfer Room: ${FRONTEND_URL}/transfer-room`,
+    });
+  });
+}
+
 // Simple test email (admin-only).
 async function sendTestEmail(to) {
   if (!resend) return { status: 'not_configured' };
@@ -1035,6 +1073,7 @@ module.exports = {
   sendBuyerPaymentConfirmedEmail,
   sendSellerPaymentReceivedEmail,
   sendSellerApprovedEmail,
+  sendSellerPayoutSentEmail,
   sendSellerCredentialsSubmittedEmail,
   sendBuyerCredentialsReadyEmail,
   sendOrderCompletedEmail,
