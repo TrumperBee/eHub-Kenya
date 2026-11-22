@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, PauseCircle, PlayCircle, Trash2, Edit3, AlertTriangle, Package, Camera, MapPin } from 'lucide-react';
 import { getSellerListings, updateListing, deleteListingSoft } from '../../../services/listingsService';
 import { formatKES } from '../../../utils/formatters';
+import SafeImage from '../../../components/common/SafeImage';
 import toast from 'react-hot-toast';
 
 function ListingsSkeleton() {
@@ -149,11 +150,12 @@ export default function ListingsTab({ profile, user, onTabChange }) {
           {filtered.map(listing => (
             <div key={listing.id} className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                {listing.photos?.[0] ? (
-                  <img src={listing.photos[0]} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />
-                ) : (
-                  <div className="w-12 h-12 rounded-lg shrink-0 flex items-center justify-center text-lg" style={{ background: '#F0F4FF' }}><Camera size={20} /></div>
-                )}
+                <SafeImage
+                  src={listing.photos?.[0]}
+                  wrapperClassName="w-12 h-12 rounded-lg shrink-0"
+                  width={160}
+                  fallback={<Camera size={20} style={{ color: 'rgba(255,255,255,0.55)' }} />}
+                />
                 <div className="min-w-0">
                   <p className="text-sm font-bold truncate" style={{ color: '#111' }}>{listing.title}</p>
                   <p className="text-xs mt-0.5" style={{ color: '#6B7280' }}>{listing.tier}, {listing.platform}, {formatKES(listing.price)}</p>

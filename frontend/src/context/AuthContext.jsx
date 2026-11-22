@@ -18,6 +18,23 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setCurrentUser(firebaseUser);
+
+        // Google Sign-In returns a photo on the Auth user but it is not written
+        // to Firestore automatically. Copy it once into the profile document
+        // when the profile has no custom photo yet, so the avatar survives
+        // reloads and appears everywhere the profile is read.
+        if (firebaseUser.photoURL) {
+          getUserDocument(firebaseUser.uid)
+            .then((existing) => {
+              if (existing && !existing.photoURL) {
+                return updateUserDocument(firebaseUser.uid, { photoURL: firebaseUser.photoURL });
+              }
+              return null;
+            })
+            .catch((err) => {
+              console.warn('Could not sync Google avatar:', err?.code || err?.message);
+            });
+        }
       } else {
         setCurrentUser(null);
         setUserProfile(null);
@@ -93,6 +110,9 @@ export function AuthProvider({ children }) {
         photoURL: user.photoURL,
       });
       return { isNew: true };
+    }
+    if (user.photoURL && !existing.photoURL) {
+      await updateUserDocument(user.uid, { photoURL: user.photoURL });
     }
     return { isNew: false };
   };

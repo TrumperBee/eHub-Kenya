@@ -8,6 +8,7 @@ import { updateUserDocument } from '../../services/authService';
 import { saveUserContact } from '../../services/userContactService';
 import { validatePhone } from '../../utils/validators';
 import PasswordInput from '../../components/common/PasswordInput';
+import Avatar from '../../components/common/Avatar';
 import { validateUsernameFormat, generateSuggestions, checkUsername, normalizeUsernameLower } from '../../utils/usernameUtils';
 import { formatDate, formatKES } from '../../utils/formatters';
 import { ORDER_STATUS } from '../../utils/constants';
@@ -86,8 +87,9 @@ export default function AccountPage() {
   const [deleteEmail, setDeleteEmail] = useState('');
   const [deleting, setDeleting] = useState(false);
 
-  const initials = (userProfile?.displayName || 'U')
-    .split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  // Prefer the uploaded/Google photo; the Avatar component falls back to
+  // initials only when no usable photo exists (or it fails to load).
+  const avatarSrc = userProfile?.photoURL || currentUser?.photoURL || '';
 
   useEffect(() => {
     if (userProfile) {
@@ -401,11 +403,14 @@ export default function AccountPage() {
       <div className="max-w-7xl mx-auto px-4 py-4 md:py-6 flex gap-6">
         <div className="hidden md:flex flex-col w-60 shrink-0">
           <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 text-center">
-            <div className="w-[72px] h-[72px] rounded-full bg-[#003BFF] flex items-center justify-center text-white text-xl font-heading font-bold mx-auto mb-3">
-              {userProfile?.photoURL ? (
-                <img src={userProfile.photoURL} alt="" className="w-full h-full rounded-full object-cover" />
-              ) : initials}
-            </div>
+            <Avatar
+              src={avatarSrc}
+              name={userProfile?.displayName || 'User'}
+              size={72}
+              background="#003BFF"
+              textClassName="text-xl"
+              className="mx-auto mb-3"
+            />
             <h2 className="font-heading text-lg font-bold" style={{ color: '#111111' }}>
               {userProfile?.displayName || 'User'}
             </h2>
@@ -439,10 +444,14 @@ export default function AccountPage() {
         {activeTab === 'profile' && (
             <div className="space-y-5">
               <div className="bg-white rounded-2xl p-6 shadow-sm text-center">
-                <div className="w-24 h-24 rounded-full bg-[#003BFF] flex items-center justify-center text-white text-3xl font-heading font-bold mx-auto mb-3 relative">
-                  {userProfile?.photoURL ? (
-                    <img src={userProfile.photoURL} alt="" className="w-full h-full rounded-full object-cover" />
-                  ) : initials}
+                <div className="relative mx-auto mb-3 w-24 h-24">
+                  <Avatar
+                    src={avatarSrc}
+                    name={userProfile?.displayName || 'User'}
+                    size={96}
+                    background="#003BFF"
+                    textClassName="text-3xl"
+                  />
                   {changingPhoto && (
                     <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
                       <Loader2 size={20} className="animate-spin text-white" />

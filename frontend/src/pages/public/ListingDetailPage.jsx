@@ -13,6 +13,8 @@ import PlayerBadge from '../../components/listings/PlayerBadge';
 import ReviewCard from '../../components/reviews/ReviewCard';
 import BuyNowButton from '../../components/checkout/BuyNowButton';
 import SaveButton from '../../components/listings/SaveButton';
+import SafeImage from '../../components/common/SafeImage';
+import Avatar from '../../components/common/Avatar';
 import CommentSection from '../../components/comments/CommentSection';
 import { toggleSaveListing, subscribeSavedListingIds } from '../../services/savedListingsService';
 import { ChevronDown, ChevronUp, Shield, Star, Circle, ChevronRight, Flame, ShoppingBag } from 'lucide-react';
@@ -160,17 +162,14 @@ export default function ListingDetailPage() {
           <div className="flex-1 min-w-0 space-y-6">
             <div className="card overflow-hidden">
               <div className="relative bg-konami-blue-deep">
-                {photos.length > 0 ? (
-                  <img
-                    src={photos[selectedPhoto]}
-                    alt={listing.title}
-                    className="w-full max-w-full h-auto aspect-video object-cover"
-                  />
-                ) : (
-                  <div className="w-full aspect-video flex items-center justify-center">
-                    <span className="text-5xl opacity-60"><Circle size={48} /></span>
-                  </div>
-                )}
+                <SafeImage
+                  src={photos[selectedPhoto]}
+                  alt={listing.title}
+                  wrapperClassName="w-full aspect-video"
+                  width={1200}
+                  loading="eager"
+                  fallback={<Circle size={48} style={{ color: 'rgba(255,255,255,0.35)' }} />}
+                />
               </div>
               {photos.length > 1 && (
                 <div className="flex gap-2 p-3 overflow-x-auto">
@@ -183,7 +182,12 @@ export default function ListingDetailPage() {
                         border: i === selectedPhoto ? '2px solid #003BFF' : '2px solid transparent',
                       }}
                     >
-                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <SafeImage
+                        src={url}
+                        wrapperClassName="w-full h-full"
+                        width={160}
+                        fallback={<Circle size={18} style={{ color: 'rgba(255,255,255,0.35)' }} />}
+                      />
                     </button>
                   ))}
                 </div>
@@ -339,15 +343,13 @@ export default function ListingDetailPage() {
                                border border-white/20 hover:border-white/40
                                transition-all duration-150 group"
                   >
-                    <div className="w-10 h-10 rounded-full bg-konami-blue-dark border-2 border-white/30
-                                    flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {listing.sellerPhotoURL
-                        ? <img src={listing.sellerPhotoURL} className="w-full h-full object-cover" alt="" />
-                        : <span className="text-white font-heading font-bold text-sm">
-                            {listing.sellerDisplayName?.[0]?.toUpperCase()}
-                          </span>
-                      }
-                    </div>
+                    <Avatar
+                      src={listing.sellerPhotoURL}
+                      name={listing.sellerDisplayName || 'S'}
+                      size={40}
+                      background="#001E7A"
+                      className="border-2 border-white/30"
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="font-heading font-bold text-white text-sm uppercase tracking-wide truncate">
                         {listing.sellerDisplayName}

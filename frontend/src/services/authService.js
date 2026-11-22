@@ -80,6 +80,8 @@ export const loginWithGoogle = async () => {
       displayName: user.displayName,
       photoURL: user.photoURL,
     });
+  } else if (user.photoURL && !existing.photoURL) {
+    await updateUserDocument(user.uid, { photoURL: user.photoURL });
   }
   return result;
 };

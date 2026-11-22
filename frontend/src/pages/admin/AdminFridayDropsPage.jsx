@@ -7,6 +7,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import { subscribeToAllDrops, approveDrop, rejectDrop } from '../../services/fridayDropsService';
 import { formatKES, formatRelativeTime } from '../../utils/formatters';
 import { getCurrentDropWeek, formatFridayLabel } from '../../utils/fridayUtils';
+import SafeImage from '../../components/common/SafeImage';
 
 const TABS = [
   { id: 'pending', label: 'Pending' },
@@ -151,11 +152,12 @@ export default function AdminFridayDropsPage({ embedded = false }) {
                   <tr key={drop.id} className="hover:bg-konami-light-gray transition-colors">
                     <td className="py-3 text-sm text-konami-text">
                       <div className="flex items-center gap-3 min-w-0">
-                        {drop.photo ? (
-                          <img src={drop.photo} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg shrink-0 flex items-center justify-center" style={{ background: '#F0F4FF' }}><Package size={16} /></div>
-                        )}
+                        <SafeImage
+                          src={drop.photo}
+                          wrapperClassName="w-10 h-10 rounded-lg shrink-0"
+                          width={160}
+                          fallback={<Package size={16} style={{ color: 'rgba(255,255,255,0.55)' }} />}
+                        />
                         <div className="min-w-0">
                           <p className="font-semibold truncate max-w-[200px]">{drop.title}</p>
                           <Link to={`/listing/${drop.listingId}`} className="text-xs text-konami-blue hover:underline">View listing</Link>

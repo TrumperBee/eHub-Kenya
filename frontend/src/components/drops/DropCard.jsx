@@ -5,6 +5,8 @@ import { formatKES } from '../../utils/formatters';
 import { classifyDrop, formatFridayLabel } from '../../utils/fridayUtils';
 import TierBadge from '../listings/TierBadge';
 import PlayerBadge from '../listings/PlayerBadge';
+import SafeImage from '../common/SafeImage';
+import Avatar from '../common/Avatar';
 
 export default function DropCard({ drop, onView }) {
   const navigate = useNavigate();
@@ -47,13 +49,14 @@ export default function DropCard({ drop, onView }) {
       </div>
 
       <div className="relative aspect-[16/9] overflow-hidden" style={{ background: 'linear-gradient(135deg, #001E7A, #003BFF)' }}>
-        {photoUrl ? (
-          <img src={photoUrl} alt={drop.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span style={{ color: 'rgba(255,255,255,0.3)' }}><Flame size={56} /></span>
-          </div>
-        )}
+        <SafeImage
+          src={photoUrl}
+          alt={drop.title}
+          wrapperClassName="w-full h-full"
+          width={800}
+          className="transition-transform duration-300 group-hover:scale-105"
+          fallback={<Flame size={56} style={{ color: 'rgba(255,255,255,0.3)' }} />}
+        />
 
         <div className="absolute top-3 left-3 z-10">
           <TierBadge tier={tier} />
@@ -87,15 +90,13 @@ export default function DropCard({ drop, onView }) {
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border transition-all duration-150 group/seller"
           style={{ borderColor: 'rgba(0,59,255,0.3)' }}
         >
-          <div className="w-5 h-5 rounded-full bg-[#003BFF] flex items-center justify-center overflow-hidden flex-shrink-0">
-            {drop.sellerPhotoURL ? (
-              <img src={drop.sellerPhotoURL} alt="" className="w-5 h-5 rounded-full object-cover" />
-            ) : (
-              <span className="text-white font-heading font-bold text-[9px]">
-                {(drop.sellerName || 'S')[0]?.toUpperCase()}
-              </span>
-            )}
-          </div>
+          <Avatar
+            src={drop.sellerPhotoURL}
+            name={drop.sellerName || 'S'}
+            size={20}
+            background="#003BFF"
+            textClassName="text-[9px]"
+          />
           <span className="font-heading font-bold text-xs uppercase tracking-wide" style={{ color: '#003BFF' }}>
             {drop.sellerName || 'Verified Seller'}
           </span>

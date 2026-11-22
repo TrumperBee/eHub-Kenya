@@ -5,6 +5,7 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { formatDate } from '../../utils/formatters';
 import ListingCard from '../../components/listings/ListingCard';
+import Avatar from '../../components/common/Avatar';
 import ReviewCard from '../../components/reviews/ReviewCard';
 import ReviewForm from '../../components/reviews/ReviewForm';
 import { Star, ShieldCheck, Star as StarIcon } from 'lucide-react';
@@ -75,13 +76,6 @@ export default function SellerPublicProfilePage() {
     );
   }
 
-  const initials = (seller.sellerDisplayName || seller.displayName || 'S')
-    .split(' ')
-    .map(w => w[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-
   const totalRating = seller.sellerRating || 0;
   const totalReviews = seller.sellerTotalRatings || 0;
   const totalSales = seller.totalSales || 0;
@@ -101,12 +95,13 @@ export default function SellerPublicProfilePage() {
 
         <div className="rounded-2xl p-6 md:p-8" style={{ background: '#003BFF' }}>
           <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center text-white font-heading font-extrabold text-2xl shrink-0"
-              style={{ background: '#001E7A' }}>
-              {seller.photoURL ? (
-                <img src={seller.photoURL} alt="" className="w-full h-full rounded-full object-cover" />
-              ) : initials}
-            </div>
+            <Avatar
+              src={seller.photoURL}
+              name={seller.sellerDisplayName || seller.displayName || 'S'}
+              size={80}
+              background="#001E7A"
+              textClassName="text-2xl"
+            />
             <div className="space-y-1.5">
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="font-heading text-2xl md:text-[28px] font-extrabold text-white">

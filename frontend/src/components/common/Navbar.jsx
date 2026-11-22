@@ -8,6 +8,7 @@ import { formatRelativeTime } from '../../utils/formatters';
 import { isDropLive } from '../../utils/fridayUtils';
 import useSellerActionOrders from '../../hooks/useSellerActionOrders';
 import Badge from './Badge';
+import Avatar from './Avatar';
 import FeedbackModal from './FeedbackModal';
 
 export default function Navbar() {
@@ -121,14 +122,11 @@ export default function Navbar() {
     )
   );
 
-  const getInitials = (name) => {
-    if (!name) return '?';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
   const isAdmin = currentUser?.email === ADMIN_EMAIL;
   const displayName = userProfile?.sellerDisplayName || userProfile?.displayName || currentUser?.displayName || 'User';
-  const initials = getInitials(displayName);
+  // Prefer the profile document (manually uploaded photo wins) and fall back to
+  // the Firebase Auth photo (Google Sign-In) when the document has none yet.
+  const avatarSrc = userProfile?.photoURL || currentUser?.photoURL || '';
 
   const DrawerNavItem = ({ icon, label, href, activeColor, badge }) => (
     <Link
@@ -235,11 +233,15 @@ export default function Navbar() {
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center gap-2 rounded-lg px-2 py-2 transition-colors duration-200 min-h-[48px]"
+                  aria-label="Account menu"
                 >
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-heading font-bold"
-                    style={{ background: '#001E7A' }}>
-                    {initials}
-                  </div>
+                  <Avatar
+                    src={avatarSrc}
+                    name={displayName}
+                    size={36}
+                    background="#001E7A"
+                    loading="eager"
+                  />
                 </button>
 
                 {dropdownOpen && (
@@ -346,9 +348,13 @@ export default function Navbar() {
 
           {currentUser && (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-heading font-bold shrink-0" style={{ background: '#003BFF', border: '2px solid #FFFFFF' }}>
-                {initials}
-              </div>
+              <Avatar
+                src={avatarSrc}
+                name={displayName}
+                size={40}
+                background="#003BFF"
+                className="border-2 border-white"
+              />
               <div className="min-w-0">
                 <p className="font-heading text-sm font-bold text-white truncate">{displayName}</p>
                 <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{currentUser.email}</p>

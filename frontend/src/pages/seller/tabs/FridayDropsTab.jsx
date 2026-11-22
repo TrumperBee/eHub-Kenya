@@ -7,6 +7,7 @@ import { getSellerListings } from '../../../services/listingsService';
 import { formatKES } from '../../../utils/formatters';
 import { calcDiscount, getCurrentDropWeek, formatFridayLabel, isDropLive, FRIDAY_ACTIVE_PERIOD } from '../../../utils/fridayUtils';
 import CountdownTimer from '../../../components/drops/CountdownTimer';
+import SafeImage from '../../../components/common/SafeImage';
 
 const STATUS_BADGE = {
   pending: { label: 'PENDING', bg: '#FEF3C7', color: '#B45309' },
@@ -210,13 +211,12 @@ export default function FridayDropsTab({ profile, user }) {
                 return (
                   <div key={drop.id} className="bg-white rounded-xl shadow-sm p-4">
                     <div className="flex items-start gap-3">
-                      {drop.photo ? (
-                        <img src={drop.photo} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />
-                      ) : (
-                        <div className="w-12 h-12 rounded-lg shrink-0 flex items-center justify-center" style={{ background: '#F0F4FF' }}>
-                          <Package size={20} />
-                        </div>
-                      )}
+                      <SafeImage
+                        src={drop.photo}
+                        wrapperClassName="w-12 h-12 rounded-lg shrink-0"
+                        width={160}
+                        fallback={<Package size={20} style={{ color: 'rgba(255,255,255,0.55)' }} />}
+                      />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-sm font-bold truncate min-w-0" style={{ color: '#111' }}>{drop.title}</p>
