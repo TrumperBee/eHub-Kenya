@@ -13,12 +13,14 @@ import AdminOrdersPage from './AdminOrdersPage';
 import AdminDisputesPage from './AdminDisputesPage';
 import AdminFridayDropsPage from './AdminFridayDropsPage';
 import DeveloperSettingsTab from './tabs/DeveloperSettingsTab';
+import AnalyticsTab from './tabs/AnalyticsTab';
 import { BACKEND_URL } from '../../utils/constants';
 import { formatKES } from '../../utils/formatters';
 import { sellerPayout } from '../../utils/payouts';
 import { useAuth } from '../../context/AuthContext';
 import useOpenDisputeCount from '../../hooks/useOpenDisputeCount';
 import {
+  BarChart3,
   Banknote,
   Flame,
   Package,
@@ -32,6 +34,7 @@ import {
 } from 'lucide-react';
 
 const TABS = [
+  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'payouts', label: 'Payouts', icon: Wallet },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'sellers', label: 'Sellers', icon: UserCheck },
@@ -297,6 +300,7 @@ export default function AdminDashboardPage() {
         </div>
 
         <section>
+          {tab === 'analytics' && <AnalyticsTab />}
           {tab === 'payouts' && (
             <PayoutsTab orders={completedOrders} loading={ordersLoading} />
           )}

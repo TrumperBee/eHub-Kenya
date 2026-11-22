@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "test": "node --test src/services/listingDeleteGuard.test.js src/services/fridayDropGuard.test.js src/services/disputeResolver.test.js src/utils/orderAccess.test.js src/utils/orderPlatform.test.js src/utils/orderMachine.test.js src/utils/fridayUtils.test.js src/utils/orderGuide.test.js src/utils/maintenance.test.js src/utils/whatsapp.test.js src/utils/push.test.js",
+    "test": "node --test src/services/listingDeleteGuard.test.js src/services/fridayDropGuard.test.js src/services/disputeResolver.test.js src/utils/orderAccess.test.js src/utils/orderPlatform.test.js src/utils/orderMachine.test.js src/utils/fridayUtils.test.js src/utils/orderGuide.test.js src/utils/maintenance.test.js src/utils/whatsapp.test.js src/utils/analytics.test.js src/utils/push.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -18,7 +18,9 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-hot-toast": "^2.6.0",
+    "react-is": "^19.3.1",
     "react-router-dom": "^7.17.0",
+    "recharts": "^3.11.0",
     "swiper": "^12.2.0"
   },
   "devDependencies": {
