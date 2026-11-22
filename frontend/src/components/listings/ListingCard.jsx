@@ -2,9 +2,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useFridayDrop } from '../../context/FridayDropContext';
 import { Smartphone, Star, CircleDollarSign, BarChart3, ArrowRight, Circle, ExternalLink, Bookmark, Flame } from 'lucide-react';
-import { TIERS, PLATFORMS } from '../../utils/constants';
+import { PLATFORMS } from '../../utils/constants';
 import { formatKES } from '../../utils/formatters';
 import { formatFridayLabel } from '../../utils/fridayUtils';
+import SellerTierBadge from '../common/SellerTierBadge';
+import { useSellerSalesCount } from '../../hooks/useSellerSalesCount';
 import TierBadge from './TierBadge';
 import PlayerBadge from './PlayerBadge';
 import SafeImage from '../common/SafeImage';
@@ -24,6 +26,10 @@ export default function ListingCard({ listing }) {
   const { currentUser } = useAuth();
   const tier = listing.tier || 'bronze';
   const tierAccent = TIER_COLORS[tier];
+  const sellerSalesCount = useSellerSalesCount(
+    listing.sellerId,
+    listing.sellerCompletedSalesCount
+  );
 
   const platformLabel = PLATFORMS[listing.platform]?.label || listing.platform || 'eFootball';
 
@@ -52,7 +58,7 @@ export default function ListingCard({ listing }) {
     try {
       const nowSaved = await toggleSaveListing(currentUser.uid, listing);
       toast.success(nowSaved ? 'Saved to Favourites' : 'Removed from Favourites');
-    } catch (err) {
+    } catch {
       toast.error('Failed to save listing');
     }
   };
@@ -148,13 +154,14 @@ export default function ListingCard({ listing }) {
               </span>
               <ExternalLink size={11} className="text-konami-blue/60 group-hover:text-white flex-shrink-0" />
             </Link>
-            {listing.sellerRating > 0 ? (
-              <span className="text-sm font-medium" style={{ color: '#D4AF37' }}>
-                {listing.sellerRating.toFixed(1)} <Star size={14} className="inline" />
-              </span>
-            ) : (
-              <span className="text-xs font-heading font-bold uppercase" style={{ color: '#6B7280' }}>New Seller</span>
-            )}
+            <div className="flex items-center gap-2">
+              {listing.sellerRating > 0 && (
+                <span className="text-sm font-medium" style={{ color: '#D4AF37' }}>
+                  {listing.sellerRating.toFixed(1)} <Star size={14} className="inline" />
+                </span>
+              )}
+              <SellerTierBadge count={sellerSalesCount} className="shrink-0" />
+            </div>
           </div>
 
           <h3 className="font-heading text-lg font-bold text-konami-text leading-snug line-clamp-2 uppercase">

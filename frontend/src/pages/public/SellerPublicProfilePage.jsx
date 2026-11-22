@@ -4,6 +4,8 @@ import { doc, getDoc, collection, query, where, orderBy, getDocs, onSnapshot } f
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { formatDate } from '../../utils/formatters';
+import { normalizeSalesCount } from '../../utils/sellerTier';
+import SellerTierBadge from '../../components/common/SellerTierBadge';
 import ListingCard from '../../components/listings/ListingCard';
 import Avatar from '../../components/common/Avatar';
 import ReviewCard from '../../components/reviews/ReviewCard';
@@ -78,7 +80,7 @@ export default function SellerPublicProfilePage() {
 
   const totalRating = seller.sellerRating || 0;
   const totalReviews = seller.sellerTotalRatings || 0;
-  const totalSales = seller.totalSales || 0;
+  const completedSalesCount = normalizeSalesCount(seller.completedSalesCount);
 
   const handleReviewSuccess = () => {
     setShowReviewModal(false);
@@ -107,6 +109,7 @@ export default function SellerPublicProfilePage() {
                 <h1 className="font-heading text-2xl md:text-[28px] font-extrabold text-white">
                   {seller.sellerDisplayName || seller.displayName || 'Unknown Seller'}
                 </h1>
+                <SellerTierBadge count={completedSalesCount} />
                 {seller.sellerApproved && (
                   <span className="inline-flex items-center gap-1 text-xs font-heading font-bold text-white px-2.5 py-0.5 rounded-full"
                     style={{ background: '#10B981' }}>
@@ -131,7 +134,7 @@ export default function SellerPublicProfilePage() {
                 </span>
               </div>
               <p className="text-sm text-white/70">
-                {totalSales} {totalSales === 1 ? 'account' : 'accounts'} sold
+                {completedSalesCount} {completedSalesCount === 1 ? 'account' : 'accounts'} sold
               </p>
             </div>
           </div>

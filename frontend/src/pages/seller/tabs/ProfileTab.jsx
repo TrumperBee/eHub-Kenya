@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { User, Save, Star, AlertTriangle, Mail, Calendar, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { updateUserDocument } from '../../../services/authService';
+import { getNextTierProgress, normalizeSalesCount } from '../../../utils/sellerTier';
+import SellerTierBadge from '../../../components/common/SellerTierBadge';
 import toast from 'react-hot-toast';
 
 const PHONE_REGEX = /^(?:254|\+254|0)?[17]\d{8}$/;
@@ -103,6 +105,9 @@ export default function ProfileTab({ profile, user, onTabChange }) {
 
   if (!profile) return <ProfileSkeleton />;
 
+  const completedSalesCount = normalizeSalesCount(profile.completedSalesCount);
+  const progress = getNextTierProgress(completedSalesCount);
+
   return (
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
@@ -114,6 +119,17 @@ export default function ProfileTab({ profile, user, onTabChange }) {
         <p className="text-sm leading-relaxed" style={{ color: '#374151' }}>
           Your seller profile is what buyers see when they view your listings. A complete profile with a good display name builds trust and increases sales. Your rating is calculated automatically from buyer reviews after each sale.
         </p>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm p-5 mb-6" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+        <h2 className="font-heading text-sm font-bold uppercase mb-3" style={{ color: '#003BFF' }}>Your Seller Tier</h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          <SellerTierBadge count={completedSalesCount} />
+          <span className="text-sm font-medium" style={{ color: '#111' }}>
+            {completedSalesCount} completed sale{completedSalesCount === 1 ? '' : 's'}
+          </span>
+        </div>
+        <p className="text-sm mt-3" style={{ color: '#6B7280' }}>{progress.message}</p>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm p-6 mb-6" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
@@ -228,7 +244,7 @@ export default function ProfileTab({ profile, user, onTabChange }) {
           <div className="flex items-center gap-3">
             <ShoppingBag size={16} style={{ color: '#6B7280' }} />
             <div>
-              <p className="text-sm font-medium" style={{ color: '#111' }}>{profile.totalSales || 0} total sale{profile.totalSales !== 1 ? 's' : ''}</p>
+              <p className="text-sm font-medium" style={{ color: '#111' }}>{completedSalesCount} completed sale{completedSalesCount === 1 ? '' : 's'}</p>
             </div>
           </div>
         </div>

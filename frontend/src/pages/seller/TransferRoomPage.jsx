@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { LayoutDashboard, List, ShoppingBag, Wallet, User, Plus, Star, Flame } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Badge from '../../components/common/Badge';
+import SellerTierBadge from '../../components/common/SellerTierBadge';
 import useSellerActionOrders from '../../hooks/useSellerActionOrders';
 import OverviewTab from './tabs/OverviewTab';
 import ListingsTab from './tabs/ListingsTab';
@@ -44,6 +45,9 @@ export default function TransferRoomPage() {
           <div className="mb-6">
             <h2 className="font-heading text-sm font-bold uppercase tracking-wider" style={{ color: '#FFF100' }}>TRANSFER ROOM</h2>
             <p className="text-sm text-white mt-2 truncate">{userProfile?.sellerDisplayName || userProfile?.displayName}</p>
+            <div className="mt-2">
+              <SellerTierBadge count={userProfile?.completedSalesCount} />
+            </div>
             {userProfile?.sellerRating > 0 && (
               <p className="text-xs text-konami-gold"><Star size={12} className="inline" /> {userProfile.sellerRating.toFixed(1)}</p>
             )}

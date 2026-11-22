@@ -1,5 +1,6 @@
 const { canonicalStatus } = require('./orderStateMachine');
 const { verificationStartMs, verificationDeadlineMs } = require('./verificationWindow');
+const { sellerCompletedSalePatch } = require('./sellerSalesCount');
 
 /**
  * eHub Kenya — Phase 5: automatic escrow release decision (pure).
@@ -82,6 +83,11 @@ function escrowAutoReleaseDecision(effectiveOrder, nowMs) {
 const { adminDb, admin } = require('./firebaseAdmin');
 const { assertValidTransition } = require('./orderStateMachine');
 
+const sellerCompletedSaleUpdate = () => sellerCompletedSalePatch({
+  increment: (value) => admin.firestore.FieldValue.increment(value),
+  serverTimestamp: () => admin.firestore.FieldValue.serverTimestamp(),
+});
+
 /**
  * eHub Kenya — Phase 5: automatic matured-release worker pass.
  *
@@ -151,10 +157,10 @@ async function runMaturedReleasePass({ limit = 100 } = {}) {
       }
 
       if (freshOrder.sellerId) {
-        tx.update(adminDb.collection('users').doc(freshOrder.sellerId), {
-          totalSales: admin.firestore.FieldValue.increment(1),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
+        tx.update(
+          adminDb.collection('users').doc(freshOrder.sellerId),
+          sellerCompletedSaleUpdate()
+        );
       }
 
       released.push({ orderId: doc.id, reason: 'auto_released' });

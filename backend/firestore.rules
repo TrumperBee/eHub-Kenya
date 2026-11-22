@@ -45,7 +45,7 @@ service cloud.firestore {
     function userProtectedKeys() {
       return [
         'uid', 'role', 'sellerApproved', 'sellerRating', 'sellerTotalRatings',
-        'totalSales', 'totalPurchases', 'statsCounted', 'disabled', 'banned',
+        'totalSales', 'completedSalesCount', 'totalPurchases', 'statsCounted', 'disabled', 'banned',
         'warnings', 'suspended', 'suspendedAt', 'suspensionReason', 'createdAt'
       ];
     }
@@ -86,6 +86,7 @@ service cloud.firestore {
         && (!('sellerRating' in request.resource.data) || request.resource.data.sellerRating == 0)
         && (!('sellerTotalRatings' in request.resource.data) || request.resource.data.sellerTotalRatings == 0)
         && (!('totalSales' in request.resource.data) || request.resource.data.totalSales == 0)
+        && (!('completedSalesCount' in request.resource.data) || request.resource.data.completedSalesCount == 0)
         && (!('totalPurchases' in request.resource.data) || request.resource.data.totalPurchases == 0);
 
       // The owner may always edit their own profile. Field checks below only

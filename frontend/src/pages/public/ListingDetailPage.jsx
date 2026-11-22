@@ -8,6 +8,8 @@ import { useFridayDrop } from '../../context/FridayDropContext';
 import { PLATFORMS } from '../../utils/constants';
 import { formatKES } from '../../utils/formatters';
 import { formatFridayLabel } from '../../utils/fridayUtils';
+import { normalizeSalesCount } from '../../utils/sellerTier';
+import SellerTierBadge from '../../components/common/SellerTierBadge';
 import TierBadge from '../../components/listings/TierBadge';
 import PlayerBadge from '../../components/listings/PlayerBadge';
 import ReviewCard from '../../components/reviews/ReviewCard';
@@ -35,7 +37,7 @@ export default function ListingDetailPage() {
   const [showSteps, setShowSteps] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
-  const [sellerSales, setSellerSales] = useState(0);
+  const [sellerCompletedSalesCount, setSellerCompletedSalesCount] = useState(0);
 
   // Subscribe to saved listings
   useEffect(() => {
@@ -62,9 +64,11 @@ export default function ListingDetailPage() {
         if (listingData.sellerId) {
           getDoc(doc(db, 'users', listingData.sellerId))
             .then((sellerSnap) => {
-              setSellerSales(sellerSnap.exists() ? (sellerSnap.data().totalSales || 0) : 0);
+              setSellerCompletedSalesCount(
+                sellerSnap.exists() ? normalizeSalesCount(sellerSnap.data()?.completedSalesCount) : 0
+              );
             })
-            .catch(() => setSellerSales(0));
+            .catch(() => setSellerCompletedSalesCount(0));
         }
       }
     });
@@ -214,13 +218,12 @@ export default function ListingDetailPage() {
                   {(listing.sellerDisplayName || 'S')[0]}
                 </div>
                 <Link to={`/seller/${listing.sellerId}`} className="font-heading text-sm font-bold hover:underline" style={{ color: '#003BFF' }}>{listing.sellerDisplayName || 'Unknown Seller'}</Link>
-                {listing.sellerRating > 0 ? (
+                {listing.sellerRating > 0 && (
                   <span className="text-sm" style={{ color: '#D4AF37' }}>
                     <Star size={14} className="inline -mt-0.5" /> {listing.sellerRating.toFixed(1)}
                   </span>
-                ) : (
-                  <span className="text-xs font-heading font-bold uppercase" style={{ color: '#6B7280' }}>New Seller</span>
                 )}
+                <SellerTierBadge count={sellerCompletedSalesCount} />
               </div>
 
               <div className="card-accent p-5">
@@ -354,13 +357,17 @@ export default function ListingDetailPage() {
                       <p className="font-heading font-bold text-white text-sm uppercase tracking-wide truncate">
                         {listing.sellerDisplayName}
                       </p>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <Star size={11} className="text-yellow-400 fill-yellow-400" />
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <SellerTierBadge count={sellerCompletedSalesCount} />
+                        {listing.sellerRating > 0 && (
+                          <span className="inline-flex items-center gap-0.5 text-white/70 text-xs">
+                            <Star size={11} className="text-yellow-400 fill-yellow-400" />
+                            {listing.sellerRating.toFixed(1)}
+                          </span>
+                        )}
                         <span className="text-white/70 text-xs">
-                          {listing.sellerRating > 0 ? listing.sellerRating.toFixed(1) : 'New Seller'}
+                          {sellerCompletedSalesCount} sale{sellerCompletedSalesCount === 1 ? '' : 's'}
                         </span>
-                        <span className="w-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.4)' }} />
-                        <span className="text-white/70 text-xs">{sellerSales} sale{sellerSales === 1 ? '' : 's'}</span>
                       </div>
                     </div>
                     <ChevronRight size={16} className="text-white/50 group-hover:text-white transition-colors" />

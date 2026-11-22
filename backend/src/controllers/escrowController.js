@@ -12,6 +12,7 @@ const {
 } = require('../services/emailService');
 const { sendPushToUser } = require('../services/pushService');
 const { sellerPayout } = require('../utils/payouts');
+const { sellerCompletedSalePatch } = require('../services/sellerSalesCount');
 
 const {
   verificationDeadlineAfter,
@@ -20,6 +21,11 @@ const {
 } = require('../services/verificationWindow');
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'ochiengv250@gmail.com';
+
+const sellerCompletedSaleUpdate = () => sellerCompletedSalePatch({
+  increment: (value) => admin.firestore.FieldValue.increment(value),
+  serverTimestamp: () => admin.firestore.FieldValue.serverTimestamp(),
+});
 
 // Canonical eligibility for each actor action. Legacy statuses are read through
 // canonicalStatus() (old orders keep working), and every write below is also
@@ -105,10 +111,7 @@ async function release(req, res) {
     }
 
     if (order.sellerId) {
-      await adminDb.collection('users').doc(order.sellerId).update({
-        totalSales: admin.firestore.FieldValue.increment(1),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      await adminDb.collection('users').doc(order.sellerId).update(sellerCompletedSaleUpdate());
     }
 
     reconcileAsync(); // order completed -> sales/transactions counters refresh
@@ -583,9 +586,9 @@ async function resolve(req, res) {
         }).catch(() => {});
       }
       if (order.sellerId) {
-        await adminDb.collection('users').doc(order.sellerId).update({
-          totalSales: admin.firestore.FieldValue.increment(1),
-        }).catch(() => {});
+        await adminDb.collection('users').doc(order.sellerId)
+          .update(sellerCompletedSaleUpdate())
+          .catch(() => {});
       }
       reconcileAsync();
     } else {

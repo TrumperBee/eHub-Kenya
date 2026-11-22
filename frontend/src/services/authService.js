@@ -28,6 +28,7 @@ export const createUserDocument = async (uid, data) => {
     sellerRating: 0,
     sellerTotalRatings: 0,
     totalSales: 0,
+    completedSalesCount: 0,
     totalPurchases: 0,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -58,7 +59,7 @@ export const getUserDocument = async (uid) => {
 const OWNER_WRITE_BLOCKED_KEYS = [
   'email', 'phoneNumber', 'whatsappNumber', 'sellerWhatsapp', 'sellerPhone',
   'uid', 'role', 'sellerApproved', 'sellerRating', 'sellerTotalRatings',
-  'totalSales', 'totalPurchases', 'statsCounted', 'disabled', 'banned',
+  'totalSales', 'completedSalesCount', 'totalPurchases', 'statsCounted', 'disabled', 'banned',
   'warnings', 'suspended', 'suspendedAt', 'suspensionReason', 'createdAt',
 ];
 
