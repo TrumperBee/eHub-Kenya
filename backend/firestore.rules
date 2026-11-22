@@ -55,9 +55,13 @@ service cloud.firestore {
       return !('username' in data)
         || data.username == null
         || (data.username is string
-            && data.username.size() >= 3
-            && data.username.size() <= 20
-            && data.username.matches('^[a-zA-Z0-9_-]+$'));
+            // An empty string means "no username yet" (legacy accounts and
+            // Google sign-ins). Treat it like null so an owner can still save
+            // their display name or phone without a rules denial.
+            && (data.username.size() == 0
+                || (data.username.size() >= 3
+                    && data.username.size() <= 20
+                    && data.username.matches('^[a-zA-Z0-9_-]+$'))));
     }
 
     // ------------------------------------------------------------------ users
@@ -84,6 +88,10 @@ service cloud.firestore {
         && (!('totalSales' in request.resource.data) || request.resource.data.totalSales == 0)
         && (!('totalPurchases' in request.resource.data) || request.resource.data.totalPurchases == 0);
 
+      // The owner may always edit their own profile. Field checks below only
+      // reject *new* writes of private/privileged fields (diff against the
+      // existing document), so legacy contact fields already present on old
+      // accounts do not block an otherwise valid profile save.
       allow update: if (isOwner(userId) || isAdmin())
         && usernameIsValid()
         && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(userPrivateKeys()))

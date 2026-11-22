@@ -9,7 +9,7 @@ import { saveUserContact } from '../../services/userContactService';
 import { validatePhone } from '../../utils/validators';
 import PasswordInput from '../../components/common/PasswordInput';
 import Avatar from '../../components/common/Avatar';
-import { validateUsernameFormat, generateSuggestions, checkUsername, normalizeUsernameLower } from '../../utils/usernameUtils';
+import { validateUsernameFormat, generateSuggestions, checkUsername, normalizeUsernameLower, normalizeUsernameForWrite } from '../../utils/usernameUtils';
 import { formatDate, formatKES } from '../../utils/formatters';
 import { ORDER_STATUS } from '../../utils/constants';
 import toast from 'react-hot-toast';
@@ -196,10 +196,11 @@ export default function AccountPage() {
     }
     setSaving(true);
     try {
+      const username = normalizeUsernameForWrite(usernameVal);
       await updateUserDocument(currentUser.uid, {
         displayName: displayName.trim(),
-        username: usernameVal,
-        usernameLower: normalizeUsernameLower(usernameVal),
+        username,
+        usernameLower: username ? normalizeUsernameLower(username) : null,
       });
       // SECURITY: contact details live in the owner-only private subcollection,
       // never on the publicly readable user document.

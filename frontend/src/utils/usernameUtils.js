@@ -12,6 +12,19 @@ export const USERNAME_PATTERN = /^[a-zA-Z0-9_-]{3,20}$/;
 export const normalizeUsernameLower = (username) =>
   String(username || '').trim().toLowerCase();
 
+/**
+ * Value persisted to users/{uid}.username.
+ *
+ * Firestore rules reject an empty-string username (it is neither null nor a
+ * valid 3–20 character name), which used to deny profile saves for legacy and
+ * Google accounts that have no username yet. `null` is the rules' explicit
+ * "unset" value, so normalise empty input to null instead of ''.
+ */
+export const normalizeUsernameForWrite = (username) => {
+  const cleaned = String(username || '').trim();
+  return cleaned || null;
+};
+
 export const validateUsernameFormat = (username) => {
   if (!username) return 'Username is required';
   if (username.length < 3) return 'Username must be at least 3 characters';

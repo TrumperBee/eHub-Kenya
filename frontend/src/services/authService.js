@@ -52,9 +52,19 @@ export const getUserDocument = async (uid) => {
 
 // SECURITY: profile updates must never carry private contact fields — they
 // belong in users/{uid}/private/contact (see userContactService.saveUserContact).
+// Privilege/trust fields are stripped too: they are either backend-managed or
+// admin-only in firestore.rules, and including one would deny the whole write
+// with "Missing or insufficient permissions".
+const OWNER_WRITE_BLOCKED_KEYS = [
+  'email', 'phoneNumber', 'whatsappNumber', 'sellerWhatsapp', 'sellerPhone',
+  'uid', 'role', 'sellerApproved', 'sellerRating', 'sellerTotalRatings',
+  'totalSales', 'totalPurchases', 'statsCounted', 'disabled', 'banned',
+  'warnings', 'suspended', 'suspendedAt', 'suspensionReason', 'createdAt',
+];
+
 export const updateUserDocument = async (uid, data) => {
   const publicFields = { ...(data || {}) };
-  for (const key of ['email', 'phoneNumber', 'whatsappNumber', 'sellerWhatsapp', 'sellerPhone']) {
+  for (const key of OWNER_WRITE_BLOCKED_KEYS) {
     delete publicFields[key];
   }
   await updateDoc(doc(db, 'users', uid), { ...publicFields, updatedAt: serverTimestamp() });
